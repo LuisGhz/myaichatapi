@@ -1,6 +1,6 @@
 {
   "name": "My AI Chat",
-  "dockerFile": "DockerFile",
+  "dockerFile": "Dockerfile",
   "appPort": 8080,
   "forwardPorts": [8080],
   "customizations": {
@@ -66,5 +66,6 @@
         "wayou.vscode-todo-highlight"
       ]
     }
-  }
+  },
+  "runArgs": ["--network=dbs", "--env-file=.env"]
 }
