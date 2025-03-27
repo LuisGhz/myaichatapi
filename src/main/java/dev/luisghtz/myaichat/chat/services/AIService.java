@@ -26,13 +26,14 @@ public class AIService {
 
   public AssistantMessageResponseDto sendNewMessage(NewMessageRequestDto newMessageRequestDto) {
     Chat chat = getChat(newMessageRequestDto);
+    var isNewChat = chat.getMessages().size() == 0;
     var messages = messageRepository.findAllByChat(chat);
     var newMessage = createNewUserMessage(newMessageRequestDto, chat);
     messages.add(newMessage);
     var chatResponse = openAIService.sendNewMessage(messages, chat.getModel());
     var assistantMessage = createAssistantMessage(chatResponse, chat);
     messageRepository.saveAll(List.of(newMessage, assistantMessage));
-    var assistantMessageResponseDto = createAssistantMessageDto(chatResponse);
+    var assistantMessageResponseDto = createAssistantMessageDto(chatResponse, chat.getId(), isNewChat);
     return assistantMessageResponseDto;
   }
 
@@ -40,8 +41,9 @@ public class AIService {
     Chat chat = null;
     if (newMessageRequestDto.getChatId() != null)
       chat = findChatById(newMessageRequestDto.getChatId());
-    if (chat == null)
+    if (chat == null) {
       chat = getNewChat(newMessageRequestDto);
+    }
     return chat;
   }
 
@@ -83,13 +85,17 @@ public class AIService {
         .build();
   }
 
-  private AssistantMessageResponseDto createAssistantMessageDto(ChatResponse chatResponse) {
+  private AssistantMessageResponseDto createAssistantMessageDto(ChatResponse chatResponse, UUID chatId,
+      boolean isNewChat) {
     var usage = chatResponse.getMetadata().getUsage();
-    return AssistantMessageResponseDto.builder()
+    var message = AssistantMessageResponseDto.builder()
         .content(chatResponse.getResult().getOutput().getText())
         .promptTokens(usage.getPromptTokens())
         .completionTokens(usage.getCompletionTokens())
         .totalTokens(usage.getTotalTokens())
         .build();
+    if (isNewChat)
+      message.setChatId(chatId);
+    return message;
   }
 }
