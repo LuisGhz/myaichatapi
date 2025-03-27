@@ -12,8 +12,10 @@ import org.springframework.stereotype.Service;
 
 import dev.luisghtz.myaichat.chat.dtos.AssistantMessageResponseDto;
 import dev.luisghtz.myaichat.chat.dtos.ChatsListResponseDto;
+import dev.luisghtz.myaichat.chat.dtos.HistoryChatDto;
 import dev.luisghtz.myaichat.chat.dtos.NewMessageRequestDto;
 import dev.luisghtz.myaichat.chat.entities.Chat;
+import dev.luisghtz.myaichat.chat.models.AppMessageHistory;
 import dev.luisghtz.myaichat.chat.models.ChatSummary;
 import dev.luisghtz.myaichat.chat.entities.AppMessage;
 import dev.luisghtz.myaichat.chat.repositories.ChatRepository;
@@ -35,6 +37,21 @@ public class AIService {
       return chatSummary;
     }).collect(Collectors.toList()));
     return chatsListResponseDto;
+  }
+
+  public HistoryChatDto getChatHistory(UUID id) {
+    var chat = findChatById(id);
+    var messages = messageRepository.findAllByChat(chat);
+    var historyMessages = messages.stream().map(message -> {
+      return AppMessageHistory.builder()
+          .content(message.getContent())
+          .role(message.getRole())
+          .build();
+    }).collect(Collectors.toList());
+    var appMessageHistory = HistoryChatDto.builder()
+      .historyMessages(historyMessages)
+      .build();
+    return appMessageHistory;
   }
 
   public AssistantMessageResponseDto sendNewMessage(NewMessageRequestDto newMessageRequestDto) {
