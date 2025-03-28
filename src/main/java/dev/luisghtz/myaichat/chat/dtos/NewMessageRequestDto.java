@@ -16,6 +16,5 @@ public class NewMessageRequestDto {
   private UUID chatId = null;
   @NotEmpty
   private String prompt;
-  @NotEmpty
-  private String model;
+  private String model = null;
 }
