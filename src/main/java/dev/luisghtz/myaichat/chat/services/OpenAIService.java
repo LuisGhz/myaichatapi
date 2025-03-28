@@ -16,11 +16,9 @@ import org.springframework.stereotype.Service;
 
 import dev.luisghtz.myaichat.chat.entities.AppMessage;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.log4j.Log4j2;
 
 @Service
 @RequiredArgsConstructor
-@Log4j2
 public class OpenAIService {
   private final ChatModel chatModel;
 
@@ -28,7 +26,6 @@ public class OpenAIService {
     List<Message> modelMessages = new ArrayList<>();
     modelMessages.add(new SystemMessage("You are an intelligent assistant."));
     modelMessages.addAll(messages.stream().map(message -> {
-      log.info(message.getContent());
       if (message.getRole().equals("Assistant"))
         return new AssistantMessage(message.getContent());
 
