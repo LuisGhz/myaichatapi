@@ -49,14 +49,14 @@ public class AIService {
           .build();
     }).collect(Collectors.toList());
     var appMessageHistory = HistoryChatDto.builder()
-      .historyMessages(historyMessages)
-      .build();
+        .historyMessages(historyMessages)
+        .build();
     return appMessageHistory;
   }
 
   public AssistantMessageResponseDto sendNewMessage(NewMessageRequestDto newMessageRequestDto) {
     Chat chat = getChat(newMessageRequestDto);
-    var isNewChat = chat.getMessages().size() == 0;
+    var isNewChat = chat.getMessages() == null || chat.getMessages().isEmpty();
     var messages = messageRepository.findAllByChat(chat);
     var newMessage = createNewUserMessage(newMessageRequestDto, chat);
     messages.add(newMessage);
