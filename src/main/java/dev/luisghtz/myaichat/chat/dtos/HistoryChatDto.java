@@ -14,4 +14,5 @@ import lombok.NoArgsConstructor;
 @Builder
 public class HistoryChatDto {
   private List<AppMessageHistory> historyMessages;
+  private String model;
 }

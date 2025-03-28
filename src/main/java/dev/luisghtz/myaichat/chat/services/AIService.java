@@ -50,6 +50,7 @@ public class AIService {
     }).collect(Collectors.toList());
     var appMessageHistory = HistoryChatDto.builder()
         .historyMessages(historyMessages)
+        .model(chat.getModel())
         .build();
     return appMessageHistory;
   }
