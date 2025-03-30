@@ -20,10 +20,13 @@ import dev.luisghtz.myaichat.chat.models.ChatSummary;
 import dev.luisghtz.myaichat.chat.entities.AppMessage;
 import dev.luisghtz.myaichat.chat.repositories.ChatRepository;
 import dev.luisghtz.myaichat.chat.repositories.MessageRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.log4j.Log4j2;
 
 @Service
 @RequiredArgsConstructor
+@Log4j2
 public class AIService {
   private final OpenAIService openAIService;
   private final ChatRepository chatRepository;
@@ -68,6 +71,15 @@ public class AIService {
     if (isNewChat)
       generateAndSetTitleForNewChat(chat, newMessageRequestDto, assistantMessageResponseDto);
     return assistantMessageResponseDto;
+  }
+
+  @Transactional
+  public void deleteChat(UUID id) {
+    var chat = findChatById(id);
+    log.info("Deleting chat with Title: '{}'' and ID: '{}'", chat.getTitle(), id);
+    log.info("Deleting messages for chat with ID: '{}'", id);
+    messageRepository.deleteAllByChat(chat);
+    chatRepository.delete(chat);
   }
 
   private Chat getChat(NewMessageRequestDto newMessageRequestDto) {

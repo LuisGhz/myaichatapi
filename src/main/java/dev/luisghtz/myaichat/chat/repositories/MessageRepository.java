@@ -11,4 +11,6 @@ import dev.luisghtz.myaichat.chat.entities.Chat;
 
 public interface MessageRepository extends JpaRepository<AppMessage, UUID> {
   List<AppMessage> findAllByChat(Chat chat);
+
+  void deleteAllByChat(Chat chat);
 }

@@ -15,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 import java.util.UUID;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -43,6 +44,12 @@ public class ChatController {
       @RequestBody NewMessageRequestDto newMessageRequestDto) {
     var response = aiService.sendNewMessage(newMessageRequestDto);
     return ResponseEntity.ok(response);
+  }
+
+  @DeleteMapping("{id}/delete")
+  public ResponseEntity<Void> deleteChat(@PathVariable UUID id) {
+    aiService.deleteChat(id);
+    return ResponseEntity.noContent().build();
   }
 
   @ExceptionHandler(ResponseStatusException.class)
