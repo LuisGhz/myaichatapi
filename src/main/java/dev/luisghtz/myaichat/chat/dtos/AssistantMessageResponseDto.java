@@ -13,6 +13,7 @@ import lombok.NoArgsConstructor;
 @Builder
 public class AssistantMessageResponseDto {
   private UUID chatId;
+  private String chatTitle;
   private String content;
   private Integer promptTokens;
   private Integer completionTokens;

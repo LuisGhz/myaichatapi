@@ -65,6 +65,8 @@ public class AIService {
     var assistantMessage = createAssistantMessage(chatResponse, chat);
     messageRepository.saveAll(List.of(newMessage, assistantMessage));
     var assistantMessageResponseDto = createAssistantMessageDto(chatResponse, chat.getId(), isNewChat);
+    if (isNewChat)
+      generateAndSetTitleForNewChat(chat, newMessageRequestDto, assistantMessageResponseDto);
     return assistantMessageResponseDto;
   }
 
@@ -128,5 +130,14 @@ public class AIService {
     if (isNewChat)
       message.setChatId(chatId);
     return message;
+  }
+
+  private void generateAndSetTitleForNewChat(Chat chat, NewMessageRequestDto newMessageRequestDto,
+      AssistantMessageResponseDto res) {
+    String generatedTitle = openAIService.generateTitle(chat, newMessageRequestDto.getPrompt(),
+        res.getContent());
+    chat.setTitle(generatedTitle);
+    chatRepository.save(chat);
+    res.setChatTitle(generatedTitle);
   }
 }
