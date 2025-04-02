@@ -16,6 +16,8 @@ USER appuser
 COPY --from=build /app/target/*.jar app.jar
 
 # Environment variable configuration
+ARG OPENAI_API_KEY
+ARG DB_URL
 ENV OPENAI_API_KEY=${OPENAI_API_KEY}
 ENV DB_URL=${DB_URL}
 
@@ -30,4 +32,4 @@ ENTRYPOINT ["java", "-jar", "/app/app.jar"]
 
 # Docker network information in comments:
 # This container should be started with:
-# docker run --network dbs -e OPENAI_API_KEY=your_key [other-options] --port 3501:8080 image-name
+# docker run --network dbs -e OPENAI_API_KEY=your_key -e DB_URL=jdbc_url [other-options] --port 3001:8080 image-name
