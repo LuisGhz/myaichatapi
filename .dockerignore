@@ -1,0 +1,43 @@
+# Environment variables
+.env
+.env.*
+
+# Version control
+.git
+.gitignore
+.github/
+
+# Build files
+target/
+build/
+out/
+bin/
+*.jar
+*.war
+*.class
+
+# Logs
+logs/
+*.log
+
+# IDE files
+.idea/
+.vscode/
+*.iml
+.settings/
+.project
+.classpath
+
+# Documentation
+README.md
+CHANGELOG.md
+docs/
+
+# Test files
+**/test/
+**/tests/
+
+# Temporary files
+tmp/
+temp/
+.DS_Store
