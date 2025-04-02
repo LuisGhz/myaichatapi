@@ -5,7 +5,7 @@ spring:
     openai:
       api-key: ${OPENAI_API_KEY}
   datasource:
-    url: jdbc:postgresql://localhost:5432/myaichat
+    url: ${DB_URL}
     username: postgres
     password: postgres
   jpa:

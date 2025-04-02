@@ -17,6 +17,7 @@ COPY --from=build /app/target/*.jar app.jar
 
 # Environment variable configuration
 ENV OPENAI_API_KEY=${OPENAI_API_KEY}
+ENV DB_URL=${DB_URL}
 
 # Expose the default Spring Boot port
 EXPOSE 8080
