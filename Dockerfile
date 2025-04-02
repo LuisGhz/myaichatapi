@@ -16,7 +16,6 @@ USER appuser
 COPY --from=build /app/target/*.jar app.jar
 
 # Environment variable configuration
-ENV SPRING_PROFILES_ACTIVE=prod
 ENV OPENAI_API_KEY=${OPENAI_API_KEY}
 
 # Expose the default Spring Boot port
