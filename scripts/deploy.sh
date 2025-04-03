@@ -8,6 +8,14 @@ if [ -z "$DOCKERHUB_TOKEN" ]; then
     echo "Error: DOCKERHUB_TOKEN environment variable is not set"
     exit 1
 fi
+if [ -z "$OPENAI_API_KEY" ]; then
+    echo "Error: OPENAI_API_KEY environment variable is not set"
+    exit 1
+fi
+if [ -z "$DB_URL" ]; then
+    echo "Error: DB_URL environment variable is not set"
+    exit 1
+fi
 IMAGE_NAME="luisghtz/personalwebapss:myaichatapi-springboot"
 CONTAINER_NAME="myaichatapi-springboot"
 LOCALPORT=3001
@@ -35,4 +43,4 @@ docker pull ${IMAGE_NAME}
 
 # Run a new container with the specified flags
 echo "Running new container ${CONTAINER_NAME}..."
-docker run -d -p ${LOCALPORT}:${DOCKERPORT} --network dbs --name ${CONTAINER_NAME} ${IMAGE_NAME}
+docker run -d -p ${LOCALPORT}:${DOCKERPORT} --network dbs -e OPENAI_API_KEY=${OPENAI_API_KEY} -e DB_URL=${DB_URL} --name ${CONTAINER_NAME} ${IMAGE_NAME}

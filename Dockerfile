@@ -16,12 +16,6 @@ USER appuser
 # Copy only the JAR file from build stage
 COPY --from=build /app/target/*.jar app.jar
 
-# Environment variable configuration
-ARG OPENAI_API_KEY
-ARG DB_URL
-ENV OPENAI_API_KEY=${OPENAI_API_KEY}
-ENV DB_URL=${DB_URL}
-
 # Expose the default Spring Boot port
 EXPOSE 8080
 

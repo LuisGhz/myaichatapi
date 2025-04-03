@@ -24,9 +24,6 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v6
         with:
-          build-args: |
-            OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
-            DB_URL=${{ secrets.DB_URL }}
           push: true
           tags: ${{ vars.DOCKERHUB_USERNAME }}/personalwebapss:myaichatapi-springboot
 
@@ -35,10 +32,12 @@ jobs:
         env:
           DOCKERHUB_USER: ${{ vars.DOCKERHUB_USERNAME }}
           DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          DB_URL: ${{ secrets.DB_URL }}
         with:
           host: ${{ secrets.SERVER_IP }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           passphrase: ${{ secrets.SSH_PASSPHRASE }}
-          envs: DOCKERHUB_USER,DOCKERHUB_TOKEN
+          envs: DOCKERHUB_USER,DOCKERHUB_TOKEN,OPENAI_API_KEY,DB_URL
           script_path: scripts/deploy.sh
