@@ -44,7 +44,7 @@ public class AIService {
 
   public HistoryChatDto getChatHistory(UUID id) {
     var chat = findChatById(id);
-    var messages = messageRepository.findAllByChat(chat);
+    var messages = chat.getMessages();
     var historyMessages = messages.stream().map(message -> {
       return AppMessageHistory.builder()
           .content(message.getContent())
@@ -61,7 +61,7 @@ public class AIService {
   public AssistantMessageResponseDto sendNewMessage(NewMessageRequestDto newMessageRequestDto) {
     Chat chat = getChat(newMessageRequestDto);
     var isNewChat = chat.getMessages() == null || chat.getMessages().isEmpty();
-    var messages = messageRepository.findAllByChat(chat);
+    var messages = isNewChat ? List.<AppMessage>of() : chat.getMessages();
     var newMessage = createNewUserMessage(newMessageRequestDto, chat);
     messages.add(newMessage);
     var chatResponse = openAIService.sendNewMessage(messages, chat.getModel());
