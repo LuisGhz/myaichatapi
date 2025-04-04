@@ -58,6 +58,7 @@ public class AIService {
     return appMessageHistory;
   }
 
+  @Transactional
   public AssistantMessageResponseDto sendNewMessage(NewMessageRequestDto newMessageRequestDto) {
     Chat chat = getChat(newMessageRequestDto);
     var isNewChat = chat.getMessages() == null || chat.getMessages().isEmpty();
