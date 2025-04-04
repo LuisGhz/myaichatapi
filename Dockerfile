@@ -6,7 +6,7 @@ RUN chmod +x ./mvnw
 RUN ./mvnw clean package -DskipTests
 
 # Run stage
-FROM eclipse-temurin:17-jre-alpine
+FROM azul/zulu-openjdk-alpine:17-jre
 WORKDIR /app
 
 # Create non-root user for security
@@ -23,7 +23,7 @@ EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=3s CMD wget -q --spider http://localhost:8080/actuator/health || exit 1
 
 # Run the application
-ENTRYPOINT ["java", "-jar", "/app/app.jar"]
+ENTRYPOINT ["java", "-Xms64m", "-Xmx96m", "-XX:MaxRAM=128M", "-XX:+UseSerialGC", "-XX:+UseStringDeduplication", "-XX:+ExitOnOutOfMemoryError", "-jar", "/app/app.jar"]
 
 # Docker network information in comments:
 # This container should be started with:
