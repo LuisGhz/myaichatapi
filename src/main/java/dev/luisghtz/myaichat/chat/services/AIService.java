@@ -1,5 +1,6 @@
 package dev.luisghtz.myaichat.chat.services;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
@@ -62,7 +63,7 @@ public class AIService {
   public AssistantMessageResponseDto sendNewMessage(NewMessageRequestDto newMessageRequestDto) {
     Chat chat = getChat(newMessageRequestDto);
     var isNewChat = chat.getMessages() == null || chat.getMessages().isEmpty();
-    var messages = isNewChat ? List.<AppMessage>of() : chat.getMessages();
+    List<AppMessage> messages = getMessagesFromChat(chat);
     var newMessage = createNewUserMessage(newMessageRequestDto, chat);
     messages.add(newMessage);
     var chatResponse = openAIService.sendNewMessage(messages, chat.getModel());
@@ -106,6 +107,14 @@ public class AIService {
         .model(newMessageRequestDto.getModel())
         .build();
     return chatRepository.save(newChat);
+  }
+
+  private List<AppMessage> getMessagesFromChat(Chat chat) {
+    var messages = chat.getMessages();
+    if (messages == null || messages.isEmpty()) {
+      return new ArrayList<>();
+    }
+    return messages;
   }
 
   private AppMessage createNewUserMessage(NewMessageRequestDto newMessageRequestDto, Chat chat) {
