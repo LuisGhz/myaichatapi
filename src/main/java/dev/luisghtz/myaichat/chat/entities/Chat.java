@@ -7,6 +7,7 @@ import java.util.UUID;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -29,6 +30,6 @@ public class Chat {
   private Date createdAt;
   private String model;
   @JsonIgnore
-  @OneToMany(mappedBy = "chat")
+  @OneToMany(mappedBy = "chat", fetch = FetchType.LAZY)
   private List<AppMessage> messages;
 }
