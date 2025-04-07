@@ -46,12 +46,14 @@ public class AIService {
   public HistoryChatDto getChatHistory(UUID id) {
     var chat = findChatById(id);
     var messages = chat.getMessages();
-    var historyMessages = messages.stream().map(message -> {
-      return AppMessageHistory.builder()
-          .content(message.getContent())
-          .role(message.getRole())
-          .build();
-    }).collect(Collectors.toList());
+    var historyMessages = messages.stream()
+        .sorted((m1, m2) -> m1.getCreatedAt().compareTo(m2.getCreatedAt()))
+        .map(message -> {
+          return AppMessageHistory.builder()
+              .content(message.getContent())
+              .role(message.getRole())
+              .build();
+        }).collect(Collectors.toList());
     var appMessageHistory = HistoryChatDto.builder()
         .historyMessages(historyMessages)
         .model(chat.getModel())
