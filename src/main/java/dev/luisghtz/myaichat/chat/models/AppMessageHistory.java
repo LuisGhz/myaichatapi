@@ -12,4 +12,6 @@ import lombok.NoArgsConstructor;
 public class AppMessageHistory {
   private String role;
   private String content;
+  private Integer promptTokens;
+  private Integer completionTokens;
 }

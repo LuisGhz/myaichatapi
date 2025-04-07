@@ -52,6 +52,8 @@ public class AIService {
           return AppMessageHistory.builder()
               .content(message.getContent())
               .role(message.getRole())
+              .promptTokens(message.getPromptTokens())
+              .completionTokens(message.getCompletionTokens())
               .build();
         }).collect(Collectors.toList());
     var appMessageHistory = HistoryChatDto.builder()
@@ -70,6 +72,8 @@ public class AIService {
     messages.add(newMessage);
     var chatResponse = openAIService.sendNewMessage(messages, chat.getModel());
     var assistantMessage = createAssistantMessage(chatResponse, chat);
+    newMessage.setPromptTokens(assistantMessage.getPromptTokens());
+    assistantMessage.setPromptTokens(null);
     messageRepository.saveAll(List.of(newMessage, assistantMessage));
     var assistantMessageResponseDto = createAssistantMessageDto(chatResponse, chat.getId(), isNewChat);
     if (isNewChat)
