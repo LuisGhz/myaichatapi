@@ -64,11 +64,12 @@ public class AIService {
   }
 
   @Transactional
-  public AssistantMessageResponseDto sendNewMessage(NewMessageRequestDto newMessageRequestDto) {
+  public AssistantMessageResponseDto sendNewMessage(NewMessageRequestDto newMessageRequestDto, String fileUrl) {
     Chat chat = getChat(newMessageRequestDto);
     var isNewChat = chat.getMessages() == null || chat.getMessages().isEmpty();
     List<AppMessage> messages = getMessagesFromChat(chat);
     var newMessage = createNewUserMessage(newMessageRequestDto, chat);
+    newMessage = addImageUrlIfApply(newMessage, fileUrl);
     messages.add(newMessage);
     var chatResponse = openAIService.sendNewMessage(messages, chat.getModel());
     var assistantMessage = createAssistantMessage(chatResponse, chat);
@@ -131,6 +132,13 @@ public class AIService {
         .chat(chat)
         .build();
     return newMessage;
+  }
+
+  private AppMessage addImageUrlIfApply(AppMessage message, String imageFileUrl) {
+    if (imageFileUrl != null && !imageFileUrl.isEmpty()) {
+      message.setImageUrl(imageFileUrl);
+    }
+    return message;
   }
 
   private AppMessage createAssistantMessage(ChatResponse chatResponse, Chat chat) {

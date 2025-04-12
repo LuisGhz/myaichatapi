@@ -1,6 +1,8 @@
 package dev.luisghtz.myaichat.chat.services;
 
 import java.util.List;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.stream.Collectors;
 
@@ -11,9 +13,11 @@ import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.prompt.Prompt;
+import org.springframework.ai.model.Media;
 import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.ai.openai.api.OpenAiApi;
 import org.springframework.stereotype.Service;
+import org.springframework.util.MimeTypeUtils;
 
 import dev.luisghtz.myaichat.chat.entities.AppMessage;
 import dev.luisghtz.myaichat.chat.entities.Chat;
@@ -27,16 +31,15 @@ public class OpenAIService {
   public ChatResponse sendNewMessage(List<AppMessage> messages, String model) {
     List<Message> modelMessages = new ArrayList<>();
     modelMessages.add(new SystemMessage("You are an intelligent assistant."));
-    
+
     // Convert AppMessages to the appropriate Message type
     List<Message> convertedMessages = messages.stream().map(message -> {
       if (message.getRole().equals("Assistant"))
         return new AssistantMessage(message.getContent());
-      
-      return new UserMessage(message.getContent());
+      return generateUserMessage(message);
     }).collect(Collectors.toList());
-    
-    modelMessages.addAll(convertedMessages);    
+
+    modelMessages.addAll(convertedMessages);
     // Always create the chat response
     OpenAiChatOptions options = OpenAiChatOptions.builder()
         .model(model)
@@ -44,7 +47,7 @@ public class OpenAIService {
         .build();
 
     ChatResponse chatResponse = chatModel.call(new Prompt(modelMessages, options));
-    
+
     return chatResponse;
   }
 
@@ -64,5 +67,19 @@ public class OpenAIService {
     ChatResponse titleResponse = chatModel.call(new Prompt(titleMessages, titleOptions));
 
     return titleResponse.getResult().getOutput().getText();
+  }
+
+  private Message generateUserMessage(AppMessage message) {
+    if (message.getImageUrl() != null &&
+        message.getId() == null) {
+      try {
+        return new UserMessage(message.getContent(),
+            new Media(MimeTypeUtils.IMAGE_PNG, new URL(message.getImageUrl())));
+      } catch (MalformedURLException e) {
+        e.printStackTrace();
+      }
+    }
+
+    return new UserMessage(message.getContent());
   }
 }

@@ -36,6 +36,8 @@ public class AppMessage {
   private Integer completionTokens;
   @Column(nullable = true)
   private Integer totalTokens;
+  @Column(nullable = true)
+  private String imageUrl;
   @JsonIgnore
   @ManyToOne()
   private Chat chat;
