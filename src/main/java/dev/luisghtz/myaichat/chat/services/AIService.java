@@ -52,6 +52,7 @@ public class AIService {
           return AppMessageHistory.builder()
               .content(message.getContent())
               .role(message.getRole())
+              .image(message.getImageUrl())
               .promptTokens(message.getPromptTokens())
               .completionTokens(message.getCompletionTokens())
               .build();
