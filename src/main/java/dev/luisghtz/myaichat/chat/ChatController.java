@@ -10,23 +10,28 @@ import dev.luisghtz.myaichat.chat.dtos.ChatsListResponseDto;
 import dev.luisghtz.myaichat.chat.dtos.HistoryChatDto;
 import dev.luisghtz.myaichat.chat.dtos.NewMessageRequestDto;
 import dev.luisghtz.myaichat.chat.services.AIService;
+import dev.luisghtz.myaichat.image.ImageService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.log4j.Log4j2;
 
 import java.util.UUID;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 
 @RestController
 @RequestMapping("api/chat")
 @RequiredArgsConstructor
+@Log4j2
 public class ChatController {
   private final AIService aiService;
+  private final ImageService imageService;
 
   @GetMapping("all")
   public ResponseEntity<ChatsListResponseDto> getChatsList() {
@@ -41,8 +46,12 @@ public class ChatController {
 
   @PostMapping("send-message")
   public ResponseEntity<AssistantMessageResponseDto> newMessage(
-      @RequestBody NewMessageRequestDto newMessageRequestDto) {
-    var response = aiService.sendNewMessage(newMessageRequestDto);
+      @Validated @ModelAttribute NewMessageRequestDto newMessageRequestDto) {
+    String imageFileName = null;
+    if (newMessageRequestDto.getImage() != null) {
+      imageFileName = imageService.uploadImage(newMessageRequestDto.getImage());
+    }
+    var response = aiService.sendNewMessage(newMessageRequestDto, imageFileName);
     return ResponseEntity.ok(response);
   }
 
