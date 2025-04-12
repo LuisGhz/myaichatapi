@@ -23,10 +23,13 @@ spring:
       ddl-auto: validate
   servlet:
     multipart:
-      max-file-size: 1MB # Maximum size for a single file
+      max-file-size: 2MB # Maximum size for a single file
       max-request-size: 2MB # Maximum size for the entire request
+cdn: ${CDN_DOMAIN}
 aws:
   s3:
     access-key: ${S3_ACCESS_KEY}
     secret-key: ${S3_SECRET_KEY}
     bucket-name: ${S3_BUCKET_NAME}
+files:
+  max-mb-size: 1 # This is MB
