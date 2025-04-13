@@ -57,7 +57,8 @@ public class OpenAIService {
     var MAX_COMPLETION_TOKENS = 50;
     List<Message> titleMessages = new ArrayList<>();
     titleMessages
-        .add(new SystemMessage("Generate a concise title of no more than 10 words that summarizes this conversation."));
+        .add(new SystemMessage(
+            "Generate a concise title of no more than 10 words that summarizes this conversation, avoid to use markdown styles, title should be only text."));
     titleMessages.add(new UserMessage(userMessage));
     titleMessages.add(new AssistantMessage(assistantMessage));
 
