@@ -17,10 +17,12 @@ import org.springframework.ai.model.Media;
 import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.ai.openai.api.OpenAiApi;
 import org.springframework.stereotype.Service;
+import org.springframework.util.MimeType;
 import org.springframework.util.MimeTypeUtils;
 
 import dev.luisghtz.myaichat.chat.entities.AppMessage;
 import dev.luisghtz.myaichat.chat.entities.Chat;
+import dev.luisghtz.myaichat.exceptions.ImageNotValidException;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -73,13 +75,26 @@ public class OpenAIService {
     if (message.getImageUrl() != null &&
         message.getId() == null) {
       try {
+        MimeType mimeType = getMimeType(message.getImageUrl());
         return new UserMessage(message.getContent(),
-            new Media(MimeTypeUtils.IMAGE_PNG, new URL(message.getImageUrl())));
+            new Media(mimeType, new URL(message.getImageUrl())));
       } catch (MalformedURLException e) {
         e.printStackTrace();
       }
     }
 
     return new UserMessage(message.getContent());
+  }
+
+  private MimeType getMimeType(String imageUrl) {
+    if (imageUrl.endsWith(".gif")) {
+      return MimeTypeUtils.IMAGE_GIF;
+    } else if (imageUrl.endsWith(".png")) {
+      return MimeTypeUtils.IMAGE_PNG;
+    } else if (imageUrl.endsWith(".jpg") || imageUrl.endsWith(".jpeg")) {
+      return MimeTypeUtils.IMAGE_JPEG;
+    } else {
+      throw new ImageNotValidException("Image not valid. Supported formats: gif, png, jpg, jpeg.");
+    }
   }
 }
