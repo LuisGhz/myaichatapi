@@ -1,12 +1,14 @@
 package dev.luisghtz.myaichat.chat.services;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.springframework.ai.chat.model.ChatResponse;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.stereotype.Service;
@@ -43,11 +45,10 @@ public class AIService {
     return chatsListResponseDto;
   }
 
-  public HistoryChatDto getChatHistory(UUID id) {
+  public HistoryChatDto getChatHistory(UUID id, Pageable pageable) {
     var chat = findChatById(id);
-    var messages = chat.getMessages();
+    var messages = messageRepository.findAllByChatOrderByCreatedAtDesc(chat, pageable);
     var historyMessages = messages.stream()
-        .sorted((m1, m2) -> m1.getCreatedAt().compareTo(m2.getCreatedAt()))
         .map(message -> {
           return AppMessageHistory.builder()
               .content(message.getContent())
@@ -57,6 +58,7 @@ public class AIService {
               .completionTokens(message.getCompletionTokens())
               .build();
         }).collect(Collectors.toList());
+    Collections.reverse(historyMessages);
     var appMessageHistory = HistoryChatDto.builder()
         .historyMessages(historyMessages)
         .model(chat.getModel())

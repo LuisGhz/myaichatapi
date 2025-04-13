@@ -16,6 +16,8 @@ import lombok.extern.log4j.Log4j2;
 
 import java.util.UUID;
 
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -40,8 +42,9 @@ public class ChatController {
   }
 
   @GetMapping("{id}/messages")
-  public ResponseEntity<HistoryChatDto> getChatHistory(@PathVariable UUID id) {
-    return ResponseEntity.ok(aiService.getChatHistory(id));
+  public ResponseEntity<HistoryChatDto> getChatHistory(@PathVariable UUID id,
+      @PageableDefault(size = 2) Pageable pageable) {
+    return ResponseEntity.ok(aiService.getChatHistory(id, pageable));
   }
 
   @PostMapping("send-message")
