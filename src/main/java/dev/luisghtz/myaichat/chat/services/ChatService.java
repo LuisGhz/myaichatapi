@@ -4,16 +4,19 @@ import java.util.Date;
 import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import dev.luisghtz.myaichat.chat.dtos.NewMessageRequestDto;
 import dev.luisghtz.myaichat.chat.entities.Chat;
 import dev.luisghtz.myaichat.chat.repositories.ChatRepository;
-
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.log4j.Log4j2;
 
+@Service
 @RequiredArgsConstructor
+@Log4j2
 public class ChatService {
   private final ChatRepository chatRepository;
 
@@ -41,5 +44,12 @@ public class ChatService {
         .model(newMessageRequestDto.getModel())
         .build();
     return chatRepository.save(newChat);
+  }
+
+  @Transactional
+  public void deleteChat(UUID id) {
+    var chat = findChatById(id);
+    log.info("Deleting chat with Title: '{}'' and ID: '{}'", chat.getTitle(), id);
+    chatRepository.delete(chat);
   }
 }

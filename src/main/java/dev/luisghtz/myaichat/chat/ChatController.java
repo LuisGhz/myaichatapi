@@ -10,6 +10,8 @@ import dev.luisghtz.myaichat.chat.dtos.ChatsListResponseDto;
 import dev.luisghtz.myaichat.chat.dtos.HistoryChatDto;
 import dev.luisghtz.myaichat.chat.dtos.NewMessageRequestDto;
 import dev.luisghtz.myaichat.chat.services.AIService;
+import dev.luisghtz.myaichat.chat.services.ChatService;
+import dev.luisghtz.myaichat.chat.services.MessageService;
 import dev.luisghtz.myaichat.image.ImageService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -34,6 +36,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 public class ChatController {
   private final AIService aiService;
   private final ImageService imageService;
+  private final ChatService chatService;
+  private final MessageService messageService;
 
   @GetMapping("all")
   public ResponseEntity<ChatsListResponseDto> getChatsList() {
@@ -60,7 +64,8 @@ public class ChatController {
 
   @DeleteMapping("{id}/delete")
   public ResponseEntity<Void> deleteChat(@PathVariable UUID id) {
-    aiService.deleteChat(id);
+    messageService.deleteAllByChat(id);
+    chatService.deleteChat(id);
     return ResponseEntity.noContent().build();
   }
 

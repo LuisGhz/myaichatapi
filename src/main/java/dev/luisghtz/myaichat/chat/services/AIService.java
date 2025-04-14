@@ -69,15 +69,6 @@ public class AIService {
     return assistantMessageResponseDto;
   }
 
-  @Transactional
-  public void deleteChat(UUID id) {
-    var chat = chatService.findChatById(id);
-    log.info("Deleting chat with Title: '{}'' and ID: '{}'", chat.getTitle(), id);
-    log.info("Deleting messages for chat with ID: '{}'", id);
-    messageService.deleteAllByChat(chat);
-    chatRepository.delete(chat);
-  }
-
   private AppMessage createNewUserMessage(NewMessageRequestDto newMessageRequestDto, Chat chat) {
     var newMessage = AppMessage.builder()
         .role("User")
