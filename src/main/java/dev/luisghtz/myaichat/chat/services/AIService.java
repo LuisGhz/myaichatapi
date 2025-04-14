@@ -54,17 +54,12 @@ public class AIService {
   public AssistantMessageResponseDto sendNewMessage(NewMessageRequestDto newMessageRequestDto, String fileUrl) {
     Chat chat = chatService.getChat(newMessageRequestDto);
     boolean isNewChat = isChatNew(chat);
-    
     AppMessage userMessage = processUserMessage(newMessageRequestDto, chat, fileUrl);
     AppMessage assistantMessage = getAssistantResponse(chat, userMessage);
-    
-    saveMessages(userMessage, assistantMessage);
-    
     AssistantMessageResponseDto responseDto = createAssistantMessageDto(assistantMessage, chat.getId(), isNewChat);
-    
+    saveMessages(userMessage, assistantMessage);
     if (isNewChat)
-        generateAndSetTitleForNewChat(chat, newMessageRequestDto, responseDto);
-    
+      generateAndSetTitleForNewChat(chat, newMessageRequestDto, responseDto);
     return responseDto;
   }
 
