@@ -1,5 +1,6 @@
 package dev.luisghtz.myaichat.chat.services;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -41,5 +42,13 @@ public class MessageService {
 
   public void deleteAllByChat(Chat chat) {
     messageRepository.deleteAllByChat(chat);
+  }
+
+  public List<AppMessage> getMessagesFromChat(Chat chat) {
+    var messages = chat.getMessages();
+    if (messages == null || messages.isEmpty()) {
+      return new ArrayList<>();
+    }
+    return messages;
   }
 }

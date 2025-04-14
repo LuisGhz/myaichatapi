@@ -1,6 +1,5 @@
 package dev.luisghtz.myaichat.chat.services;
 
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
@@ -55,7 +54,7 @@ public class AIService {
   public AssistantMessageResponseDto sendNewMessage(NewMessageRequestDto newMessageRequestDto, String fileUrl) {
     Chat chat = chatService.getChat(newMessageRequestDto);
     var isNewChat = chat.getMessages() == null || chat.getMessages().isEmpty();
-    List<AppMessage> messages = getMessagesFromChat(chat);
+    List<AppMessage> messages = messageService.getMessagesFromChat(chat);
     var newMessage = createNewUserMessage(newMessageRequestDto, chat);
     newMessage = addImageUrlIfApply(newMessage, fileUrl);
     messages.add(newMessage);
@@ -77,14 +76,6 @@ public class AIService {
     log.info("Deleting messages for chat with ID: '{}'", id);
     messageService.deleteAllByChat(chat);
     chatRepository.delete(chat);
-  }
-
-  private List<AppMessage> getMessagesFromChat(Chat chat) {
-    var messages = chat.getMessages();
-    if (messages == null || messages.isEmpty()) {
-      return new ArrayList<>();
-    }
-    return messages;
   }
 
   private AppMessage createNewUserMessage(NewMessageRequestDto newMessageRequestDto, Chat chat) {
