@@ -1,7 +1,6 @@
 package dev.luisghtz.myaichat.chat.services;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
@@ -9,8 +8,6 @@ import java.util.stream.Collectors;
 
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpStatus;
-import org.springframework.web.server.ResponseStatusException;
 import org.springframework.stereotype.Service;
 
 import dev.luisghtz.myaichat.chat.dtos.AssistantMessageResponseDto;
@@ -31,6 +28,7 @@ import lombok.extern.log4j.Log4j2;
 public class AIService {
   private final OpenAIService openAIService;
   private final ChatRepository chatRepository;
+  private final ChatService chatService;
   private final MessageService messageService;
 
   public ChatsListResponseDto getAllChats() {
@@ -44,7 +42,7 @@ public class AIService {
   }
 
   public HistoryChatDto getChatHistory(UUID id, Pageable pageable) {
-    var chat = findChatById(id);
+    var chat = chatService.findChatById(id);
     var historyMessages = messageService.getAppMessagesHistory(chat, pageable);
     var appMessageHistory = HistoryChatDto.builder()
         .historyMessages(historyMessages)
@@ -55,7 +53,7 @@ public class AIService {
 
   @Transactional
   public AssistantMessageResponseDto sendNewMessage(NewMessageRequestDto newMessageRequestDto, String fileUrl) {
-    Chat chat = getChat(newMessageRequestDto);
+    Chat chat = chatService.getChat(newMessageRequestDto);
     var isNewChat = chat.getMessages() == null || chat.getMessages().isEmpty();
     List<AppMessage> messages = getMessagesFromChat(chat);
     var newMessage = createNewUserMessage(newMessageRequestDto, chat);
@@ -74,36 +72,11 @@ public class AIService {
 
   @Transactional
   public void deleteChat(UUID id) {
-    var chat = findChatById(id);
+    var chat = chatService.findChatById(id);
     log.info("Deleting chat with Title: '{}'' and ID: '{}'", chat.getTitle(), id);
     log.info("Deleting messages for chat with ID: '{}'", id);
     messageService.deleteAllByChat(chat);
     chatRepository.delete(chat);
-  }
-
-  private Chat getChat(NewMessageRequestDto newMessageRequestDto) {
-    Chat chat = null;
-    if (newMessageRequestDto.getChatId() != null)
-      chat = findChatById(newMessageRequestDto.getChatId());
-    if (chat == null) {
-      chat = getNewChat(newMessageRequestDto);
-    }
-    return chat;
-  }
-
-  private Chat findChatById(UUID id) {
-    return chatRepository.findById(id)
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-            "Chat not found with ID: " + id));
-  }
-
-  private Chat getNewChat(NewMessageRequestDto newMessageRequestDto) {
-    var newChat = Chat.builder()
-        .title("Title")
-        .createdAt(new Date())
-        .model(newMessageRequestDto.getModel())
-        .build();
-    return chatRepository.save(newChat);
   }
 
   private List<AppMessage> getMessagesFromChat(Chat chat) {
