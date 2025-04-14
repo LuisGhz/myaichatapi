@@ -18,11 +18,9 @@ import dev.luisghtz.myaichat.chat.dtos.ChatsListResponseDto;
 import dev.luisghtz.myaichat.chat.dtos.HistoryChatDto;
 import dev.luisghtz.myaichat.chat.dtos.NewMessageRequestDto;
 import dev.luisghtz.myaichat.chat.entities.Chat;
-import dev.luisghtz.myaichat.chat.models.AppMessageHistory;
 import dev.luisghtz.myaichat.chat.models.ChatSummary;
 import dev.luisghtz.myaichat.chat.entities.AppMessage;
 import dev.luisghtz.myaichat.chat.repositories.ChatRepository;
-import dev.luisghtz.myaichat.chat.repositories.MessageRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -33,7 +31,7 @@ import lombok.extern.log4j.Log4j2;
 public class AIService {
   private final OpenAIService openAIService;
   private final ChatRepository chatRepository;
-  private final MessageRepository messageRepository;
+  private final MessageService messageService;
 
   public ChatsListResponseDto getAllChats() {
     var chats = chatRepository.findAll();
@@ -47,18 +45,7 @@ public class AIService {
 
   public HistoryChatDto getChatHistory(UUID id, Pageable pageable) {
     var chat = findChatById(id);
-    var messages = messageRepository.findAllByChatOrderByCreatedAtDesc(chat, pageable);
-    var historyMessages = messages.stream()
-        .map(message -> {
-          return AppMessageHistory.builder()
-              .content(message.getContent())
-              .role(message.getRole())
-              .image(message.getImageUrl())
-              .promptTokens(message.getPromptTokens())
-              .completionTokens(message.getCompletionTokens())
-              .build();
-        }).collect(Collectors.toList());
-    Collections.reverse(historyMessages);
+    var historyMessages = messageService.getAppMessagesHistory(chat, pageable);
     var appMessageHistory = HistoryChatDto.builder()
         .historyMessages(historyMessages)
         .model(chat.getModel())
@@ -78,7 +65,7 @@ public class AIService {
     var assistantMessage = createAssistantMessage(chatResponse, chat);
     newMessage.setPromptTokens(assistantMessage.getPromptTokens());
     assistantMessage.setPromptTokens(null);
-    messageRepository.saveAll(List.of(newMessage, assistantMessage));
+    messageService.saveAll(List.of(newMessage, assistantMessage));
     var assistantMessageResponseDto = createAssistantMessageDto(chatResponse, chat.getId(), isNewChat);
     if (isNewChat)
       generateAndSetTitleForNewChat(chat, newMessageRequestDto, assistantMessageResponseDto);
@@ -90,7 +77,7 @@ public class AIService {
     var chat = findChatById(id);
     log.info("Deleting chat with Title: '{}'' and ID: '{}'", chat.getTitle(), id);
     log.info("Deleting messages for chat with ID: '{}'", id);
-    messageRepository.deleteAllByChat(chat);
+    messageService.deleteAllByChat(chat);
     chatRepository.delete(chat);
   }
 
