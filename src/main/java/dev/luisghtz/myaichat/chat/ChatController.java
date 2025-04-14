@@ -43,7 +43,7 @@ public class ChatController {
 
   @GetMapping("{id}/messages")
   public ResponseEntity<HistoryChatDto> getChatHistory(@PathVariable UUID id,
-      @PageableDefault(size = 2) Pageable pageable) {
+      @PageableDefault(size = 10) Pageable pageable) {
     return ResponseEntity.ok(aiService.getChatHistory(id, pageable));
   }
 
