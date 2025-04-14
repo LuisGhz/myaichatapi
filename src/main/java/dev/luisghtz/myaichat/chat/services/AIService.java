@@ -53,29 +53,33 @@ public class AIService {
   @Transactional
   public AssistantMessageResponseDto sendNewMessage(NewMessageRequestDto newMessageRequestDto, String fileUrl) {
     Chat chat = chatService.getChat(newMessageRequestDto);
-    var isNewChat = chat.getMessages() == null || chat.getMessages().isEmpty();
-    List<AppMessage> messages = messageService.getMessagesFromChat(chat);
-    var newMessage = createNewUserMessage(newMessageRequestDto, chat);
-    newMessage = addImageUrlIfApply(newMessage, fileUrl);
-    messages.add(newMessage);
-    var chatResponse = openAIService.sendNewMessage(messages, chat.getModel());
-    var assistantMessage = createAssistantMessage(chatResponse, chat);
-    newMessage.setPromptTokens(assistantMessage.getPromptTokens());
-    assistantMessage.setPromptTokens(null);
-    messageService.saveAll(List.of(newMessage, assistantMessage));
-    var assistantMessageResponseDto = createAssistantMessageDto(chatResponse, chat.getId(), isNewChat);
+    boolean isNewChat = isChatNew(chat);
+    
+    AppMessage userMessage = processUserMessage(newMessageRequestDto, chat, fileUrl);
+    AppMessage assistantMessage = getAssistantResponse(chat, userMessage);
+    
+    saveMessages(userMessage, assistantMessage);
+    
+    AssistantMessageResponseDto responseDto = createAssistantMessageDto(assistantMessage, chat.getId(), isNewChat);
+    
     if (isNewChat)
-      generateAndSetTitleForNewChat(chat, newMessageRequestDto, assistantMessageResponseDto);
-    return assistantMessageResponseDto;
+        generateAndSetTitleForNewChat(chat, newMessageRequestDto, responseDto);
+    
+    return responseDto;
   }
 
-  private AppMessage createNewUserMessage(NewMessageRequestDto newMessageRequestDto, Chat chat) {
+  private boolean isChatNew(Chat chat) {
+    return chat.getMessages() == null || chat.getMessages().isEmpty();
+  }
+
+  private AppMessage processUserMessage(NewMessageRequestDto newMessageRequestDto, Chat chat, String fileUrl) {
     var newMessage = AppMessage.builder()
         .role("User")
         .content(newMessageRequestDto.getPrompt())
         .createdAt(new Date())
         .chat(chat)
         .build();
+    newMessage = addImageUrlIfApply(newMessage, fileUrl);
     return newMessage;
   }
 
@@ -84,6 +88,19 @@ public class AIService {
       message.setImageUrl(imageFileUrl);
     }
     return message;
+  }
+
+  private AppMessage getAssistantResponse(Chat chat, AppMessage userMessage) {
+    List<AppMessage> messages = messageService.getMessagesFromChat(chat);
+    messages.add(userMessage);
+    var chatResponse = openAIService.sendNewMessage(messages, chat.getModel());
+    return createAssistantMessage(chatResponse, chat);
+  }
+
+  private void saveMessages(AppMessage userMessage, AppMessage assistantMessage) {
+    userMessage.setPromptTokens(assistantMessage.getPromptTokens());
+    assistantMessage.setPromptTokens(null);
+    messageService.saveAll(List.of(userMessage, assistantMessage));
   }
 
   private AppMessage createAssistantMessage(ChatResponse chatResponse, Chat chat) {
@@ -99,14 +116,13 @@ public class AIService {
         .build();
   }
 
-  private AssistantMessageResponseDto createAssistantMessageDto(ChatResponse chatResponse, UUID chatId,
+  private AssistantMessageResponseDto createAssistantMessageDto(AppMessage assistantMessage, UUID chatId,
       boolean isNewChat) {
-    var usage = chatResponse.getMetadata().getUsage();
     var message = AssistantMessageResponseDto.builder()
-        .content(chatResponse.getResult().getOutput().getText())
-        .promptTokens(usage.getPromptTokens())
-        .completionTokens(usage.getCompletionTokens())
-        .totalTokens(usage.getTotalTokens())
+        .content(assistantMessage.getContent())
+        .promptTokens(assistantMessage.getPromptTokens())
+        .completionTokens(assistantMessage.getCompletionTokens())
+        .totalTokens(assistantMessage.getTotalTokens())
         .build();
     if (isNewChat)
       message.setChatId(chatId);
