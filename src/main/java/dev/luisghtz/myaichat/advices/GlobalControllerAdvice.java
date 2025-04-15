@@ -36,4 +36,9 @@ public class GlobalControllerAdvice {
 
     return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
   }
+
+  @ExceptionHandler(RuntimeException.class)
+  public ResponseEntity<Object> handleRuntimeException() {
+    return ResponseEntity.internalServerError().body("Server error. Try later");
+  }
 }
