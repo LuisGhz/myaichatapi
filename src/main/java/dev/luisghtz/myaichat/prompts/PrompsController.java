@@ -27,7 +27,8 @@ public class PrompsController {
   }
 
   @PostMapping()
-  public ResponseEntity<CustomPrompt> create(@RequestBody CreateCustomPromptDtoReq createCustomPromptDtoReq) {
+  public ResponseEntity<CustomPrompt> create(@RequestBody CreateCustomPromptDtoReq createCustomPromptDtoReq)
+      throws Exception {
     return ResponseEntity.status(HttpStatus.CREATED).body(customPromptService.create(createCustomPromptDtoReq));
   }
 

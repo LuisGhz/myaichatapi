@@ -57,7 +57,7 @@ public class CustomPromptServiceTest {
   
   @Test
   @DisplayName("Should successfully create a custom prompt")
-  void testCreateCustomPrompt() {
+  void testCreateCustomPrompt() throws Exception {
     when(promptRepository.save(any(CustomPrompt.class))).thenReturn(savedCustomPrompt);
     // Act
     CustomPrompt result = customPromptService.create(createCustomPromptDtoReq);
@@ -75,7 +75,7 @@ public class CustomPromptServiceTest {
 
   @Test
   @DisplayName("Should map DTO fields correctly to entity")
-  void testDtoToEntityMapping() {
+  void testDtoToEntityMapping() throws Exception {
     // Arrange
     // Override the default mock behavior to capture the actual entity being saved
     when(promptRepository.save(any(CustomPrompt.class))).thenAnswer(invocation -> {
