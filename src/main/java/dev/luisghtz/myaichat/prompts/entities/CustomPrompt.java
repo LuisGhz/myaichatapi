@@ -1,5 +1,6 @@
 package dev.luisghtz.myaichat.prompts.entities;
 
+import java.util.List;
 import java.util.UUID;
 
 import jakarta.persistence.Column;
@@ -27,4 +28,5 @@ public class CustomPrompt {
   private String model;
   @Column(nullable = false)
   private String systemMessage;
+  private List<String> params;
 }
