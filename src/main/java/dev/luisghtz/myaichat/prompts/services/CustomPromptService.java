@@ -19,16 +19,12 @@ public class CustomPromptService {
     return promptsDto;
   }
 
-  public CustomPrompt create(CreateCustomPromptDtoReq createCustomPromptDtoReq) throws Exception {
-    try {
-      var newCustomPrompt = CustomPrompt.builder()
-          .name(createCustomPromptDtoReq.getName())
-          .model(createCustomPromptDtoReq.getModel())
-          .systemMessage(createCustomPromptDtoReq.getSystemMessage())
-          .build();
-      return promptRepository.save(newCustomPrompt);
-    } catch(Exception ex) {
-      throw new RuntimeException("Error on save prompt to database");
-    }
+  public CustomPrompt create(CreateCustomPromptDtoReq createCustomPromptDtoReq) {
+    var newCustomPrompt = CustomPrompt.builder()
+        .name(createCustomPromptDtoReq.getName())
+        .model(createCustomPromptDtoReq.getModel())
+        .systemMessage(createCustomPromptDtoReq.getSystemMessage())
+        .build();
+    return promptRepository.save(newCustomPrompt);
   }
 }
