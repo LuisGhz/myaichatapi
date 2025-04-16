@@ -6,6 +6,7 @@ import dev.luisghtz.myaichat.prompts.dtos.CreateCustomPromptDtoReq;
 import dev.luisghtz.myaichat.prompts.dtos.PromptsListDtoRes;
 import dev.luisghtz.myaichat.prompts.entities.CustomPrompt;
 import dev.luisghtz.myaichat.prompts.services.CustomPromptService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.http.HttpStatus;
@@ -27,7 +28,8 @@ public class PrompsController {
   }
 
   @PostMapping()
-  public ResponseEntity<CustomPrompt> create(@RequestBody CreateCustomPromptDtoReq createCustomPromptDtoReq) {
+  public ResponseEntity<CustomPrompt> create(
+      @Valid @RequestBody CreateCustomPromptDtoReq createCustomPromptDtoReq) {
     return ResponseEntity.status(HttpStatus.CREATED).body(customPromptService.create(createCustomPromptDtoReq));
   }
 
