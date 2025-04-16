@@ -2,6 +2,7 @@ package dev.luisghtz.myaichat.prompts.dtos;
 
 import java.util.List;
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -14,8 +15,9 @@ public class CreateCustomPromptDtoReq {
   @NotBlank
   private String name;
   @NotBlank
-  private String model;
-  @NotBlank
-  private String systemMessage;
-  private List<String> params;
+  private String content;
+  @Valid
+  private List<CreateCustomPromptParamsDto> params;
+  @Valid
+  private List<CreateCustomPromptMessagesDto> messages;
 }
