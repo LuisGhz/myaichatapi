@@ -1,13 +1,16 @@
 package dev.luisghtz.myaichat.prompts.entities;
 
+import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -22,11 +25,16 @@ public class CustomPrompt {
   @Id
   @GeneratedValue(strategy = GenerationType.UUID)
   private UUID id;
-  @Column(unique = true, nullable = false)
+  @Column(nullable = false)
   private String name;
   @Column(nullable = false)
-  private String model;
-  @Column(nullable = false)
-  private String systemMessage;
-  private List<String> params;
+  private String content;
+  @Column(updatable = false)
+  private Date createdAt;
+  @Column(insertable = false)
+  private Date updatedAt;
+  @OneToMany(mappedBy = "prompt", cascade = CascadeType.ALL)
+  private List<PromptMessage> messages;
+  @OneToMany(mappedBy = "prompt", cascade = CascadeType.ALL)
+  private List<PromptParam> params;
 }
