@@ -24,14 +24,8 @@ import dev.luisghtz.myaichat.prompts.dtos.PromptsListDtoRes;
 import dev.luisghtz.myaichat.prompts.entities.CustomPrompt;
 import dev.luisghtz.myaichat.prompts.services.CustomPromptService;
 
-
-
-
-
-
-
-@WebMvcTest(PrompsController.class)
-public class PrompsControllerTest {
+@WebMvcTest(PromptsController.class)
+public class PromptsControllerTest {
 
   @Autowired
   private MockMvc mockMvc;
@@ -53,15 +47,13 @@ public class PrompsControllerTest {
     // Setup request DTO
     createRequest = new CreateCustomPromptDtoReq();
     createRequest.setName("Test Prompt");
-    createRequest.setModel("gpt-4");
-    createRequest.setSystemMessage("You are a helpful assistant");
+    createRequest.setContent("You are a helpful assistant");
 
     // Setup entity response
     customPrompt = CustomPrompt.builder()
       .id(promptId)
       .name("Test Prompt")
-      .model("gpt-4")
-      .systemMessage("You are a helpful assistant")
+      .content("You are a helpful assistant")
       .build();
   }
 
@@ -72,12 +64,10 @@ public class PrompsControllerTest {
     CustomPrompt promptDto1 = new CustomPrompt();
     promptDto1.setId(UUID.randomUUID());
     promptDto1.setName("Prompt 1");
-    promptDto1.setModel("gpt-4");
 
     CustomPrompt promptDto2 = new CustomPrompt();
     promptDto2.setId(UUID.randomUUID());
     promptDto2.setName("Prompt 2");
-    promptDto2.setModel("gpt-3.5-turbo");
 
     List<CustomPrompt> prompts = Arrays.asList(promptDto1, promptDto2);
     PromptsListDtoRes response = new PromptsListDtoRes();
@@ -130,8 +120,7 @@ public class PrompsControllerTest {
         .andExpect(content().contentType(MediaType.APPLICATION_JSON))
         .andExpect(jsonPath("$.id").value(promptId.toString()))
         .andExpect(jsonPath("$.name").value("Test Prompt"))
-        .andExpect(jsonPath("$.model").value("gpt-4"))
-        .andExpect(jsonPath("$.systemMessage").value("You are a helpful assistant"));
+        .andExpect(jsonPath("$.content").value("You are a helpful assistant"));
   }
 
   @Test

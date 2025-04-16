@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 @RestController
 @RequestMapping("api/custom-prompts")
 @RequiredArgsConstructor
-public class PrompsController {
+public class PromptsController {
   private final CustomPromptService customPromptService;
 
   @GetMapping()
