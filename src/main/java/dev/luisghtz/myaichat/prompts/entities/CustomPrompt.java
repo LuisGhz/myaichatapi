@@ -33,8 +33,8 @@ public class CustomPrompt {
   private Date createdAt;
   @Column(insertable = false)
   private Date updatedAt;
-  @OneToMany(mappedBy = "prompt", cascade = CascadeType.ALL)
+  @OneToMany(mappedBy = "prompt", cascade = CascadeType.ALL, orphanRemoval = true)
   private List<PromptMessage> messages;
-  @OneToMany(mappedBy = "prompt", cascade = CascadeType.ALL)
+  @OneToMany(mappedBy = "prompt", cascade = CascadeType.ALL, orphanRemoval = true)
   private List<PromptParam> params;
 }
