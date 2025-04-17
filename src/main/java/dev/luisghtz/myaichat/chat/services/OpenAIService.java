@@ -45,7 +45,7 @@ public class OpenAIService {
     // Always create the chat response
     OpenAiChatOptions options = OpenAiChatOptions.builder()
         .model(model)
-        .maxCompletionTokens(1000)
+        .maxCompletionTokens(2500)
         .build();
 
     ChatResponse chatResponse = chatModel.call(new Prompt(modelMessages, options));
