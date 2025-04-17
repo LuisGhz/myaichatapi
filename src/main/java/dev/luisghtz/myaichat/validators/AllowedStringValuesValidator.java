@@ -17,6 +17,8 @@ public class AllowedStringValuesValidator implements ConstraintValidator<Allowed
 
   @Override
   public boolean isValid(String value, ConstraintValidatorContext context) {
+    if (value == null)
+      return true;
     return values.contains(value);
   }
 
