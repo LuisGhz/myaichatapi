@@ -12,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -22,9 +23,16 @@ import org.springframework.web.bind.annotation.RequestBody;
 public class PromptsController {
   private final CustomPromptService customPromptService;
 
-  @GetMapping()
+  @GetMapping("/all")
   public ResponseEntity<PromptsListDtoRes> getAllPrompts() {
     return ResponseEntity.ok(customPromptService.findAll());
+  }
+
+  @GetMapping("/{promptId}")
+  public ResponseEntity<CustomPrompt> getPromptById(@PathVariable String promptId) {
+    return customPromptService.findById(promptId)
+        .map(ResponseEntity::ok)
+        .orElse(ResponseEntity.notFound().build());
   }
 
   @PostMapping()

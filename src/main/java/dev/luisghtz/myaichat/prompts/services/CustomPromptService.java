@@ -1,6 +1,8 @@
 package dev.luisghtz.myaichat.prompts.services;
 
 import java.util.Date;
+import java.util.Optional;
+import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,7 +21,7 @@ public class CustomPromptService {
   private final CustomRepository promptRepository;
 
   public PromptsListDtoRes findAll() {
-    var prompts = promptRepository.findAll();
+    var prompts = promptRepository.findAllSummary();
     var promptsDto = new PromptsListDtoRes(prompts);
     return promptsDto;
   }
@@ -63,5 +65,9 @@ public class CustomPromptService {
 
       customPrompt.setParams(params);
     }
+  }
+
+  public Optional<CustomPrompt> findById(String promptId) {
+    return promptRepository.findById(UUID.fromString(promptId));
   }
 }
