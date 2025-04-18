@@ -492,4 +492,99 @@ public class CustomPromptServiceTest {
     verify(promptRepository, never()).save(any());
   }
 
+  @Test
+  @DisplayName("Should delete message successfully when prompt and message exist")
+  void testDeleteMessageSuccess() throws Exception {
+    // Arrange
+    String promptId = UUID.randomUUID().toString();
+    String messageId = UUID.randomUUID().toString();
+
+    PromptMessage message = PromptMessage.builder()
+        .id(UUID.fromString(messageId))
+        .role("User")
+        .content("Hello!")
+        .build();
+
+    CustomPrompt customPrompt = CustomPrompt.builder()
+        .id(UUID.fromString(promptId))
+        .messages(new ArrayList<>(List.of(message)))
+        .build();
+
+    when(promptRepository.findById(UUID.fromString(promptId))).thenReturn(Optional.of(customPrompt));
+    when(promptRepository.save(any(CustomPrompt.class))).thenReturn(customPrompt);
+
+    // Act
+    customPromptService.deleteMessage(promptId, messageId);
+
+    // Assert
+    assertTrue(customPrompt.getMessages().isEmpty());
+    verify(promptMessageService).deleteByIdAndPromptId(messageId, promptId);
+    verify(promptRepository).save(customPrompt);
+  }
+
+  @Test
+  @DisplayName("Should throw AppNotFoundException if prompt does not exist in deleteMessage")
+  void testDeleteMessagePromptNotFound() {
+    // Arrange
+    String promptId = UUID.randomUUID().toString();
+    String messageId = UUID.randomUUID().toString();
+
+    when(promptRepository.findById(UUID.fromString(promptId))).thenReturn(Optional.empty());
+
+    // Act & Assert
+    assertThrows(AppNotFoundException.class, () -> customPromptService.deleteMessage(promptId, messageId));
+    verify(promptMessageService, never()).deleteByIdAndPromptId(anyString(), anyString());
+    verify(promptRepository, never()).save(any());
+  }
+
+  @Test
+  @DisplayName("Should throw AppNotFoundException if message does not exist in deleteMessage")
+  void testDeleteMessageMessageNotFound() {
+    // Arrange
+    String promptId = UUID.randomUUID().toString();
+    String messageId = UUID.randomUUID().toString();
+
+    CustomPrompt customPrompt = CustomPrompt.builder()
+        .id(UUID.fromString(promptId))
+        .messages(new ArrayList<>()) // No messages
+        .build();
+
+    when(promptRepository.findById(UUID.fromString(promptId))).thenReturn(Optional.of(customPrompt));
+
+    // Act & Assert
+    assertThrows(AppNotFoundException.class, () -> customPromptService.deleteMessage(promptId, messageId));
+    verify(promptMessageService, never()).deleteByIdAndPromptId(anyString(), anyString());
+    verify(promptRepository, never()).save(any());
+  }
+
+  @Test
+  @DisplayName("Should propagate exception thrown by promptMessageService.deleteByIdAndPromptId")
+  void testDeleteMessageServiceThrows() throws Exception {
+    // Arrange
+    String promptId = UUID.randomUUID().toString();
+    String messageId = UUID.randomUUID().toString();
+
+    PromptMessage message = PromptMessage.builder()
+        .id(UUID.fromString(messageId))
+        .role("User")
+        .content("Hello!")
+        .build();
+
+    CustomPrompt customPrompt = CustomPrompt.builder()
+        .id(UUID.fromString(promptId))
+        .messages(new ArrayList<>(List.of(message)))
+        .build();
+
+    when(promptRepository.findById(UUID.fromString(promptId))).thenReturn(Optional.of(customPrompt));
+    doThrow(new RuntimeException("Delete failed")).when(promptMessageService).deleteByIdAndPromptId(messageId, promptId);
+
+    // Act & Assert
+    assertThrows(RuntimeException.class, () -> customPromptService.deleteMessage(promptId, messageId));
+    // The message should have been removed from the prompt's messages list before the exception
+    assertTrue(customPrompt.getMessages().isEmpty());
+    verify(promptMessageService).deleteByIdAndPromptId(messageId, promptId);
+    // promptRepository.save should not be called if exception is thrown before it
+    verify(promptRepository, never()).save(any());
+  }
+
 }
