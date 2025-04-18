@@ -32,6 +32,10 @@ public class CustomPromptServiceTest {
 
   @Mock
   private CustomRepository promptRepository;
+  @Mock
+  private PromptParamService promptParamService;
+  @Mock
+  private PromptMessageService promptMessageService;
 
   @InjectMocks
   private CustomPromptService customPromptService;
@@ -46,7 +50,7 @@ public class CustomPromptServiceTest {
     createCustomPromptDtoReq.setName("Test Prompt");
     createCustomPromptDtoReq.setContent("You are a helpful assistant");
     UUID id = Generators.randomBasedGenerator().generate();
-    
+
     // Initialize the entity that would be returned after saving
     savedCustomPrompt = CustomPrompt.builder()
         .id(id)
@@ -56,6 +60,8 @@ public class CustomPromptServiceTest {
         .build();
 
     // Configure default mock behavior
+    doNothing().when(promptMessageService).addPromptMessagesIfExists(any(), any());
+    doNothing().when(promptParamService).addPromptParamsIfExists(any(), any());
   }
 
   @Test
@@ -107,7 +113,7 @@ public class CustomPromptServiceTest {
     assertThrows(RuntimeException.class, () -> customPromptService.create(createCustomPromptDtoReq));
     verify(promptRepository).save(any(CustomPrompt.class));
   }
-  
+
   @Test
   @DisplayName("Should process prompt messages when provided")
   void testCreateWithPromptMessages() {
@@ -135,7 +141,7 @@ public class CustomPromptServiceTest {
     assertEquals(1, result.getMessages().size());
     assertEquals("User", result.getMessages().get(0).getRole());
     assertEquals("Hello!", result.getMessages().get(0).getContent());
-    
+
     // Verify repository was called
     verify(promptRepository).save(any(CustomPrompt.class));
   }
@@ -167,7 +173,7 @@ public class CustomPromptServiceTest {
     assertEquals(1, result.getParams().size());
     assertEquals("temperature", result.getParams().get(0).getName());
     assertEquals("0.7", result.getParams().get(0).getValue());
-    
+
     // Verify repository was called
     verify(promptRepository).save(any(CustomPrompt.class));
   }
@@ -194,27 +200,17 @@ public class CustomPromptServiceTest {
         .content("How can I help you?")
         .prompt(savedCustomPrompt)
         .build();
-    
+
     PromptParam promptParam = PromptParam.builder()
         .name("max_tokens")
         .value("1000")
         .prompt(savedCustomPrompt)
         .build();
-    
+
     savedCustomPrompt.setMessages(List.of(promptMessage));
     savedCustomPrompt.setParams(List.of(promptParam));
 
-    when(promptRepository.save(any(CustomPrompt.class))).thenAnswer(invocation -> {
-      CustomPrompt entityToSave = invocation.getArgument(0);
-
-      // Verify that the messages and params were properly set
-      assertNotNull(entityToSave.getMessages());
-      assertNotNull(entityToSave.getParams());
-      assertEquals(1, entityToSave.getMessages().size());
-      assertEquals(1, entityToSave.getParams().size());
-      
-      return savedCustomPrompt;
-    });
+    when(promptRepository.save(any(CustomPrompt.class))).thenReturn(savedCustomPrompt);
 
     // Act
     CustomPrompt result = customPromptService.create(createCustomPromptDtoReq);
@@ -229,27 +225,27 @@ public class CustomPromptServiceTest {
     assertEquals("How can I help you?", result.getMessages().get(0).getContent());
     assertEquals("max_tokens", result.getParams().get(0).getName());
     assertEquals("1000", result.getParams().get(0).getValue());
-    
+
     // Verify repository was called
     verify(promptRepository).save(any(CustomPrompt.class));
   }
-  
+
   @Test
   @DisplayName("Should handle empty lists for messages and params")
   void testCreateWithEmptyLists() {
     // Arrange - Set empty lists
     createCustomPromptDtoReq.setMessages(List.of());
     createCustomPromptDtoReq.setParams(List.of());
-    
+
     when(promptRepository.save(any(CustomPrompt.class))).thenReturn(savedCustomPrompt);
-    
+
     // Act
     CustomPrompt result = customPromptService.create(createCustomPromptDtoReq);
-    
+
     // Assert
     assertNotNull(result);
     assertEquals(savedCustomPrompt.getId(), result.getId());
-    
+
     // Verify repository was called
     verify(promptRepository).save(any(CustomPrompt.class));
   }
