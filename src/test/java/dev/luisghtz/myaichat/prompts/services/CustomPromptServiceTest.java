@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
@@ -395,4 +396,100 @@ public class CustomPromptServiceTest {
     assertEquals("Old Name", existingPrompt.getName());
     assertEquals("Old Content", existingPrompt.getContent());
   }
+
+  @Test
+  @DisplayName("Should delete param successfully when prompt and param exist")
+  void testDeleteParamSuccess() throws Exception {
+    // Arrange
+    String promptId = UUID.randomUUID().toString();
+    String paramId = UUID.randomUUID().toString();
+
+    PromptParam param = PromptParam.builder()
+        .id(UUID.fromString(paramId))
+        .name("temperature")
+        .value("0.7")
+        .build();
+
+    CustomPrompt customPrompt = CustomPrompt.builder()
+        .id(UUID.fromString(promptId))
+        .params(new ArrayList<>(List.of(param)))
+        .build();
+
+    when(promptRepository.findById(UUID.fromString(promptId))).thenReturn(Optional.of(customPrompt));
+    when(promptRepository.save(any(CustomPrompt.class))).thenReturn(customPrompt);
+
+    // Act
+    customPromptService.deleteParam(promptId, paramId);
+
+    // Assert
+    assertTrue(customPrompt.getParams().isEmpty());
+    verify(promptParamService).deleteByIdAndPromptId(paramId, promptId);
+    verify(promptRepository).save(customPrompt);
+  }
+
+  @Test
+  @DisplayName("Should throw AppNotFoundException if prompt does not exist in deleteParam")
+  void testDeleteParamPromptNotFound() {
+    // Arrange
+    String promptId = UUID.randomUUID().toString();
+    String paramId = UUID.randomUUID().toString();
+
+    when(promptRepository.findById(UUID.fromString(promptId))).thenReturn(Optional.empty());
+
+    // Act & Assert
+    assertThrows(AppNotFoundException.class, () -> customPromptService.deleteParam(promptId, paramId));
+    verify(promptParamService, never()).deleteByIdAndPromptId(anyString(), anyString());
+    verify(promptRepository, never()).save(any());
+  }
+
+  @Test
+  @DisplayName("Should throw AppNotFoundException if param does not exist in deleteParam")
+  void testDeleteParamParamNotFound() {
+    // Arrange
+    String promptId = UUID.randomUUID().toString();
+    String paramId = UUID.randomUUID().toString();
+
+    CustomPrompt customPrompt = CustomPrompt.builder()
+        .id(UUID.fromString(promptId))
+        .params(new java.util.ArrayList<>()) // No params
+        .build();
+
+    when(promptRepository.findById(UUID.fromString(promptId))).thenReturn(Optional.of(customPrompt));
+
+    // Act & Assert
+    assertThrows(AppNotFoundException.class, () -> customPromptService.deleteParam(promptId, paramId));
+    verify(promptParamService, never()).deleteByIdAndPromptId(anyString(), anyString());
+    verify(promptRepository, never()).save(any());
+  }
+
+  @Test
+  @DisplayName("Should propagate exception thrown by promptParamService.deleteByIdAndPromptId")
+  void testDeleteParamServiceThrows() throws Exception {
+    // Arrange
+    String promptId = UUID.randomUUID().toString();
+    String paramId = UUID.randomUUID().toString();
+
+    PromptParam param = PromptParam.builder()
+        .id(UUID.fromString(paramId))
+        .name("temperature")
+        .value("0.7")
+        .build();
+
+    CustomPrompt customPrompt = CustomPrompt.builder()
+        .id(UUID.fromString(promptId))
+        .params(new java.util.ArrayList<>(List.of(param)))
+        .build();
+
+    when(promptRepository.findById(UUID.fromString(promptId))).thenReturn(Optional.of(customPrompt));
+    doThrow(new RuntimeException("Delete failed")).when(promptParamService).deleteByIdAndPromptId(paramId, promptId);
+
+    // Act & Assert
+    assertThrows(RuntimeException.class, () -> customPromptService.deleteParam(promptId, paramId));
+    // The param should have been removed from the prompt's params list before the exception
+    assertTrue(customPrompt.getParams().isEmpty());
+    verify(promptParamService).deleteByIdAndPromptId(paramId, promptId);
+    // promptRepository.save should not be called if exception is thrown before it
+    verify(promptRepository, never()).save(any());
+  }
+
 }
