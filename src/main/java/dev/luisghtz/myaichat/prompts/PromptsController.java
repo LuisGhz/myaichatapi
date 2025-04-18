@@ -10,6 +10,8 @@ import dev.luisghtz.myaichat.prompts.services.CustomPromptService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
+import java.util.UUID;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -46,31 +48,31 @@ public class PromptsController {
 
   @PatchMapping("/{promptId}/update")
   public ResponseEntity<String> update(
-      @PathVariable String promptId,
+      @PathVariable UUID promptId,
       @Valid @RequestBody UpdateCustomPromptDtoReq updateCustomPromptDtoReq) {
-    customPromptService.update(promptId, updateCustomPromptDtoReq);
+    customPromptService.update(promptId.toString(), updateCustomPromptDtoReq);
     return ResponseEntity.ok("Prompt updated successfully");
   }
 
   @DeleteMapping("/{promptId}/{paramId}/delete-param")
   public ResponseEntity<Void> deleteParam(
-      @PathVariable String promptId,
-      @PathVariable String paramId) throws Exception {
-    customPromptService.deleteParam(promptId, paramId);
+      @PathVariable UUID promptId,
+      @PathVariable UUID paramId) throws Exception {
+    customPromptService.deleteParam(promptId.toString(), paramId.toString());
     return ResponseEntity.ok().build();
   }
 
   @DeleteMapping("/{promptId}/{messageId}/delete-message")
   public ResponseEntity<String> deleteMessage(
-      @PathVariable String promptId,
-      @PathVariable String messageId) throws Exception {
-    customPromptService.deleteMessage(promptId, messageId);
+      @PathVariable UUID promptId,
+      @PathVariable UUID messageId) throws Exception {
+    customPromptService.deleteMessage(promptId.toString(), messageId.toString());
     return ResponseEntity.ok().build();
   }
 
   @DeleteMapping("/{promptId}/delete")
-  public ResponseEntity<Void> deletePrompt(@PathVariable String promptId) {
-    customPromptService.delete(promptId);
+  public ResponseEntity<Void> deletePrompt(@PathVariable UUID promptId) {
+    customPromptService.delete(promptId.toString());
     return ResponseEntity.ok().build();
   }
 
