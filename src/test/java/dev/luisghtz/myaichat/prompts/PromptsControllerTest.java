@@ -505,4 +505,49 @@ public class PromptsControllerTest {
     verify(customPromptService, never()).deleteMessage(anyString(), anyString());
   }
 
+  @Test
+  @DisplayName("DELETE /api/custom-prompts/{promptId}/delete - Should delete prompt successfully")
+  void testDeletePromptSuccess() throws Exception {
+    String promptIdString = promptId.toString();
+    doNothing().when(customPromptService).delete(promptIdString);
+
+    mockMvc.perform(
+        org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+            .delete("/api/custom-prompts/{promptId}/delete", promptIdString)
+            .contentType(MediaType.APPLICATION_JSON))
+        .andExpect(status().isOk())
+        .andExpect(content().string(""));
+
+    verify(customPromptService, times(1)).delete(promptIdString);
+  }
+
+  @Test
+  @DisplayName("DELETE /api/custom-prompts/{promptId}/delete - Should return Internal Server Error on service exception")
+  void testDeletePromptServiceException() throws Exception {
+    String promptIdString = promptId.toString();
+    doThrow(new RuntimeException("Service error"))
+        .when(customPromptService).delete(promptIdString);
+
+    mockMvc.perform(
+        org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+            .delete("/api/custom-prompts/{promptId}/delete", promptIdString)
+            .contentType(MediaType.APPLICATION_JSON))
+        .andExpect(status().isInternalServerError());
+
+    verify(customPromptService, times(1)).delete(promptIdString);
+  }
+
+  @Test
+  @DisplayName("DELETE /api/custom-prompts/{promptId}/delete - Should return Bad Request for invalid promptId")
+  void testDeletePromptInvalidPromptId() throws Exception {
+    String invalidPromptId = " ";
+
+    mockMvc.perform(
+        org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+            .delete("/api/custom-prompts/{promptId}/delete", invalidPromptId)
+            .contentType(MediaType.APPLICATION_JSON))
+        .andExpect(status().isBadRequest());
+
+    verify(customPromptService, never()).delete(anyString());
+  }
 }
