@@ -2,7 +2,6 @@ package dev.luisghtz.myaichat.advices;
 
 import java.util.stream.Collectors;
 
-import org.springframework.data.crossstore.ChangeSetPersister.NotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -53,7 +52,7 @@ public class GlobalControllerAdvice {
   }
 
   @ExceptionHandler(AppNotFoundException.class)
-  public ResponseEntity<Object> handleNotFoundException(NotFoundException ex) {
+  public ResponseEntity<Object> handleNotFoundException(AppNotFoundException ex) {
     var response = ChatErrorResponseDto.builder()
         .statusCode(HttpStatus.NOT_FOUND)
         .message(ex.getMessage())
