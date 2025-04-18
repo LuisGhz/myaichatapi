@@ -440,4 +440,69 @@ public class PromptsControllerTest {
 
     verify(customPromptService, never()).deleteParam(anyString(), anyString());
   }
+
+  @Test
+  @DisplayName("DELETE /api/custom-prompts/{promptId}/{messageId}/delete-message - Should delete message successfully")
+  void testDeleteMessageSuccess() throws Exception {
+    String promptIdString = promptId.toString();
+    String messageId = UUID.randomUUID().toString();
+    doNothing().when(customPromptService).deleteMessage(promptIdString, messageId);
+
+    mockMvc.perform(
+        org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+            .delete("/api/custom-prompts/{promptId}/{messageId}/delete-message", promptIdString, messageId)
+            .contentType(MediaType.APPLICATION_JSON))
+        .andExpect(status().isOk())
+        .andExpect(content().string(""));
+
+    verify(customPromptService, times(1)).deleteMessage(promptIdString, messageId);
+  }
+
+  @Test
+  @DisplayName("DELETE /api/custom-prompts/{promptId}/{messageId}/delete-message - Should return Internal Server Error on service exception")
+  void testDeleteMessageServiceException() throws Exception {
+    String promptIdString = promptId.toString();
+    String messageId = UUID.randomUUID().toString();
+    doThrow(new RuntimeException("Service error"))
+        .when(customPromptService).deleteMessage(promptIdString, messageId);
+
+    mockMvc.perform(
+        org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+            .delete("/api/custom-prompts/{promptId}/{messageId}/delete-message", promptIdString, messageId)
+            .contentType(MediaType.APPLICATION_JSON))
+        .andExpect(status().isInternalServerError());
+
+    verify(customPromptService, times(1)).deleteMessage(promptIdString, messageId);
+  }
+
+  @Test
+  @DisplayName("DELETE /api/custom-prompts/{promptId}/{messageId}/delete-message - Should return Bad Request for invalid promptId")
+  void testDeleteMessageInvalidPromptId() throws Exception {
+    String invalidPromptId = " ";
+    String messageId = UUID.randomUUID().toString();
+
+    mockMvc.perform(
+        org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+            .delete("/api/custom-prompts/{promptId}/{messageId}/delete-message", invalidPromptId, messageId)
+            .contentType(MediaType.APPLICATION_JSON))
+        .andExpect(status().isBadRequest());
+
+    verify(customPromptService, never()).deleteMessage(anyString(), anyString());
+  }
+
+  @Test
+  @DisplayName("DELETE /api/custom-prompts/{promptId}/{messageId}/delete-message - Should return Bad Request for invalid messageId")
+  void testDeleteMessageInvalidMessageId() throws Exception {
+    String promptIdString = promptId.toString();
+    String invalidMessageId = " ";
+
+    mockMvc.perform(
+        org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+            .delete("/api/custom-prompts/{promptId}/{messageId}/delete-message", promptIdString, invalidMessageId)
+            .contentType(MediaType.APPLICATION_JSON))
+        .andExpect(status().isBadRequest());
+
+    verify(customPromptService, never()).deleteMessage(anyString(), anyString());
+  }
+
 }
