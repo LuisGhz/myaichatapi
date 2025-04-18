@@ -20,14 +20,27 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+import dev.luisghtz.myaichat.exceptions.AppNotFoundException;
 import dev.luisghtz.myaichat.prompts.dtos.CreateCustomPromptDtoReq;
 import dev.luisghtz.myaichat.prompts.dtos.CreateCustomPromptParamsDto;
+import dev.luisghtz.myaichat.prompts.dtos.PromptSummaryResDto;
 import dev.luisghtz.myaichat.prompts.dtos.CreateCustomPromptMessagesDto;
 import dev.luisghtz.myaichat.prompts.dtos.PromptsListDtoRes;
 import dev.luisghtz.myaichat.prompts.entities.CustomPrompt;
 import dev.luisghtz.myaichat.prompts.entities.PromptMessage;
 import dev.luisghtz.myaichat.prompts.entities.PromptParam;
 import dev.luisghtz.myaichat.prompts.services.CustomPromptService;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import dev.luisghtz.myaichat.prompts.dtos.update.UpdateCustomPromptDtoReq;
+import dev.luisghtz.myaichat.prompts.dtos.update.UpdateCustomPromptMessagesDto;
+import dev.luisghtz.myaichat.prompts.dtos.update.UpdateCustomPromptParamsDto;
 
 @WebMvcTest(PromptsController.class)
 public class PromptsControllerTest {
@@ -83,18 +96,18 @@ public class PromptsControllerTest {
   }
 
   @Test
-  @DisplayName("GET /api/custom-prompts - Should return all prompts")
+  @DisplayName("GET /api/custom-prompts/all - Should return all prompts")
   void testGetAllPrompts() throws Exception {
     // Prepare mock data
-    CustomPrompt promptDto1 = new CustomPrompt();
+    PromptSummaryResDto promptDto1 = new PromptSummaryResDto();
     promptDto1.setId(UUID.randomUUID());
     promptDto1.setName("Prompt 1");
 
-    CustomPrompt promptDto2 = new CustomPrompt();
+    PromptSummaryResDto promptDto2 = new PromptSummaryResDto();
     promptDto2.setId(UUID.randomUUID());
     promptDto2.setName("Prompt 2");
 
-    List<CustomPrompt> prompts = Arrays.asList(promptDto1, promptDto2);
+    List<PromptSummaryResDto> prompts = Arrays.asList(promptDto1, promptDto2);
     PromptsListDtoRes response = new PromptsListDtoRes();
     response.setPrompts(prompts);
 
@@ -102,7 +115,7 @@ public class PromptsControllerTest {
     when(customPromptService.findAll()).thenReturn(response);
 
     // Execute and verify
-    mockMvc.perform(get("/api/custom-prompts")
+    mockMvc.perform(get("/api/custom-prompts/all")
         .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk())
         .andExpect(content().contentType(MediaType.APPLICATION_JSON))
@@ -113,7 +126,7 @@ public class PromptsControllerTest {
   }
 
   @Test
-  @DisplayName("GET /api/custom-prompts - Should return empty list when no prompts")
+  @DisplayName("GET /api/custom-prompts/all - Should return empty list when no prompts")
   void testGetAllPromptsWhenEmpty() throws Exception {
     // Prepare empty response
     PromptsListDtoRes emptyResponse = new PromptsListDtoRes();
@@ -123,7 +136,7 @@ public class PromptsControllerTest {
     when(customPromptService.findAll()).thenReturn(emptyResponse);
 
     // Execute and verify
-    mockMvc.perform(get("/api/custom-prompts")
+    mockMvc.perform(get("/api/custom-prompts/all")
         .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk())
         .andExpect(content().contentType(MediaType.APPLICATION_JSON))
@@ -155,7 +168,7 @@ public class PromptsControllerTest {
   }
 
   @Test
-  @DisplayName("POST /api/custom-prompt - Invalid Role message")
+  @DisplayName("POST /api/custom-prompts - Invalid Role message")
   void testInvalidRoleMessage() throws Exception {
     // Setup mock service
     when(customPromptService.create(any(CreateCustomPromptDtoReq.class))).thenReturn(customPrompt);
@@ -167,7 +180,7 @@ public class PromptsControllerTest {
   }
 
   @Test
-  @DisplayName("POST /api/custom-prompt - Invalid content message")
+  @DisplayName("POST /api/custom-prompts - Invalid content message")
   void testInvalidContentMessage() throws Exception {
     // Setup mock service
     when(customPromptService.create(any(CreateCustomPromptDtoReq.class))).thenReturn(customPrompt);
@@ -179,7 +192,7 @@ public class PromptsControllerTest {
   }
 
   @Test
-  @DisplayName("POST /api/custom-prompt - Invalid param name")
+  @DisplayName("POST /api/custom-prompts - Invalid param name")
   void testInvalidParamName() throws Exception {
     // Setup mock service
     when(customPromptService.create(any(CreateCustomPromptDtoReq.class))).thenReturn(customPrompt);
@@ -192,7 +205,7 @@ public class PromptsControllerTest {
   }
 
   @Test
-  @DisplayName("POST /api/custom-prompt - Invalid param value")
+  @DisplayName("POST /api/custom-prompts - Invalid param value")
   void testInvalidParamValue() throws Exception {
     // Setup mock service
     when(customPromptService.create(any(CreateCustomPromptDtoReq.class))).thenReturn(customPrompt);
@@ -216,5 +229,215 @@ public class PromptsControllerTest {
         .contentType(MediaType.APPLICATION_JSON)
         .content(objectMapper.writeValueAsString(createRequest)))
         .andExpect(status().isInternalServerError());
+  }
+
+  @Test
+  @DisplayName("PATCH /api/custom-prompts/{promptId}/update - Should update prompt successfully")
+  void testUpdatePromptSuccess() throws Exception {
+    // Arrange
+    String promptIdString = promptId.toString();
+    UpdateCustomPromptDtoReq updateRequest = new UpdateCustomPromptDtoReq();
+    updateRequest.setName("Updated Test Prompt");
+    updateRequest.setContent("Updated content");
+
+    UpdateCustomPromptParamsDto updatedParam = new UpdateCustomPromptParamsDto();
+    updatedParam.setName("max_tokens");
+    updatedParam.setValue("150");
+    updateRequest.setParams(Arrays.asList(updatedParam));
+
+    UpdateCustomPromptMessagesDto updatedMessage = new UpdateCustomPromptMessagesDto();
+    updatedMessage.setRole("Assistant");
+    updatedMessage.setContent("You are an updated assistant.");
+    updateRequest.setMessages(Arrays.asList(updatedMessage));
+
+    // Mock service call
+    doNothing().when(customPromptService).update(anyString(), any(UpdateCustomPromptDtoReq.class));
+    // Act & Assert
+    mockMvc.perform(patch("/api/custom-prompts/{promptId}/update", promptIdString)
+        .contentType(MediaType.APPLICATION_JSON)
+        .content(objectMapper.writeValueAsString(updateRequest)))
+        .andExpect(status().isOk())
+        .andExpect(content().string("Prompt updated successfully"));
+
+    // Verify service interaction
+    verify(customPromptService, times(1)).update(promptIdString, updateRequest);
+  }
+
+  @Test
+  @DisplayName("PATCH /api/custom-prompts/{promptId}/update - Should return Not Found for non-existing prompt")
+  void testUpdatePromptNotFound() throws Exception {
+    // Arrange
+    String promptIdString = promptId.toString();
+    UpdateCustomPromptDtoReq updateRequest = new UpdateCustomPromptDtoReq();
+    updateRequest.setName("Updated Test Prompt");
+    updateRequest.setContent("Updated content");
+
+    // Mock service call to throw exception
+    doThrow(new AppNotFoundException("Prompt not found"))
+        .when(customPromptService).update(anyString(), any(UpdateCustomPromptDtoReq.class));
+
+    // Act & Assert
+    mockMvc.perform(patch("/api/custom-prompts/{promptId}/update", promptIdString)
+        .contentType(MediaType.APPLICATION_JSON)
+        .content(objectMapper.writeValueAsString(updateRequest)))
+        .andExpect(status().isNotFound());
+
+    // Verify service interaction
+    verify(customPromptService, times(1)).update(promptIdString, updateRequest);
+  }
+
+  @Test
+  @DisplayName("PATCH /api/custom-prompts/{promptId}/update - Should return Bad Request for invalid data (e.g., blank name)")
+  void testUpdatePromptInvalidData() throws Exception {
+    // Arrange
+    String promptIdString = promptId.toString();
+    UpdateCustomPromptDtoReq invalidUpdateRequest = new UpdateCustomPromptDtoReq();
+    invalidUpdateRequest.setName(" "); // Assuming @NotBlank validation
+
+    // Act & Assert
+    mockMvc.perform(patch("/api/custom-prompts/{promptId}/update", promptIdString)
+        .contentType(MediaType.APPLICATION_JSON)
+        .content(objectMapper.writeValueAsString(invalidUpdateRequest)))
+        .andExpect(status().isBadRequest());
+
+    // Verify service interaction (should not be called)
+    verify(customPromptService, never()).update(anyString(), any(UpdateCustomPromptDtoReq.class));
+  }
+
+   @Test
+   @DisplayName("PATCH /api/custom-prompts/{promptId}/update - Should return Bad Request for invalid message role")
+   void testUpdatePromptInvalidMessageRole() throws Exception {
+       // Arrange
+       String promptIdString = promptId.toString();
+       UpdateCustomPromptDtoReq updateRequest = new UpdateCustomPromptDtoReq();
+       updateRequest.setName("Valid Name");
+
+       UpdateCustomPromptMessagesDto invalidMessage = new UpdateCustomPromptMessagesDto();
+       invalidMessage.setRole("InvalidRole"); // Assuming validation like @Pattern(regexp = "User|System|Assistant")
+       invalidMessage.setContent("Valid content");
+       updateRequest.setMessages(Arrays.asList(invalidMessage));
+
+       // Act & Assert
+       mockMvc.perform(patch("/api/custom-prompts/{promptId}/update", promptIdString)
+               .contentType(MediaType.APPLICATION_JSON)
+               .content(objectMapper.writeValueAsString(updateRequest)))
+               .andExpect(status().isBadRequest());
+
+       // Verify service interaction (should not be called)
+       verify(customPromptService, never()).update(anyString(), any(UpdateCustomPromptDtoReq.class));
+   }
+
+   @Test
+   @DisplayName("PATCH /api/custom-prompts/{promptId}/update - Should return Bad Request for invalid param name")
+   void testUpdatePromptInvalidParamName() throws Exception {
+       // Arrange
+       String promptIdString = promptId.toString();
+       UpdateCustomPromptDtoReq updateRequest = new UpdateCustomPromptDtoReq();
+       updateRequest.setName("Valid Name");
+
+       UpdateCustomPromptParamsDto invalidParam = new UpdateCustomPromptParamsDto();
+       invalidParam.setName(" "); // Assuming @NotBlank validation
+       invalidParam.setValue("Valid value");
+       updateRequest.setParams(Arrays.asList(invalidParam));
+
+       // Act & Assert
+       mockMvc.perform(patch("/api/custom-prompts/{promptId}/update", promptIdString)
+               .contentType(MediaType.APPLICATION_JSON)
+               .content(objectMapper.writeValueAsString(updateRequest)))
+               .andExpect(status().isBadRequest());
+
+       // Verify service interaction (should not be called)
+       verify(customPromptService, never()).update(anyString(), any(UpdateCustomPromptDtoReq.class));
+   }
+
+
+  @Test
+  @DisplayName("PATCH /api/custom-prompts/{promptId}/update - Should handle service exceptions")
+  void testUpdatePromptServiceException() throws Exception {
+    // Arrange
+    String promptIdString = promptId.toString();
+    UpdateCustomPromptDtoReq updateRequest = new UpdateCustomPromptDtoReq();
+    updateRequest.setName("Updated Test Prompt");
+    updateRequest.setContent("Updated content");
+    // Add valid params/messages if needed for the request to be valid before hitting the service
+    updateRequest.setParams(Collections.emptyList());
+    updateRequest.setMessages(Collections.emptyList());
+
+
+    // Mock service call to throw exception
+    doThrow(new RuntimeException("Service error"))
+        .when(customPromptService).update(anyString(), any(UpdateCustomPromptDtoReq.class));
+
+    // Act & Assert
+    mockMvc.perform(patch("/api/custom-prompts/{promptId}/update", promptIdString)
+        .contentType(MediaType.APPLICATION_JSON)
+        .content(objectMapper.writeValueAsString(updateRequest)))
+        .andExpect(status().isInternalServerError());
+
+    // Verify service interaction
+    verify(customPromptService, times(1)).update(promptIdString, updateRequest);
+  }
+  @Test
+  @DisplayName("DELETE /api/custom-prompts/{promptId}/{paramId}/delete-param - Should delete param successfully")
+  void testDeleteParamSuccess() throws Exception {
+    String promptIdString = promptId.toString();
+    String paramId = promptIdString;
+    doNothing().when(customPromptService).deleteParam(promptIdString, paramId);
+
+    mockMvc.perform(
+        org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+            .delete("/api/custom-prompts/{promptId}/{paramId}/delete-param", promptIdString, paramId)
+            .contentType(MediaType.APPLICATION_JSON))
+        .andExpect(status().isOk())
+        .andExpect(content().string(""));
+
+    verify(customPromptService, times(1)).deleteParam(promptIdString, paramId);
+  }
+
+  @Test
+  @DisplayName("DELETE /api/custom-prompts/{promptId}/{paramId}/delete-param - Should return Internal Server Error on service exception")
+  void testDeleteParamServiceException() throws Exception {
+    String promptIdString = promptId.toString();
+    String paramId = promptIdString;
+    doThrow(new RuntimeException("Service error"))
+        .when(customPromptService).deleteParam(promptIdString, paramId);
+
+    mockMvc.perform(
+        org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+            .delete("/api/custom-prompts/{promptId}/{paramId}/delete-param", promptIdString, paramId)
+            .contentType(MediaType.APPLICATION_JSON))
+        .andExpect(status().isInternalServerError());
+
+    verify(customPromptService, times(1)).deleteParam(promptIdString, paramId);
+  }
+
+  @Test
+  @DisplayName("DELETE /api/custom-prompts/{promptId}/{paramId}/delete-param - Should return Bad Request for invalid promptId")
+  void testDeleteParamInvalidPromptId() throws Exception {
+    String invalidPromptId = " ";
+    String paramId = "param-123";
+
+    mockMvc.perform(
+        org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+            .delete("/api/custom-prompts/{promptId}/{paramId}/delete-param", invalidPromptId, paramId)
+            .contentType(MediaType.APPLICATION_JSON))
+        .andExpect(status().isBadRequest());
+
+    verify(customPromptService, never()).deleteParam(anyString(), anyString());
+  }
+
+  @Test
+  @DisplayName("DELETE /api/custom-prompts/{promptId}/{paramId}/delete-param - Should return Bad Request for invalid paramId")
+  void testDeleteParamInvalidParamId() throws Exception {
+    String promptIdString = promptId.toString();
+    String invalidParamId = " ";
+
+    mockMvc.perform(
+        org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+            .delete("/api/custom-prompts/{promptId}/{paramId}/delete-param", promptIdString, invalidParamId)
+            .contentType(MediaType.APPLICATION_JSON))
+        .andExpect(status().isBadRequest());
+
+    verify(customPromptService, never()).deleteParam(anyString(), anyString());
   }
 }
