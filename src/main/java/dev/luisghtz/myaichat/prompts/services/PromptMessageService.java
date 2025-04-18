@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 
 import dev.luisghtz.myaichat.exceptions.AppMethodArgumentNotValidException;
 import dev.luisghtz.myaichat.prompts.dtos.CreateCustomPromptDtoReq;
+import dev.luisghtz.myaichat.prompts.dtos.CreateCustomPromptMessagesDto;
 import dev.luisghtz.myaichat.prompts.dtos.update.UpdateCustomPromptDtoReq;
 import dev.luisghtz.myaichat.prompts.dtos.update.UpdateCustomPromptMessagesDto;
 import dev.luisghtz.myaichat.prompts.entities.CustomPrompt;
@@ -28,6 +29,7 @@ public class PromptMessageService {
     if (createCustomPromptDtoReq.getMessages() != null && !createCustomPromptDtoReq.getMessages().isEmpty()) {
       var messages = createCustomPromptDtoReq.getMessages().stream()
           .map(msg -> {
+            handleInvalidMessage(msg);
             return PromptMessage.builder()
                 .role(msg.getRole())
                 .content(msg.getContent())
@@ -47,7 +49,7 @@ public class PromptMessageService {
       var messages = updateCustomPromptDtoReq.getMessages().stream()
           .filter(msg -> msg.getId() == null)
           .map(msg -> {
-            handleInvalidNewMessage(msg);
+            handleInvalidMessage(msg);
 
             return PromptMessage.builder()
                 .role(msg.getRole())
@@ -82,10 +84,21 @@ public class PromptMessageService {
     }
   }
 
-  private void handleInvalidNewMessage(UpdateCustomPromptMessagesDto message) {
-    if (message.getRole() == null || message.getRole().trim().isEmpty())
+  private <T> void handleInvalidMessage(T message) {
+    String role = null;
+    String content = null;
+    
+    if (message instanceof UpdateCustomPromptMessagesDto updateDto) {
+      role = updateDto.getRole();
+      content = updateDto.getContent();
+    } else if (message instanceof CreateCustomPromptMessagesDto createDto) {
+      role = createDto.getRole();
+      content = createDto.getContent();
+    }
+    
+    if (role == null || role.trim().isEmpty())
       throw new AppMethodArgumentNotValidException("Message role cannot be null or empty");
-    if (message.getContent() == null || message.getContent().trim().isEmpty())
+    if (content == null || content.trim().isEmpty())
       throw new AppMethodArgumentNotValidException("Message content cannot be null or empty");
   }
 }
