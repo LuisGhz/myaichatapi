@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 
 import dev.luisghtz.myaichat.exceptions.AppMethodArgumentNotValidException;
 import dev.luisghtz.myaichat.prompts.dtos.CreateCustomPromptDtoReq;
+import dev.luisghtz.myaichat.prompts.dtos.CreateCustomPromptParamsDto;
 import dev.luisghtz.myaichat.prompts.dtos.update.UpdateCustomPromptDtoReq;
 import dev.luisghtz.myaichat.prompts.dtos.update.UpdateCustomPromptParamsDto;
 import dev.luisghtz.myaichat.prompts.entities.CustomPrompt;
@@ -34,8 +35,11 @@ public class PromptParamService {
 
   public void addPromptParamsIfExists(CreateCustomPromptDtoReq createCustomPromptDtoReq, CustomPrompt customPrompt) {
     if (createCustomPromptDtoReq.getParams() != null && !createCustomPromptDtoReq.getParams().isEmpty()) {
+      if (customPrompt.getParams() == null)
+        customPrompt.setParams(new ArrayList<>());
       var params = createCustomPromptDtoReq.getParams().stream()
           .map(param -> {
+            handleInvalidNewParamProps(param);
             return PromptParam.builder()
                 .name(param.getName())
                 .value(param.getValue())
@@ -55,7 +59,7 @@ public class PromptParamService {
       var params = updateCustomPromptDtoReq.getParams().stream()
           .filter(param -> param.getId() == null)
           .map(param -> {
-            handleInvalidNewParamName(param);
+            handleInvalidNewParamProps(param);
             handleExistingParamName(param, customPrompt);
             return PromptParam.builder()
                 .name(param.getName())
@@ -79,9 +83,10 @@ public class PromptParamService {
                 .filter(p -> p.getId().toString().equals(param.getId()))
                 .findFirst()
                 .ifPresent(existingParam -> {
-                  handleInvalidParamNameOnModification(param, customPrompt);
-                  if (param.getName() != null && !param.getName().trim().isEmpty())
+                  if (param.getName() != null && !param.getName().trim().isEmpty()) {
+                    handleInvalidParamNameOnModification(param, customPrompt);
                     existingParam.setName(param.getName());
+                  }
                   if (param.getValue() != null && !param.getValue().trim().isEmpty())
                     existingParam.setValue(param.getValue());
                 });
@@ -89,10 +94,21 @@ public class PromptParamService {
     }
   }
 
-  private void handleInvalidNewParamName(UpdateCustomPromptParamsDto param) {
-    if (param.getName() == null || param.getName().trim().isEmpty())
+  private <T> void handleInvalidNewParamProps(T param) {
+    String name = null;
+    String value = null;
+
+    if (param instanceof UpdateCustomPromptParamsDto) {
+      name = ((UpdateCustomPromptParamsDto) param).getName();
+      value = ((UpdateCustomPromptParamsDto) param).getValue();
+    } else if (param instanceof CreateCustomPromptParamsDto) {
+      name = ((CreateCustomPromptParamsDto) param).getName();
+      value = ((CreateCustomPromptParamsDto) param).getValue();
+    }
+
+    if (name == null || name.trim().isEmpty())
       throw new AppMethodArgumentNotValidException("Param name cannot be null or empty");
-    if (param.getValue() == null || param.getValue().trim().isEmpty())
+    if (value == null || value.trim().isEmpty())
       throw new AppMethodArgumentNotValidException("Param value cannot be null or empty");
   }
 
