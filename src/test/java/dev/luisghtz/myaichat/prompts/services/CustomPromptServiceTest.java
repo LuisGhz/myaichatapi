@@ -587,4 +587,58 @@ public class CustomPromptServiceTest {
     verify(promptRepository, never()).save(any());
   }
 
+  @Test
+  @DisplayName("Should delete prompt successfully when prompt exists")
+  void testDeletePromptSuccess() {
+    // Arrange
+    String promptId = UUID.randomUUID().toString();
+    CustomPrompt customPrompt = CustomPrompt.builder()
+        .id(UUID.fromString(promptId))
+        .name("Prompt to delete")
+        .content("Some content")
+        .build();
+
+    when(promptRepository.findById(UUID.fromString(promptId))).thenReturn(Optional.of(customPrompt));
+
+    // Act
+    customPromptService.delete(promptId);
+
+    // Assert
+    verify(promptRepository).findById(UUID.fromString(promptId));
+    verify(promptRepository).delete(customPrompt);
+  }
+
+  @Test
+  @DisplayName("Should throw AppNotFoundException if prompt does not exist in delete")
+  void testDeletePromptNotFound() {
+    // Arrange
+    String promptId = UUID.randomUUID().toString();
+    when(promptRepository.findById(UUID.fromString(promptId))).thenReturn(Optional.empty());
+
+    // Act & Assert
+    assertThrows(AppNotFoundException.class, () -> customPromptService.delete(promptId));
+    verify(promptRepository).findById(UUID.fromString(promptId));
+    verify(promptRepository, never()).delete(any());
+  }
+
+  @Test
+  @DisplayName("Should propagate exception thrown by repository.delete in delete")
+  void testDeletePromptRepositoryThrows() {
+    // Arrange
+    String promptId = UUID.randomUUID().toString();
+    CustomPrompt customPrompt = CustomPrompt.builder()
+        .id(UUID.fromString(promptId))
+        .name("Prompt to delete")
+        .content("Some content")
+        .build();
+
+    when(promptRepository.findById(UUID.fromString(promptId))).thenReturn(Optional.of(customPrompt));
+    doThrow(new RuntimeException("Delete failed")).when(promptRepository).delete(customPrompt);
+
+    // Act & Assert
+    assertThrows(RuntimeException.class, () -> customPromptService.delete(promptId));
+    verify(promptRepository).findById(UUID.fromString(promptId));
+    verify(promptRepository).delete(customPrompt);
+  }
+
 }
