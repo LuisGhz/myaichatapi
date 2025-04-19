@@ -1,7 +1,10 @@
 package dev.luisghtz.myaichat.advices;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -64,5 +67,28 @@ public class GlobalControllerAdvice {
   @ExceptionHandler(RuntimeException.class)
   public ResponseEntity<Object> handleRuntimeException() {
     return ResponseEntity.internalServerError().body("Server error. Try later");
+  }
+
+  @ExceptionHandler(DataIntegrityViolationException.class)
+  public ResponseEntity<ChatErrorResponseDto> handleUniqueConstraintViolationException(
+      DataIntegrityViolationException ex) {
+    String message = getErrorMessage(ex.getRootCause().getLocalizedMessage());
+    var response = ChatErrorResponseDto.builder()
+        .statusCode(HttpStatus.BAD_REQUEST)
+        .message(message)
+        .build();
+    return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+  }
+
+  private String getErrorMessage(String message) {
+    if (message.contains("Key (name)=")) {
+      // Extract name from the error message using regex
+      Pattern pattern = Pattern.compile("Key \\(name\\)=\\((.+?)\\) already exists");
+      Matcher matcher = pattern.matcher(message);
+      if (matcher.find()) {
+        return "'" + matcher.group(1) + "' is already in use";
+      }
+    }
+    return message;
   }
 }
