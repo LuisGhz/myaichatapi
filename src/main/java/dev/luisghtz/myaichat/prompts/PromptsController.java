@@ -5,6 +5,7 @@ import org.springframework.web.bind.annotation.RestController;
 import dev.luisghtz.myaichat.prompts.dtos.CreateCustomPromptDtoReq;
 import dev.luisghtz.myaichat.prompts.dtos.PromptsListDtoRes;
 import dev.luisghtz.myaichat.prompts.dtos.update.UpdateCustomPromptDtoReq;
+import dev.luisghtz.myaichat.prompts.dtos.update.UpdatedCustomPromptDtoRes;
 import dev.luisghtz.myaichat.prompts.entities.CustomPrompt;
 import dev.luisghtz.myaichat.prompts.services.CustomPromptService;
 import jakarta.validation.Valid;
@@ -47,11 +48,12 @@ public class PromptsController {
   }
 
   @PatchMapping("/{promptId}/update")
-  public ResponseEntity<String> update(
+  public ResponseEntity<UpdatedCustomPromptDtoRes> update(
       @PathVariable UUID promptId,
       @Valid @RequestBody UpdateCustomPromptDtoReq updateCustomPromptDtoReq) {
     customPromptService.update(promptId.toString(), updateCustomPromptDtoReq);
-    return ResponseEntity.ok("Prompt updated successfully");
+    var res = new UpdatedCustomPromptDtoRes("Prompt updated successfully");
+    return ResponseEntity.ok(res);
   }
 
   @DeleteMapping("/{promptId}/{paramId}/delete-param")
