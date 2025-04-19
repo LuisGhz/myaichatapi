@@ -22,17 +22,22 @@ import org.springframework.util.MimeTypeUtils;
 
 import dev.luisghtz.myaichat.chat.entities.AppMessage;
 import dev.luisghtz.myaichat.chat.entities.Chat;
+import dev.luisghtz.myaichat.exceptions.AppNotFoundException;
 import dev.luisghtz.myaichat.exceptions.ImageNotValidException;
+import dev.luisghtz.myaichat.prompts.entities.CustomPrompt;
+import dev.luisghtz.myaichat.prompts.services.CustomPromptService;
 import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
 public class OpenAIService {
   private final ChatModel chatModel;
+  private final CustomPromptService customPromptService;
 
-  public ChatResponse sendNewMessage(List<AppMessage> messages, String model) {
+  public ChatResponse sendNewMessage(List<AppMessage> messages, String model, String customPromptId) {
     List<Message> modelMessages = new ArrayList<>();
-    modelMessages.add(new SystemMessage("You are an intelligent assistant."));
+    var systemMessage = systemMessage(customPromptId);
+    modelMessages.add(new SystemMessage(systemMessage));
 
     // Convert AppMessages to the appropriate Message type
     List<Message> convertedMessages = messages.stream().map(message -> {
@@ -96,6 +101,16 @@ public class OpenAIService {
       return MimeTypeUtils.IMAGE_JPEG;
     } else {
       throw new ImageNotValidException("Image not valid. Supported formats: gif, png, jpg, jpeg.");
+    }
+  }
+
+  private String systemMessage(String customPromptId) {
+    if (customPromptId != null) {
+      CustomPrompt customPrompt = customPromptService.findById(customPromptId)
+          .orElseThrow(() -> new AppNotFoundException("Prompt not found for this chat"));
+      return customPrompt.getContent();
+    } else {
+      return "You are an intelligent assistant.";
     }
   }
 }

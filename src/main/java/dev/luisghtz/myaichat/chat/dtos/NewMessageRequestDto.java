@@ -20,4 +20,5 @@ public class NewMessageRequestDto {
   private String model = null;
   @ValidImage(message = "Invalid image: must be a valid image file.")
   private MultipartFile image = null;
+  private String promptId;
 }

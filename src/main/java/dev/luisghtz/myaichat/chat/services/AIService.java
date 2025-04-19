@@ -54,7 +54,7 @@ public class AIService {
     Chat chat = chatService.getChat(newMessageRequestDto);
     boolean isNewChat = isChatNew(chat);
     AppMessage userMessage = MessagesUtils.processUserMessage(newMessageRequestDto, chat, fileUrl);
-    AppMessage assistantMessage = getAssistantResponse(chat, userMessage);
+    AppMessage assistantMessage = getAssistantResponse(chat, userMessage, newMessageRequestDto.getPromptId());
     AssistantMessageResponseDto responseDto = createAssistantMessageDto(assistantMessage, chat.getId(), isNewChat);
     saveMessages(userMessage, assistantMessage);
     if (isNewChat)
@@ -66,10 +66,10 @@ public class AIService {
     return chat.getMessages() == null || chat.getMessages().isEmpty();
   }
 
-  private AppMessage getAssistantResponse(Chat chat, AppMessage userMessage) {
+  private AppMessage getAssistantResponse(Chat chat, AppMessage userMessage, String customPromptId) {
     List<AppMessage> messages = messageService.getMessagesFromChat(chat);
     messages.add(userMessage);
-    var chatResponse = openAIService.sendNewMessage(messages, chat.getModel());
+    var chatResponse = openAIService.sendNewMessage(messages, chat.getModel(), customPromptId);
     return MessagesUtils.createAssistantMessage(chatResponse, chat);
   }
 
