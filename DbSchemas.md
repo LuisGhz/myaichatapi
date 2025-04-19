@@ -36,7 +36,7 @@ CREATE TABLE app_message (
 
 CREATE TABLE custom_prompt (
     id UUID PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
+    name VARCHAR(255) NOT NULL UNIQUE,
     content TEXT NOT NULL,
     created_at TIMESTAMP,
     updated_at TIMESTAMP
