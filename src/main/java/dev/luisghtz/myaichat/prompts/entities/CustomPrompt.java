@@ -27,7 +27,7 @@ public class CustomPrompt {
   private UUID id;
   @Column(nullable = false, unique = true)
   private String name;
-  @Column(nullable = false)
+  @Column(nullable = false, columnDefinition = "TEXT")
   private String content;
   @Column(updatable = false)
   private Date createdAt;

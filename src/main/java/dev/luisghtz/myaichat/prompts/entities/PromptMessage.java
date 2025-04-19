@@ -4,6 +4,7 @@ import java.util.UUID;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -25,6 +26,7 @@ public class PromptMessage {
   @GeneratedValue(strategy = GenerationType.UUID)
   private UUID id;
   private String role;
+  @Column(nullable = false, columnDefinition = "TEXT")
   private String content;
   @ManyToOne
   @JoinColumn(name = "custom_prompt_id")
