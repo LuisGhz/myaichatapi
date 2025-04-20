@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import dev.luisghtz.myaichat.chat.entities.AppMessage;
 import dev.luisghtz.myaichat.chat.entities.Chat;
 import dev.luisghtz.myaichat.chat.models.AppMessageHistory;
+import dev.luisghtz.myaichat.chat.models.TokensSum;
 import dev.luisghtz.myaichat.chat.repositories.MessageRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -57,5 +58,9 @@ public class MessageService {
   public void deleteAllByChat(UUID id) {
     log.info("Deleting messages for chat with ID: '{}'", id);
     messageRepository.deleteAllByChatId(id);
+  }
+
+  public TokensSum getSumOfPromptAndCompletionTokensByChatId(UUID chatId) {
+    return messageRepository.getSumOfPromptAndCompletionTokensByChatId(chatId);
   }
 }

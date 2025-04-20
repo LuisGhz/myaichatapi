@@ -15,4 +15,6 @@ import lombok.NoArgsConstructor;
 public class HistoryChatDto {
   private List<AppMessageHistory> historyMessages;
   private String model;
+  private Long totalPromptTokens;
+  private Long totalCompletionTokens;
 }

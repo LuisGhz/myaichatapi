@@ -41,10 +41,13 @@ public class AIService {
 
   public HistoryChatDto getChatHistory(UUID id, Pageable pageable) {
     var chat = chatService.findChatById(id);
+    var tokens = messageService.getSumOfPromptAndCompletionTokensByChatId(id);
     var historyMessages = messageService.getAppMessagesHistory(chat, pageable);
     var appMessageHistory = HistoryChatDto.builder()
         .historyMessages(historyMessages)
         .model(chat.getModel())
+        .totalPromptTokens(tokens.getPromptTokens())
+        .totalCompletionTokens(tokens.getCompletionTokens())
         .build();
     return appMessageHistory;
   }
