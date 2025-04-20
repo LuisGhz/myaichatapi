@@ -13,6 +13,7 @@ import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.prompt.Prompt;
+import org.springframework.ai.chat.prompt.PromptTemplate;
 import org.springframework.ai.model.Media;
 import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.ai.openai.api.OpenAiApi;
@@ -27,9 +28,11 @@ import dev.luisghtz.myaichat.exceptions.ImageNotValidException;
 import dev.luisghtz.myaichat.prompts.entities.CustomPrompt;
 import dev.luisghtz.myaichat.prompts.services.CustomPromptService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.log4j.Log4j2;
 
 @Service
 @RequiredArgsConstructor
+@Log4j2
 public class OpenAIService {
   private final ChatModel chatModel;
   private final CustomPromptService customPromptService;
@@ -37,6 +40,7 @@ public class OpenAIService {
   public ChatResponse sendNewMessage(List<AppMessage> messages, String model, String customPromptId) {
     List<Message> modelMessages = new ArrayList<>();
     var systemMessage = systemMessage(customPromptId);
+    log.info("System message: {}", systemMessage);
     modelMessages.add(new SystemMessage(systemMessage));
 
     // Convert AppMessages to the appropriate Message type
@@ -108,7 +112,13 @@ public class OpenAIService {
     if (customPromptId != null) {
       CustomPrompt customPrompt = customPromptService.findById(customPromptId)
           .orElseThrow(() -> new AppNotFoundException("Prompt not found for this chat"));
-      return customPrompt.getContent();
+      if (customPrompt.getParams() == null || customPrompt.getParams().isEmpty())
+        return customPrompt.getContent();
+      var promptTemplate = new PromptTemplate(customPrompt.getContent());
+      customPrompt.getParams().forEach((param) -> {
+        promptTemplate.add(param.getName(), param.getValue());
+      });
+      return promptTemplate.render();
     } else {
       return "You are an intelligent assistant.";
     }
