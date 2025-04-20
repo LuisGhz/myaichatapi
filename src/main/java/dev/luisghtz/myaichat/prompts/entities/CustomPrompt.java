@@ -4,6 +4,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
+import dev.luisghtz.myaichat.chat.entities.Chat;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -37,4 +38,6 @@ public class CustomPrompt {
   private List<PromptMessage> messages;
   @OneToMany(mappedBy = "prompt", cascade = CascadeType.ALL, orphanRemoval = true)
   private List<PromptParam> params;
+  @OneToMany(mappedBy = "customPrompt", cascade = CascadeType.ALL, orphanRemoval = true)
+  private List<Chat> chats;
 }
