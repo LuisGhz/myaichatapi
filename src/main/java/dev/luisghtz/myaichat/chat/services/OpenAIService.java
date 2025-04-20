@@ -23,10 +23,8 @@ import org.springframework.util.MimeTypeUtils;
 
 import dev.luisghtz.myaichat.chat.entities.AppMessage;
 import dev.luisghtz.myaichat.chat.entities.Chat;
-import dev.luisghtz.myaichat.exceptions.AppNotFoundException;
 import dev.luisghtz.myaichat.exceptions.ImageNotValidException;
 import dev.luisghtz.myaichat.prompts.entities.CustomPrompt;
-import dev.luisghtz.myaichat.prompts.services.CustomPromptService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 
@@ -35,11 +33,10 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 public class OpenAIService {
   private final ChatModel chatModel;
-  private final CustomPromptService customPromptService;
 
-  public ChatResponse sendNewMessage(List<AppMessage> messages, String model, String customPromptId) {
+  public ChatResponse sendNewMessage(List<AppMessage> messages, Chat chat) {
     List<Message> modelMessages = new ArrayList<>();
-    var systemMessage = systemMessage(customPromptId);
+    var systemMessage = systemMessage(chat);
     log.info("System message: {}", systemMessage);
     modelMessages.add(new SystemMessage(systemMessage));
 
@@ -53,7 +50,7 @@ public class OpenAIService {
     modelMessages.addAll(convertedMessages);
     // Always create the chat response
     OpenAiChatOptions options = OpenAiChatOptions.builder()
-        .model(model)
+        .model(chat.getModel())
         .maxCompletionTokens(2500)
         .build();
 
@@ -108,10 +105,9 @@ public class OpenAIService {
     }
   }
 
-  private String systemMessage(String customPromptId) {
-    if (customPromptId != null) {
-      CustomPrompt customPrompt = customPromptService.findById(customPromptId)
-          .orElseThrow(() -> new AppNotFoundException("Prompt not found for this chat"));
+  private String systemMessage(Chat chat) {
+    if (chat.getCustomPrompt() != null) {
+      CustomPrompt customPrompt = chat.getCustomPrompt();
       if (customPrompt.getParams() == null || customPrompt.getParams().isEmpty())
         return customPrompt.getContent();
       var promptTemplate = new PromptTemplate(customPrompt.getContent());

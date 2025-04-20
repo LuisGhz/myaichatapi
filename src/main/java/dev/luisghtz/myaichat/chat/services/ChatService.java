@@ -10,6 +10,7 @@ import org.springframework.web.server.ResponseStatusException;
 import dev.luisghtz.myaichat.chat.dtos.NewMessageRequestDto;
 import dev.luisghtz.myaichat.chat.entities.Chat;
 import dev.luisghtz.myaichat.chat.repositories.ChatRepository;
+import dev.luisghtz.myaichat.prompts.services.CustomPromptService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -19,6 +20,7 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 public class ChatService {
   private final ChatRepository chatRepository;
+  private final CustomPromptService customPromptService;
 
   public Chat getChat(NewMessageRequestDto newMessageRequestDto) {
     Chat chat = null;
@@ -43,6 +45,12 @@ public class ChatService {
         .createdAt(new Date())
         .model(newMessageRequestDto.getModel())
         .build();
+    if (newMessageRequestDto.getPromptId() != null || !newMessageRequestDto.getPromptId().isEmpty()) {
+      var prompt = customPromptService.findById(newMessageRequestDto.getPromptId())
+          .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+              "Prompt not found with ID: " + newMessageRequestDto.getPromptId()));
+      newChat.setCustomPrompt(prompt);
+    }
     return chatRepository.save(newChat);
   }
 
