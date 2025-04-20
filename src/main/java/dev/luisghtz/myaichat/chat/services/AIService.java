@@ -62,6 +62,9 @@ public class AIService {
     saveMessages(userMessage, assistantMessage);
     if (isNewChat)
       generateAndSetTitleForNewChat(chat, newMessageRequestDto, responseDto);
+    var tokens = messageService.getSumOfPromptAndCompletionTokensByChatId(chat.getId());
+    responseDto.setTotalChatPromptTokens(tokens.getPromptTokens());
+    responseDto.setTotalChatCompletionTokens(tokens.getCompletionTokens());
     return responseDto;
   }
 
