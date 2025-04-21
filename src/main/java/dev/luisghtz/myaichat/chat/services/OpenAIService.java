@@ -36,9 +36,8 @@ public class OpenAIService {
 
   public ChatResponse sendNewMessage(List<AppMessage> messages, Chat chat) {
     List<Message> modelMessages = new ArrayList<>();
-    var systemMessage = systemMessage(chat);
-    log.info("System message: {}", systemMessage);
-    modelMessages.add(new SystemMessage(systemMessage));
+    addSystemMessage(chat, modelMessages);
+    addInitialMessagesIfApply(chat, modelMessages);
 
     // Convert AppMessages to the appropriate Message type
     List<Message> convertedMessages = messages.stream().map(message -> {
@@ -105,18 +104,33 @@ public class OpenAIService {
     }
   }
 
-  private String systemMessage(Chat chat) {
+  private void addInitialMessagesIfApply(Chat chat, List<Message> messages) {
+    if (chat.getCustomPrompt() != null && chat.getCustomPrompt().getMessages() != null
+        && !chat.getCustomPrompt().getMessages().isEmpty()) {
+      CustomPrompt customPrompt = chat.getCustomPrompt();
+      customPrompt.getMessages().forEach((message) -> {
+        if (message.getRole().equals("Assistant")) {
+          messages.add(new AssistantMessage(message.getContent()));
+        } else if (message.getRole().equals("User")) {
+          messages.add(new UserMessage(message.getContent()));
+        }
+      });
+    }
+  }
+
+  private void addSystemMessage(Chat chat, List<Message> messages) {
     if (chat.getCustomPrompt() != null) {
       CustomPrompt customPrompt = chat.getCustomPrompt();
-      if (customPrompt.getParams() == null || customPrompt.getParams().isEmpty())
-        return customPrompt.getContent();
       var promptTemplate = new PromptTemplate(customPrompt.getContent());
-      customPrompt.getParams().forEach((param) -> {
-        promptTemplate.add(param.getName(), param.getValue());
-      });
-      return promptTemplate.render();
-    } else {
-      return "You are an intelligent assistant.";
+      if (customPrompt.getParams() != null && !customPrompt.getParams().isEmpty()) {
+        customPrompt.getParams().forEach((param) -> {
+          promptTemplate.add(param.getName(), param.getValue());
+        });
+      }
+      messages.add(new SystemMessage(promptTemplate.render()));
+      return;
     }
+
+    messages.add(new SystemMessage("You are a helpful assistant."));
   }
 }
