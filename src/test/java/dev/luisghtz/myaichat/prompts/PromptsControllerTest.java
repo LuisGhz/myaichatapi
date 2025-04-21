@@ -41,6 +41,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import dev.luisghtz.myaichat.prompts.dtos.update.UpdateCustomPromptDtoReq;
 import dev.luisghtz.myaichat.prompts.dtos.update.UpdateCustomPromptMessagesDto;
 import dev.luisghtz.myaichat.prompts.dtos.update.UpdateCustomPromptParamsDto;
+import dev.luisghtz.myaichat.prompts.dtos.update.UpdatedCustomPromptDtoRes;
 
 @WebMvcTest(PromptsController.class)
 public class PromptsControllerTest {
@@ -192,6 +193,18 @@ public class PromptsControllerTest {
   }
 
   @Test
+  @DisplayName("POST /api/custom-prompts - Invalid content message (max length)")
+  void testInvalidContentMessageMaxLength() throws Exception {
+    // Setup mock service
+    when(customPromptService.create(any(CreateCustomPromptDtoReq.class))).thenReturn(customPrompt);
+    createRequest.getMessages().get(0).setContent("a".repeat(10_001)); // Exceeds max length
+    mockMvc.perform(post("/api/custom-prompts")
+        .contentType(MediaType.APPLICATION_JSON)
+        .content(objectMapper.writeValueAsString(createRequest)))
+        .andExpect(status().isBadRequest());
+  }
+
+  @Test
   @DisplayName("POST /api/custom-prompts - Invalid param name")
   void testInvalidParamName() throws Exception {
     // Setup mock service
@@ -204,6 +217,18 @@ public class PromptsControllerTest {
         .andExpect(status().isBadRequest());
   }
 
+   @Test
+   @DisplayName("POST /api/custom-prompts - Invalid param name (max length)")
+   void testInvalidParamNameMaxLength() throws Exception {
+     // Setup mock service
+     when(customPromptService.create(any(CreateCustomPromptDtoReq.class))).thenReturn(customPrompt);
+     createRequest.getParams().get(0).setName("a".repeat(16)); // Exceeds max length
+     mockMvc.perform(post("/api/custom-prompts")
+         .contentType(MediaType.APPLICATION_JSON)
+         .content(objectMapper.writeValueAsString(createRequest)))
+         .andExpect(status().isBadRequest());
+   }
+
   @Test
   @DisplayName("POST /api/custom-prompts - Invalid param value")
   void testInvalidParamValue() throws Exception {
@@ -211,6 +236,42 @@ public class PromptsControllerTest {
     when(customPromptService.create(any(CreateCustomPromptDtoReq.class))).thenReturn(customPrompt);
     createRequest.getParams().get(0).setValue("  ");
     ;
+    mockMvc.perform(post("/api/custom-prompts")
+        .contentType(MediaType.APPLICATION_JSON)
+        .content(objectMapper.writeValueAsString(createRequest)))
+        .andExpect(status().isBadRequest());
+  }
+
+  @Test
+  @DisplayName("POST /api/custom-prompts - Invalid param value (max length)")
+  void testInvalidParamValueMaxLength() throws Exception {
+    // Setup mock service
+    when(customPromptService.create(any(CreateCustomPromptDtoReq.class))).thenReturn(customPrompt);
+    createRequest.getParams().get(0).setValue("a".repeat(101)); // Exceeds max length
+    mockMvc.perform(post("/api/custom-prompts")
+        .contentType(MediaType.APPLICATION_JSON)
+        .content(objectMapper.writeValueAsString(createRequest)))
+        .andExpect(status().isBadRequest());
+  }
+
+  @Test
+  @DisplayName("POST /api/custom-prompts - Invalid prompt name (max length)")
+  void testInvalidPromptNameMaxLength() throws Exception {
+    // Setup mock service
+    when(customPromptService.create(any(CreateCustomPromptDtoReq.class))).thenReturn(customPrompt);
+    createRequest.setName("a".repeat(16)); // Exceeds max length
+    mockMvc.perform(post("/api/custom-prompts")
+        .contentType(MediaType.APPLICATION_JSON)
+        .content(objectMapper.writeValueAsString(createRequest)))
+        .andExpect(status().isBadRequest());
+  }
+
+  @Test
+  @DisplayName("POST /api/custom-prompts - Invalid prompt content (max length)")
+  void testInvalidPromptContentMaxLength() throws Exception {
+    // Setup mock service
+    when(customPromptService.create(any(CreateCustomPromptDtoReq.class))).thenReturn(customPrompt);
+    createRequest.setContent("a".repeat(10_001)); // Exceeds max length
     mockMvc.perform(post("/api/custom-prompts")
         .contentType(MediaType.APPLICATION_JSON)
         .content(objectMapper.writeValueAsString(createRequest)))
@@ -237,7 +298,7 @@ public class PromptsControllerTest {
     // Arrange
     String promptIdString = promptId.toString();
     UpdateCustomPromptDtoReq updateRequest = new UpdateCustomPromptDtoReq();
-    updateRequest.setName("Updated Test Prompt");
+    updateRequest.setName("Updated Prompt"); // Shortened name
     updateRequest.setContent("Updated content");
 
     UpdateCustomPromptParamsDto updatedParam = new UpdateCustomPromptParamsDto();
@@ -246,18 +307,23 @@ public class PromptsControllerTest {
     updateRequest.setParams(Arrays.asList(updatedParam));
 
     UpdateCustomPromptMessagesDto updatedMessage = new UpdateCustomPromptMessagesDto();
-    updatedMessage.setRole("Assistant");
+    updatedMessage.setRole("User");
     updatedMessage.setContent("You are an updated assistant.");
     updateRequest.setMessages(Arrays.asList(updatedMessage));
 
     // Mock service call
     doNothing().when(customPromptService).update(anyString(), any(UpdateCustomPromptDtoReq.class));
+
+    // Expected response
+    UpdatedCustomPromptDtoRes expectedResponse = new UpdatedCustomPromptDtoRes("Prompt updated successfully");
+
     // Act & Assert
     mockMvc.perform(patch("/api/custom-prompts/{promptId}/update", promptIdString)
         .contentType(MediaType.APPLICATION_JSON)
         .content(objectMapper.writeValueAsString(updateRequest)))
         .andExpect(status().isOk())
-        .andExpect(content().string("Prompt updated successfully"));
+        // Expect the new response DTO as JSON
+        .andExpect(content().json(objectMapper.writeValueAsString(expectedResponse)));
 
     // Verify service interaction
     verify(customPromptService, times(1)).update(promptIdString, updateRequest);
@@ -269,7 +335,7 @@ public class PromptsControllerTest {
     // Arrange
     String promptIdString = promptId.toString();
     UpdateCustomPromptDtoReq updateRequest = new UpdateCustomPromptDtoReq();
-    updateRequest.setName("Updated Test Prompt");
+    updateRequest.setName("Updated Prompt");
     updateRequest.setContent("Updated content");
 
     // Mock service call to throw exception
@@ -293,6 +359,7 @@ public class PromptsControllerTest {
     String promptIdString = promptId.toString();
     UpdateCustomPromptDtoReq invalidUpdateRequest = new UpdateCustomPromptDtoReq();
     invalidUpdateRequest.setName(" "); // Assuming @NotBlank validation
+    invalidUpdateRequest.setContent("Valid content"); // Need valid content to isolate name error
 
     // Act & Assert
     mockMvc.perform(patch("/api/custom-prompts/{promptId}/update", promptIdString)
@@ -305,16 +372,80 @@ public class PromptsControllerTest {
   }
 
    @Test
+   @DisplayName("PATCH /api/custom-prompts/{promptId}/update - Should return Bad Request for invalid prompt name (max length)")
+   void testUpdatePromptInvalidNameMaxLength() throws Exception {
+       // Arrange
+       String promptIdString = promptId.toString();
+       UpdateCustomPromptDtoReq updateRequest = new UpdateCustomPromptDtoReq();
+       updateRequest.setName("a".repeat(16)); // Exceeds max length 15
+       updateRequest.setContent("Valid content");
+
+       // Act & Assert
+       mockMvc.perform(patch("/api/custom-prompts/{promptId}/update", promptIdString)
+               .contentType(MediaType.APPLICATION_JSON)
+               .content(objectMapper.writeValueAsString(updateRequest)))
+               .andExpect(status().isBadRequest());
+
+       // Verify service interaction (should not be called)
+       verify(customPromptService, never()).update(anyString(), any(UpdateCustomPromptDtoReq.class));
+   }
+
+   @Test
+   @DisplayName("PATCH /api/custom-prompts/{promptId}/update - Should return Bad Request for invalid prompt content (max length)")
+   void testUpdatePromptInvalidContentMaxLength() throws Exception {
+       // Arrange
+       String promptIdString = promptId.toString();
+       UpdateCustomPromptDtoReq updateRequest = new UpdateCustomPromptDtoReq();
+       updateRequest.setName("Valid Name");
+       updateRequest.setContent("a".repeat(10_001)); // Exceeds max length 10000
+
+       // Act & Assert
+       mockMvc.perform(patch("/api/custom-prompts/{promptId}/update", promptIdString)
+               .contentType(MediaType.APPLICATION_JSON)
+               .content(objectMapper.writeValueAsString(updateRequest)))
+               .andExpect(status().isBadRequest());
+
+       // Verify service interaction (should not be called)
+       verify(customPromptService, never()).update(anyString(), any(UpdateCustomPromptDtoReq.class));
+   }
+
+
+   @Test
    @DisplayName("PATCH /api/custom-prompts/{promptId}/update - Should return Bad Request for invalid message role")
    void testUpdatePromptInvalidMessageRole() throws Exception {
        // Arrange
        String promptIdString = promptId.toString();
        UpdateCustomPromptDtoReq updateRequest = new UpdateCustomPromptDtoReq();
        updateRequest.setName("Valid Name");
+       updateRequest.setContent("Valid Content"); // Add valid content
 
        UpdateCustomPromptMessagesDto invalidMessage = new UpdateCustomPromptMessagesDto();
        invalidMessage.setRole("InvalidRole"); // Assuming validation like @Pattern(regexp = "User|System|Assistant")
        invalidMessage.setContent("Valid content");
+       updateRequest.setMessages(Arrays.asList(invalidMessage));
+
+       // Act & Assert
+       mockMvc.perform(patch("/api/custom-prompts/{promptId}/update", promptIdString)
+               .contentType(MediaType.APPLICATION_JSON)
+               .content(objectMapper.writeValueAsString(updateRequest)))
+               .andExpect(status().isBadRequest());
+
+       // Verify service interaction (should not be called)
+       verify(customPromptService, never()).update(anyString(), any(UpdateCustomPromptDtoReq.class));
+   }
+
+   @Test
+   @DisplayName("PATCH /api/custom-prompts/{promptId}/update - Should return Bad Request for invalid message content (max length)")
+   void testUpdatePromptInvalidMessageContentMaxLength() throws Exception {
+       // Arrange
+       String promptIdString = promptId.toString();
+       UpdateCustomPromptDtoReq updateRequest = new UpdateCustomPromptDtoReq();
+       updateRequest.setName("Valid Name");
+       updateRequest.setContent("Valid Content");
+
+       UpdateCustomPromptMessagesDto invalidMessage = new UpdateCustomPromptMessagesDto();
+       invalidMessage.setRole("User");
+       invalidMessage.setContent("a".repeat(10_001)); // Exceeds max length 10000
        updateRequest.setMessages(Arrays.asList(invalidMessage));
 
        // Act & Assert
@@ -334,10 +465,59 @@ public class PromptsControllerTest {
        String promptIdString = promptId.toString();
        UpdateCustomPromptDtoReq updateRequest = new UpdateCustomPromptDtoReq();
        updateRequest.setName("Valid Name");
+       updateRequest.setContent("Valid Content"); // Add valid content
 
        UpdateCustomPromptParamsDto invalidParam = new UpdateCustomPromptParamsDto();
        invalidParam.setName(" "); // Assuming @NotBlank validation
        invalidParam.setValue("Valid value");
+       updateRequest.setParams(Arrays.asList(invalidParam));
+
+       // Act & Assert
+       mockMvc.perform(patch("/api/custom-prompts/{promptId}/update", promptIdString)
+               .contentType(MediaType.APPLICATION_JSON)
+               .content(objectMapper.writeValueAsString(updateRequest)))
+               .andExpect(status().isBadRequest());
+
+       // Verify service interaction (should not be called)
+       verify(customPromptService, never()).update(anyString(), any(UpdateCustomPromptDtoReq.class));
+   }
+
+   @Test
+   @DisplayName("PATCH /api/custom-prompts/{promptId}/update - Should return Bad Request for invalid param name (max length)")
+   void testUpdatePromptInvalidParamNameMaxLength() throws Exception {
+       // Arrange
+       String promptIdString = promptId.toString();
+       UpdateCustomPromptDtoReq updateRequest = new UpdateCustomPromptDtoReq();
+       updateRequest.setName("Valid Name");
+       updateRequest.setContent("Valid Content");
+
+       UpdateCustomPromptParamsDto invalidParam = new UpdateCustomPromptParamsDto();
+       invalidParam.setName("a".repeat(16)); // Exceeds max length 15
+       invalidParam.setValue("Valid value");
+       updateRequest.setParams(Arrays.asList(invalidParam));
+
+       // Act & Assert
+       mockMvc.perform(patch("/api/custom-prompts/{promptId}/update", promptIdString)
+               .contentType(MediaType.APPLICATION_JSON)
+               .content(objectMapper.writeValueAsString(updateRequest)))
+               .andExpect(status().isBadRequest());
+
+       // Verify service interaction (should not be called)
+       verify(customPromptService, never()).update(anyString(), any(UpdateCustomPromptDtoReq.class));
+   }
+
+   @Test
+   @DisplayName("PATCH /api/custom-prompts/{promptId}/update - Should return Bad Request for invalid param value (max length)")
+   void testUpdatePromptInvalidParamValueMaxLength() throws Exception {
+       // Arrange
+       String promptIdString = promptId.toString();
+       UpdateCustomPromptDtoReq updateRequest = new UpdateCustomPromptDtoReq();
+       updateRequest.setName("Valid Name");
+       updateRequest.setContent("Valid Content");
+
+       UpdateCustomPromptParamsDto invalidParam = new UpdateCustomPromptParamsDto();
+       invalidParam.setName("Valid Param Name");
+       invalidParam.setValue("a".repeat(101)); // Exceeds max length 100
        updateRequest.setParams(Arrays.asList(invalidParam));
 
        // Act & Assert
@@ -357,7 +537,7 @@ public class PromptsControllerTest {
     // Arrange
     String promptIdString = promptId.toString();
     UpdateCustomPromptDtoReq updateRequest = new UpdateCustomPromptDtoReq();
-    updateRequest.setName("Updated Test Prompt");
+    updateRequest.setName("Updated Prompt");
     updateRequest.setContent("Updated content");
     // Add valid params/messages if needed for the request to be valid before hitting the service
     updateRequest.setParams(Collections.emptyList());
