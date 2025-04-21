@@ -18,6 +18,6 @@ public class UpdateCustomPromptParamsDto {
   @Length(max = 15, message = "Name cannot exceed 15 characters")
   private String name;
   @NoBlankSpace(message = "Value cannot be blank")
-  @Length(max = 100, message = "Name cannot exceed 100 characters")
+  @Length(max = 100, message = "Value cannot exceed 100 characters")
   private String value;
 }
