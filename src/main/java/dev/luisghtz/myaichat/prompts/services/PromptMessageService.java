@@ -47,7 +47,7 @@ public class PromptMessageService {
       if (customPrompt.getMessages() == null)
         customPrompt.setMessages(new ArrayList<>());
       var messages = updateCustomPromptDtoReq.getMessages().stream()
-          .filter(msg -> msg.getId() == null)
+          .filter(msg -> msg.getId() == null || msg.getId().toString().isEmpty())
           .map(msg -> {
             handleInvalidMessage(msg);
 
@@ -67,7 +67,7 @@ public class PromptMessageService {
       UpdateCustomPromptDtoReq createCustomPromptDtoReq, CustomPrompt customPrompt) {
     if (createCustomPromptDtoReq.getMessages() != null && !createCustomPromptDtoReq.getMessages().isEmpty()) {
       createCustomPromptDtoReq.getMessages().stream()
-          .filter(msg -> msg.getId() != null)
+          .filter(msg -> msg.getId() != null && !msg.getId().toString().isEmpty())
           .forEach(msg -> {
             customPrompt.getMessages().stream()
                 .filter(m -> m.getId().toString().equals(msg.getId().toString()))
