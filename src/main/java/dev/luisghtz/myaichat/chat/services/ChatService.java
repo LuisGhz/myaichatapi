@@ -45,7 +45,7 @@ public class ChatService {
         .createdAt(new Date())
         .model(newMessageRequestDto.getModel())
         .build();
-    if (newMessageRequestDto.getPromptId() != null || !newMessageRequestDto.getPromptId().isEmpty()) {
+    if (newMessageRequestDto.getPromptId() != null && !newMessageRequestDto.getPromptId().isEmpty()) {
       var prompt = customPromptService.findById(newMessageRequestDto.getPromptId())
           .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
               "Prompt not found with ID: " + newMessageRequestDto.getPromptId()));
