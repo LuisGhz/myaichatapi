@@ -30,12 +30,11 @@ public class AIService {
   private final MessageService messageService;
 
   public ChatsListResponseDto getAllChats() {
-    var chats = chatRepository.findAll();
+    var chats = chatRepository.findAllByOrderByCreatedAtAsc();
     ChatsListResponseDto chatsListResponseDto = new ChatsListResponseDto();
-    chatsListResponseDto.setChats(chats.stream().map(chat -> {
-      var chatSummary = new ChatSummary(chat.getId(), chat.getTitle());
-      return chatSummary;
-    }).collect(Collectors.toList()));
+    chatsListResponseDto.setChats(chats.stream()
+      .map(chat -> new ChatSummary(chat.getId(), chat.getTitle()))
+      .collect(Collectors.toList()));
     return chatsListResponseDto;
   }
 
