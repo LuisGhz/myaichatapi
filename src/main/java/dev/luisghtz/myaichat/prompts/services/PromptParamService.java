@@ -57,7 +57,7 @@ public class PromptParamService {
       if (customPrompt.getParams() == null)
         customPrompt.setParams(new ArrayList<>());
       var params = updateCustomPromptDtoReq.getParams().stream()
-          .filter(param -> param.getId() == null)
+          .filter(param -> param.getId() == null || param.getId().isEmpty())
           .map(param -> {
             handleInvalidNewParamProps(param);
             handleExistingParamName(param, customPrompt);
@@ -77,7 +77,7 @@ public class PromptParamService {
       UpdateCustomPromptDtoReq createCustomPromptDtoReq, CustomPrompt customPrompt) {
     if (createCustomPromptDtoReq.getParams() != null && !createCustomPromptDtoReq.getParams().isEmpty()) {
       createCustomPromptDtoReq.getParams().stream()
-          .filter(param -> param.getId() != null)
+          .filter(param -> param.getId() != null && !param.getId().isEmpty())
           .forEach(param -> {
             customPrompt.getParams().stream()
                 .filter(p -> p.getId().toString().equals(param.getId()))
