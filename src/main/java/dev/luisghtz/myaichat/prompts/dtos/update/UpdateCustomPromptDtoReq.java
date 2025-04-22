@@ -19,8 +19,8 @@ public class UpdateCustomPromptDtoReq {
   @NoBlankSpace(message = "Name cannot be blank")
   @Length(max = 15, message = "Name cannot exceed 15 characters")
   private String name;
-  @Length(max = 10_000, message = "Name cannot exceed 10,000 characters")
   @NoBlankSpace(message = "Content cannot be blank")
+  @Length(max = 10_000, message = "Name cannot exceed 10,000 characters")
   private String content;
   @Valid
   private List<UpdateCustomPromptParamsDto> params;
