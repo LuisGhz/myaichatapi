@@ -58,10 +58,12 @@ public class PromptsControllerTest {
   private CreateCustomPromptDtoReq createRequest;
   private CustomPrompt customPrompt;
   private UUID promptId;
+  private UUID existingParamId; // Add ID for existing param
 
   @BeforeEach
   void setUp() {
     promptId = UUID.randomUUID();
+    existingParamId = UUID.randomUUID(); // Initialize existing param ID
 
     // Setup request DTO
     createRequest = new CreateCustomPromptDtoReq();
@@ -78,7 +80,8 @@ public class PromptsControllerTest {
     createRequest.setMessages(Arrays.asList(message));
 
     // Setup entity response
-    var promptParam = PromptParam.builder()
+    var existingPromptParam = PromptParam.builder() // Renamed for clarity
+        .id(existingParamId) // Assign ID
         .name("temperature")
         .value("0.7")
         .build();
@@ -91,7 +94,7 @@ public class PromptsControllerTest {
         .id(promptId)
         .name("Test Prompt")
         .content("You are a helpful assistant")
-        .params(List.of(promptParam))
+        .params(List.of(existingPromptParam)) // Use the param with ID
         .messages(List.of(promptMessage))
         .build();
   }
