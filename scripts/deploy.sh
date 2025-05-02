@@ -4,6 +4,14 @@ if [ -z "$DOCKERHUB_USER" ]; then
   echo "Error: DOCKERHUB_USER environment variable is not set: $DOCKERHUB_USER"
   exit 1
 fi
+if [ -z "$CDN_DOMAIN" ]; then
+  echo "Error: CDN_DOMAIN environment variable is not set"
+  exit 1
+fi
+if [ -z "$ALLOWED_ORIGINS" ]; then
+  echo "Error: ALLOWED_ORIGINS environment variable is not set"
+  exit 1
+fi
 if [ -z "$DOCKERHUB_TOKEN" ]; then
   echo "Error: DOCKERHUB_TOKEN environment variable is not set"
   exit 1
@@ -14,10 +22,6 @@ if [ -z "$OPENAI_API_KEY" ]; then
 fi
 if [ -z "$DB_URL" ]; then
   echo "Error: DB_URL environment variable is not set"
-  exit 1
-fi
-if [ -z "$CDN_DOMAIN" ]; then
-  echo "Error: CDN_DOMAIN environment variable is not set"
   exit 1
 fi
 if [ -z "$S3_ACCESS_KEY" ]; then
@@ -60,4 +64,15 @@ docker pull ${IMAGE_NAME}
 
 # Run a new container with the specified flags
 echo "Running new container ${CONTAINER_NAME}..."
-docker run -d -p ${LOCALPORT}:${DOCKERPORT} --network dbs -e OPENAI_API_KEY=${OPENAI_API_KEY} -e DB_URL=${DB_URL} -e CDN_DOMAIN=${CDN_DOMAIN} -e S3_ACCESS_KEY=${S3_ACCESS_KEY} -e S3_SECRET_KEY=${S3_SECRET_KEY} -e S3_BUCKET_NAME=${S3_BUCKET_NAME} --name ${CONTAINER_NAME} ${IMAGE_NAME}
+docker run -d \
+  -p ${LOCALPORT}:${DOCKERPORT} \
+  --network dbs \
+  -e CDN_DOMAIN=${CDN_DOMAIN} \
+  -e ALLOWED_ORIGINS=${ALLOWED_ORIGINS} \
+  -e OPENAI_API_KEY=${OPENAI_API_KEY} \
+  -e DB_URL=${DB_URL} \
+  -e S3_ACCESS_KEY=${S3_ACCESS_KEY} \
+  -e S3_SECRET_KEY=${S3_SECRET_KEY} \
+  -e S3_BUCKET_NAME=${S3_BUCKET_NAME} \
+  --name ${CONTAINER_NAME} \
+  ${IMAGE_NAME}

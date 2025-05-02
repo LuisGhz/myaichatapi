@@ -31,10 +31,11 @@ jobs:
         uses: appleboy/ssh-action@v1.2.1
         env:
           DOCKERHUB_USER: ${{ vars.DOCKERHUB_USERNAME }}
+          CDN_DOMAIN: ${{ vars.CDN_DOMAIN }}
+          ALLOWED_ORIGINS: ${{ vars.ALLOWED_ORIGINS }}
           DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           DB_URL: ${{ secrets.DB_URL }}
-          CDN_DOMAIN: ${{ vars.CDN_DOMAIN }}
           S3_ACCESS_KEY: ${{ secrets.S3_ACCESS_KEY }}
           S3_SECRET_KEY: ${{ secrets.S3_SECRET_KEY }}
           S3_BUCKET_NAME: ${{ secrets.S3_BUCKET_NAME }}
@@ -43,5 +44,5 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           passphrase: ${{ secrets.SSH_PASSPHRASE }}
-          envs: DOCKERHUB_USER,DOCKERHUB_TOKEN,OPENAI_API_KEY,DB_URL,CDN_DOMAIN,S3_ACCESS_KEY,S3_SECRET_KEY,S3_BUCKET_NAME
+          envs: DOCKERHUB_USER,CDN_DOMAIN,ALLOWED_ORIGINS,DOCKERHUB_TOKEN,OPENAI_API_KEY,DB_URL,S3_ACCESS_KEY,S3_SECRET_KEY,S3_BUCKET_NAME
           script_path: scripts/deploy.sh

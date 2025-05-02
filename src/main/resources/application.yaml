@@ -25,6 +25,9 @@ spring:
     multipart:
       max-file-size: 2MB # Maximum size for a single file
       max-request-size: 2MB # Maximum size for the entire request
+server:
+  cors:
+    allowed-origins: ${ALLOWED_ORIGINS:*}
 cdn: ${CDN_DOMAIN}
 aws:
   s3:
