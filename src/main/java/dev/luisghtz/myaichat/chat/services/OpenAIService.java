@@ -63,7 +63,7 @@ public class OpenAIService {
     List<Message> titleMessages = new ArrayList<>();
     titleMessages
         .add(new SystemMessage(
-            "Generate a concise title of no more than 10 words that summarizes this conversation, avoid to use markdown styles, title should be only text."));
+            "Generate a concise title of no more than 5 words that summarizes this conversation, avoid to use markdown styles, title should be only text."));
     titleMessages.add(new UserMessage(userMessage));
     titleMessages.add(new AssistantMessage(assistantMessage));
 
