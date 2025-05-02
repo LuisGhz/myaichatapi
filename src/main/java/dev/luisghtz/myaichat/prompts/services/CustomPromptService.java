@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import dev.luisghtz.myaichat.exceptions.AppNotFoundException;
+import dev.luisghtz.myaichat.exceptions.ResourceInUseException;
 import dev.luisghtz.myaichat.prompts.dtos.CreateCustomPromptDtoReq;
 import dev.luisghtz.myaichat.prompts.dtos.PromptsListDtoRes;
 import dev.luisghtz.myaichat.prompts.dtos.update.UpdateCustomPromptDtoReq;
@@ -89,6 +90,9 @@ public class CustomPromptService {
   @Transactional
   public void delete(String promptId) {
     var customPrompt = findById(promptId).orElseThrow(() -> new AppNotFoundException("Prompt not found"));
+    if (customPrompt.getChats() != null && !customPrompt.getChats().isEmpty()) {
+      throw new ResourceInUseException("Prompt is in use by a chat, cannot be deleted");
+    }
     promptRepository.delete(customPrompt);
   }
 }
