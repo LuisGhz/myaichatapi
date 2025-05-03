@@ -46,6 +46,12 @@
       <artifactId>spring-ai-openai-spring-boot-starter</artifactId>
       <version>1.0.0-M6</version>
     </dependency>
+    <!-- https://mvnrepository.com/artifact/org.springframework.ai/spring-ai-vertex-ai-gemini -->
+    <dependency>
+      <groupId>org.springframework.ai</groupId>
+      <artifactId>spring-ai-vertex-ai-gemini</artifactId>
+      <version>1.0.0-M8</version>
+    </dependency>
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-web</artifactId>
