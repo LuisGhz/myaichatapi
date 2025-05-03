@@ -10,13 +10,14 @@ import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.ai.chat.messages.UserMessage;
-import org.springframework.ai.chat.model.ChatModel;
+import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.chat.prompt.PromptTemplate;
 import org.springframework.ai.model.Media;
 import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.ai.openai.api.OpenAiApi;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.util.MimeType;
 import org.springframework.util.MimeTypeUtils;
@@ -32,7 +33,8 @@ import lombok.extern.log4j.Log4j2;
 @RequiredArgsConstructor
 @Log4j2
 public class OpenAIService {
-  private final ChatModel chatModel;
+  @Qualifier("openAIChatClient")
+  private final ChatClient chatClient;
 
   public ChatResponse sendNewMessage(List<AppMessage> messages, Chat chat) {
     List<Message> modelMessages = new ArrayList<>();
@@ -52,8 +54,8 @@ public class OpenAIService {
         .model(chat.getModel())
         .maxCompletionTokens(2500)
         .build();
-
-    ChatResponse chatResponse = chatModel.call(new Prompt(modelMessages, options));
+    ChatResponse chatResponse = chatClient.prompt()
+        .messages(modelMessages).options(options).call().chatResponse();
 
     return chatResponse;
   }
@@ -72,7 +74,8 @@ public class OpenAIService {
         .maxCompletionTokens(MAX_COMPLETION_TOKENS)
         .build();
 
-    ChatResponse titleResponse = chatModel.call(new Prompt(titleMessages, titleOptions));
+    ChatResponse titleResponse = chatClient.prompt(new Prompt(titleMessages))
+        .options(titleOptions).call().chatResponse();
 
     return titleResponse.getResult().getOutput().getText();
   }
