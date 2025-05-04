@@ -1,0 +1,14 @@
+package dev.luisghtz.myaichat.chat.models;
+
+import java.util.List;
+
+import org.springframework.ai.chat.model.ChatResponse;
+
+import dev.luisghtz.myaichat.chat.entities.AppMessage;
+import dev.luisghtz.myaichat.chat.entities.Chat;
+
+public interface ProviderService {
+  ChatResponse sendNewMessage(List<AppMessage> messages, Chat chat);
+
+  String generateTitle(Chat chat, String userMessage, String assistantMessage);
+}
