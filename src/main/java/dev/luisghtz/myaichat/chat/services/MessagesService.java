@@ -9,7 +9,7 @@ import java.util.stream.Collectors;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import dev.luisghtz.myaichat.ai.services.AIProviderService;
+import dev.luisghtz.myaichat.ai.services.AIService;
 import dev.luisghtz.myaichat.chat.dtos.AssistantMessageResponseDto;
 import dev.luisghtz.myaichat.chat.dtos.HistoryChatDto;
 import dev.luisghtz.myaichat.chat.dtos.NewMessageRequestDto;
@@ -27,7 +27,7 @@ import lombok.extern.log4j.Log4j2;
 @RequiredArgsConstructor
 @Log4j2
 public class MessagesService {
-  private final AIProviderService aiProviderService;
+  private final AIService aiProviderService;
   private final ChatService chatService;
   private final MessageRepository messageRepository;
 

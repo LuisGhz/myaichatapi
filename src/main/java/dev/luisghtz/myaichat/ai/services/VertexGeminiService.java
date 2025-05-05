@@ -22,7 +22,7 @@ import org.springframework.util.MimeTypeUtils;
 import dev.luisghtz.myaichat.ai.models.AppModels;
 import dev.luisghtz.myaichat.chat.entities.AppMessage;
 import dev.luisghtz.myaichat.chat.entities.Chat;
-import dev.luisghtz.myaichat.chat.models.ProviderService;
+import dev.luisghtz.myaichat.chat.models.AIProviderService;
 import dev.luisghtz.myaichat.exceptions.ImageNotValidException;
 import dev.luisghtz.myaichat.prompts.entities.CustomPrompt;
 import lombok.RequiredArgsConstructor;
@@ -31,7 +31,7 @@ import lombok.extern.log4j.Log4j2;
 @Service("vertexGeminiService")
 @RequiredArgsConstructor
 @Log4j2
-public class VertexGeminiService implements ProviderService {
+public class VertexGeminiService implements AIProviderService {
   private final ChatClient vertextAIChatClient;
 
   @Override

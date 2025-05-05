@@ -8,7 +8,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
-import dev.luisghtz.myaichat.ai.services.AIProviderService;
+import dev.luisghtz.myaichat.ai.services.AIService;
 import dev.luisghtz.myaichat.chat.dtos.AssistantMessageResponseDto;
 import dev.luisghtz.myaichat.chat.dtos.ChatsListResponseDto;
 import dev.luisghtz.myaichat.chat.dtos.NewMessageRequestDto;
@@ -26,7 +26,7 @@ import lombok.extern.log4j.Log4j2;
 public class ChatService {
   private final ChatRepository chatRepository;
   private final CustomPromptService customPromptService;
-  private final AIProviderService aiProviderService;
+  private final AIService aiProviderService;
 
   public ChatsListResponseDto getAllChats() {
     var chats = chatRepository.findAllByOrderByCreatedAtAsc();

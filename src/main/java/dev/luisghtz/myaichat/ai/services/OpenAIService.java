@@ -24,7 +24,7 @@ import org.springframework.util.MimeTypeUtils;
 import dev.luisghtz.myaichat.ai.models.AppModels;
 import dev.luisghtz.myaichat.chat.entities.AppMessage;
 import dev.luisghtz.myaichat.chat.entities.Chat;
-import dev.luisghtz.myaichat.chat.models.ProviderService;
+import dev.luisghtz.myaichat.chat.models.AIProviderService;
 import dev.luisghtz.myaichat.exceptions.ImageNotValidException;
 import dev.luisghtz.myaichat.prompts.entities.CustomPrompt;
 import lombok.RequiredArgsConstructor;
@@ -33,7 +33,7 @@ import lombok.extern.log4j.Log4j2;
 @Service("openAIService")
 @RequiredArgsConstructor
 @Log4j2
-public class OpenAIService implements ProviderService {
+public class OpenAIService implements AIProviderService {
   private final ChatClient openAIChatClient;
 
   public ChatResponse sendNewMessage(List<AppMessage> messages, Chat chat) {
