@@ -27,7 +27,7 @@ public class MessagesService {
   private final ChatService chatService;
   private final MessageService messageService;
 
-  public HistoryChatDto getChatHistory(UUID id, Pageable pageable) {
+  public HistoryChatDto getPreviousMessages(UUID id, Pageable pageable) {
     var chat = chatService.findChatById(id);
     var tokens = messageService.getSumOfPromptAndCompletionTokensByChatId(id);
     var historyMessages = messageService.getAppMessagesHistory(chat, pageable);
