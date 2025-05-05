@@ -9,9 +9,11 @@ import dev.luisghtz.myaichat.chat.entities.AppMessage;
 import dev.luisghtz.myaichat.chat.entities.Chat;
 import dev.luisghtz.myaichat.chat.models.ProviderService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.log4j.Log4j2;
 
 @Service
 @RequiredArgsConstructor
+@Log4j2
 public class AIProviderService implements ProviderService {
   private final OpenAIService openAIService;
   private final VertexGeminiService vertexGeminiService;
@@ -19,8 +21,10 @@ public class AIProviderService implements ProviderService {
   @Override
   public ChatResponse sendNewMessage(List<AppMessage> messages, Chat chat) {
     if (chat.getModel().startsWith("gpt-")) {
+      log.info("Sending message to OpenAI");
       return openAIService.sendNewMessage(messages, chat);
     } else if (chat.getModel().startsWith("gemini-")) {
+      log.info("Sending message to Vertex Gemini");
       return vertexGeminiService.sendNewMessage(messages, chat);
     } else {
       throw new UnsupportedOperationException("Unsupported model: " + chat.getModel());
