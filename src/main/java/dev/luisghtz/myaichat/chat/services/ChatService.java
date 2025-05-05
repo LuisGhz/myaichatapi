@@ -2,13 +2,16 @@ package dev.luisghtz.myaichat.chat.services;
 
 import java.util.Date;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import dev.luisghtz.myaichat.chat.dtos.ChatsListResponseDto;
 import dev.luisghtz.myaichat.chat.dtos.NewMessageRequestDto;
 import dev.luisghtz.myaichat.chat.entities.Chat;
+import dev.luisghtz.myaichat.chat.models.ChatSummary;
 import dev.luisghtz.myaichat.chat.repositories.ChatRepository;
 import dev.luisghtz.myaichat.prompts.services.CustomPromptService;
 import jakarta.transaction.Transactional;
@@ -21,6 +24,15 @@ import lombok.extern.log4j.Log4j2;
 public class ChatService {
   private final ChatRepository chatRepository;
   private final CustomPromptService customPromptService;
+
+  public ChatsListResponseDto getAllChats() {
+    var chats = chatRepository.findAllByOrderByCreatedAtAsc();
+    ChatsListResponseDto chatsListResponseDto = new ChatsListResponseDto();
+    chatsListResponseDto.setChats(chats.stream()
+      .map(chat -> new ChatSummary(chat.getId(), chat.getTitle()))
+      .collect(Collectors.toList()));
+    return chatsListResponseDto;
+  }
 
   public Chat getChat(NewMessageRequestDto newMessageRequestDto) {
     Chat chat = null;
