@@ -14,7 +14,7 @@ import jakarta.validation.Payload;
 public @interface AllowedStringValues {
   String message() default "Invalid values";
 
-  String[] values();
+  Class<?> values();
 
   Class<?>[] groups() default {};
 
