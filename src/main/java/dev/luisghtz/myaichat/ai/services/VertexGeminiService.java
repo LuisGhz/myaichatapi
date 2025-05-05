@@ -19,10 +19,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.MimeType;
 import org.springframework.util.MimeTypeUtils;
 
+import dev.luisghtz.myaichat.ai.models.AIProviderService;
 import dev.luisghtz.myaichat.ai.models.AppModels;
 import dev.luisghtz.myaichat.chat.entities.AppMessage;
 import dev.luisghtz.myaichat.chat.entities.Chat;
-import dev.luisghtz.myaichat.chat.models.AIProviderService;
 import dev.luisghtz.myaichat.exceptions.ImageNotValidException;
 import dev.luisghtz.myaichat.prompts.entities.CustomPrompt;
 import lombok.RequiredArgsConstructor;

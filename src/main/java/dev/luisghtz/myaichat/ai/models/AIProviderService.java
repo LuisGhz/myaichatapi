@@ -1,4 +1,4 @@
-package dev.luisghtz.myaichat.chat.models;
+package dev.luisghtz.myaichat.ai.models;
 
 import java.util.List;
 
