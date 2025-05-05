@@ -2,18 +2,15 @@ package dev.luisghtz.myaichat.chat.services;
 
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import dev.luisghtz.myaichat.ai.services.AIProviderService;
 import dev.luisghtz.myaichat.chat.dtos.AssistantMessageResponseDto;
-import dev.luisghtz.myaichat.chat.dtos.ChatsListResponseDto;
 import dev.luisghtz.myaichat.chat.dtos.HistoryChatDto;
 import dev.luisghtz.myaichat.chat.dtos.NewMessageRequestDto;
 import dev.luisghtz.myaichat.chat.entities.Chat;
-import dev.luisghtz.myaichat.chat.models.ChatSummary;
 import dev.luisghtz.myaichat.chat.entities.AppMessage;
 import dev.luisghtz.myaichat.chat.repositories.ChatRepository;
 import dev.luisghtz.myaichat.chat.utils.MessagesUtils;
@@ -29,15 +26,6 @@ public class MessagesService {
   private final ChatRepository chatRepository;
   private final ChatService chatService;
   private final MessageService messageService;
-
-  public ChatsListResponseDto getAllChats() {
-    var chats = chatRepository.findAllByOrderByCreatedAtAsc();
-    ChatsListResponseDto chatsListResponseDto = new ChatsListResponseDto();
-    chatsListResponseDto.setChats(chats.stream()
-      .map(chat -> new ChatSummary(chat.getId(), chat.getTitle()))
-      .collect(Collectors.toList()));
-    return chatsListResponseDto;
-  }
 
   public HistoryChatDto getChatHistory(UUID id, Pageable pageable) {
     var chat = chatService.findChatById(id);

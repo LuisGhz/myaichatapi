@@ -41,7 +41,7 @@ public class ChatController {
 
   @GetMapping("all")
   public ResponseEntity<ChatsListResponseDto> getChatsList() {
-    var chats = aiService.getAllChats();
+    var chats = chatService.getAllChats();
     return ResponseEntity.ok(chats);
   }
 
