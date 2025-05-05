@@ -39,15 +39,16 @@
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-data-jpa</artifactId>
     </dependency>
+    <!-- https://mvnrepository.com/artifact/org.springframework.ai/spring-ai-openai -->
     <dependency>
       <groupId>org.springframework.ai</groupId>
       <artifactId>spring-ai-openai-spring-boot-starter</artifactId>
       <version>1.0.0-M6</version>
     </dependency>
-    <!-- https://mvnrepository.com/artifact/org.springframework.ai/spring-ai-vertex-ai-gemini -->
+    <!-- https://mvnrepository.com/artifact/org.springframework.ai/spring-ai-vertex-ai-gemini-spring-boot-starter -->
     <dependency>
       <groupId>org.springframework.ai</groupId>
-      <artifactId>spring-ai-vertex-ai-gemini</artifactId>
+      <artifactId>spring-ai-vertex-ai-gemini-spring-boot-starter</artifactId>
       <version>1.0.0-M6</version>
     </dependency>
     <dependency>
