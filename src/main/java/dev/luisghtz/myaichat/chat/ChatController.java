@@ -11,7 +11,6 @@ import dev.luisghtz.myaichat.chat.dtos.HistoryChatDto;
 import dev.luisghtz.myaichat.chat.dtos.NewMessageRequestDto;
 import dev.luisghtz.myaichat.chat.services.MessagesService;
 import dev.luisghtz.myaichat.chat.services.ChatService;
-import dev.luisghtz.myaichat.chat.services.MessageService;
 import dev.luisghtz.myaichat.image.ImageService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -37,7 +36,7 @@ public class ChatController {
   private final MessagesService aiService;
   private final ImageService imageService;
   private final ChatService chatService;
-  private final MessageService messageService;
+  private final MessagesService messagesService;
 
   @GetMapping("all")
   public ResponseEntity<ChatsListResponseDto> getChatsList() {
@@ -64,7 +63,7 @@ public class ChatController {
 
   @DeleteMapping("{id}/delete")
   public ResponseEntity<Void> deleteChat(@PathVariable UUID id) {
-    messageService.deleteAllByChat(id);
+    messagesService.deleteAllByChat(id);
     chatService.deleteChat(id);
     return ResponseEntity.noContent().build();
   }
