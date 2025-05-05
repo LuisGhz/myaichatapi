@@ -24,7 +24,7 @@ import lombok.extern.log4j.Log4j2;
 @RequiredArgsConstructor
 @Log4j2
 public class AIService {
-  private final OpenAIService openAIService;
+  private final AIProviderService aiProviderService;
   private final ChatRepository chatRepository;
   private final ChatService chatService;
   private final MessageService messageService;
@@ -74,7 +74,7 @@ public class AIService {
   private AppMessage getAssistantResponse(Chat chat, AppMessage userMessage) {
     List<AppMessage> messages = messageService.getMessagesFromChat(chat);
     messages.add(userMessage);
-    var chatResponse = openAIService.sendNewMessage(messages, chat);
+    var chatResponse = aiProviderService.sendNewMessage(messages, chat);
     return MessagesUtils.createAssistantMessage(chatResponse, chat);
   }
 
@@ -99,7 +99,7 @@ public class AIService {
 
   private void generateAndSetTitleForNewChat(Chat chat, NewMessageRequestDto newMessageRequestDto,
       AssistantMessageResponseDto res) {
-    String generatedTitle = openAIService.generateTitle(chat, newMessageRequestDto.getPrompt(),
+    String generatedTitle = aiProviderService.generateTitle(chat, newMessageRequestDto.getPrompt(),
         res.getContent());
     chat.setTitle(generatedTitle);
     chatRepository.save(chat);
