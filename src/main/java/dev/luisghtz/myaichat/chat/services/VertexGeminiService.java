@@ -19,7 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.MimeType;
 import org.springframework.util.MimeTypeUtils;
 
-import dev.luisghtz.myaichat.ai.enums.Models;
+import dev.luisghtz.myaichat.ai.models.AppModels;
 import dev.luisghtz.myaichat.chat.entities.AppMessage;
 import dev.luisghtz.myaichat.chat.entities.Chat;
 import dev.luisghtz.myaichat.chat.models.ProviderService;
@@ -51,6 +51,7 @@ public class VertexGeminiService implements ProviderService {
     // Always create the chat response
     VertexAiGeminiChatOptions options = VertexAiGeminiChatOptions.builder()
         .model(chat.getModel())
+        .maxOutputTokens(AppModels.getMaxTokens(chat.getModel()))
         .build();
     ChatResponse chatResponse = vertextAIChatClient.prompt()
         .messages(modelMessages).options(options).call().chatResponse();
@@ -60,7 +61,6 @@ public class VertexGeminiService implements ProviderService {
 
   @Override
   public String generateTitle(Chat chat, String userMessage, String assistantMessage) {
-    var MAX_COMPLETION_TOKENS = 50;
     List<Message> titleMessages = new ArrayList<>();
     titleMessages.add(new UserMessage(userMessage));
     titleMessages.add(new AssistantMessage(assistantMessage));
@@ -69,8 +69,8 @@ public class VertexGeminiService implements ProviderService {
             "Generate a concise title of no more than 5 words that summarizes this conversation, avoid to use markdown styles, title should be only text."));
 
     VertexAiGeminiChatOptions titleOptions = VertexAiGeminiChatOptions.builder()
-        .model(Models.GEMINI_FLASH_2_0_LITE.getValue())
-        .maxOutputTokens(MAX_COMPLETION_TOKENS)
+        .model(AppModels.GEMINI_FLASH_2_0_LITE.getKey())
+        .maxOutputTokens(AppModels.GEMINI_FLASH_2_0_LITE.getMaxTokens())
         .build();
 
     String titleResponse = vertextAIChatClient.prompt()
