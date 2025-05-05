@@ -33,6 +33,18 @@ public class GlobalControllerAdvice {
     return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
   }
 
+  @ExceptionHandler({ IllegalArgumentException.class })
+  public ResponseEntity<ChatErrorResponseDto> handleValidationException(IllegalArgumentException ex) {
+    String message = ex.getMessage();
+
+    var response = ChatErrorResponseDto.builder()
+        .statusCode(HttpStatus.BAD_REQUEST)
+        .message("Validation error: " + message)
+        .build();
+
+    return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+  }
+
   @ExceptionHandler({ AppMethodArgumentNotValidException.class })
   public ResponseEntity<ChatErrorResponseDto> handleValidationException(AppMethodArgumentNotValidException ex) {
     String message = ex.getMessage();
