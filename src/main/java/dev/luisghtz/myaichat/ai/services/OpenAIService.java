@@ -1,4 +1,4 @@
-package dev.luisghtz.myaichat.chat.services;
+package dev.luisghtz.myaichat.ai.services;
 
 import java.util.List;
 import java.net.MalformedURLException;
