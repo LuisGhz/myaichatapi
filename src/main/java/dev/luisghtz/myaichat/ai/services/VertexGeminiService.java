@@ -61,6 +61,7 @@ public class VertexGeminiService implements ProviderService {
 
   @Override
   public String generateTitle(Chat chat, String userMessage, String assistantMessage) {
+    final int MAX_TOKENS = 50;
     List<Message> titleMessages = new ArrayList<>();
     titleMessages.add(new UserMessage(userMessage));
     titleMessages.add(new AssistantMessage(assistantMessage));
@@ -70,7 +71,7 @@ public class VertexGeminiService implements ProviderService {
 
     VertexAiGeminiChatOptions titleOptions = VertexAiGeminiChatOptions.builder()
         .model(AppModels.GEMINI_FLASH_2_0_LITE.getKey())
-        .maxOutputTokens(AppModels.GEMINI_FLASH_2_0_LITE.getMaxTokens())
+        .maxOutputTokens(MAX_TOKENS)
         .build();
 
     String titleResponse = vertextAIChatClient.prompt()
