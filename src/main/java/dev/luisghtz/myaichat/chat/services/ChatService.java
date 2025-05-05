@@ -8,6 +8,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import dev.luisghtz.myaichat.ai.services.AIProviderService;
+import dev.luisghtz.myaichat.chat.dtos.AssistantMessageResponseDto;
 import dev.luisghtz.myaichat.chat.dtos.ChatsListResponseDto;
 import dev.luisghtz.myaichat.chat.dtos.NewMessageRequestDto;
 import dev.luisghtz.myaichat.chat.entities.Chat;
@@ -24,6 +26,7 @@ import lombok.extern.log4j.Log4j2;
 public class ChatService {
   private final ChatRepository chatRepository;
   private final CustomPromptService customPromptService;
+  private final AIProviderService aiProviderService;
 
   public ChatsListResponseDto getAllChats() {
     var chats = chatRepository.findAllByOrderByCreatedAtAsc();
@@ -48,6 +51,15 @@ public class ChatService {
     return chatRepository.findById(id)
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
             "Chat not found with ID: " + id));
+  }
+
+  public void generateAndSetTitleForNewChat(Chat chat, NewMessageRequestDto newMessageRequestDto,
+      AssistantMessageResponseDto res) {
+    String generatedTitle = aiProviderService.generateTitle(chat, newMessageRequestDto.getPrompt(),
+        res.getContent());
+    chat.setTitle(generatedTitle);
+    chatRepository.save(chat);
+    res.setChatTitle(generatedTitle);
   }
 
   @Transactional

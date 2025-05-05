@@ -12,7 +12,6 @@ import dev.luisghtz.myaichat.chat.dtos.HistoryChatDto;
 import dev.luisghtz.myaichat.chat.dtos.NewMessageRequestDto;
 import dev.luisghtz.myaichat.chat.entities.Chat;
 import dev.luisghtz.myaichat.chat.entities.AppMessage;
-import dev.luisghtz.myaichat.chat.repositories.ChatRepository;
 import dev.luisghtz.myaichat.chat.utils.MessagesUtils;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -23,7 +22,6 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 public class MessagesService {
   private final AIProviderService aiProviderService;
-  private final ChatRepository chatRepository;
   private final ChatService chatService;
   private final MessageService messageService;
 
@@ -49,7 +47,7 @@ public class MessagesService {
     AssistantMessageResponseDto responseDto = createAssistantMessageDto(assistantMessage, chat.getId(), isNewChat);
     saveMessages(userMessage, assistantMessage);
     if (isNewChat)
-      generateAndSetTitleForNewChat(chat, newMessageRequestDto, responseDto);
+      chatService.generateAndSetTitleForNewChat(chat, newMessageRequestDto, responseDto);
     var tokens = messageService.getSumOfPromptAndCompletionTokensByChatId(chat.getId());
     responseDto.setTotalChatPromptTokens(tokens.getPromptTokens());
     responseDto.setTotalChatCompletionTokens(tokens.getCompletionTokens());
@@ -84,14 +82,5 @@ public class MessagesService {
     if (isNewChat)
       message.setChatId(chatId);
     return message;
-  }
-
-  private void generateAndSetTitleForNewChat(Chat chat, NewMessageRequestDto newMessageRequestDto,
-      AssistantMessageResponseDto res) {
-    String generatedTitle = aiProviderService.generateTitle(chat, newMessageRequestDto.getPrompt(),
-        res.getContent());
-    chat.setTitle(generatedTitle);
-    chatRepository.save(chat);
-    res.setChatTitle(generatedTitle);
   }
 }
