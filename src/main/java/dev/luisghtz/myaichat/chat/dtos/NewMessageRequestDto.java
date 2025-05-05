@@ -4,6 +4,7 @@ import java.util.UUID;
 
 import org.springframework.web.multipart.MultipartFile;
 
+import dev.luisghtz.myaichat.ai.models.AppModels;
 import dev.luisghtz.myaichat.image.validators.ValidImage;
 import dev.luisghtz.myaichat.validators.AllowedStringValues;
 import jakarta.validation.constraints.NotEmpty;
@@ -15,11 +16,11 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class NewMessageRequestDto {
+
   private UUID chatId = null;
   @NotEmpty
   private String prompt;
-  @AllowedStringValues(values = { "gpt-4o", "gpt-4o-mini", "gemini-pro",
-      "gemini-2.0-flash" }, message = "Invalid model: must be one of the allowed values.")
+  @AllowedStringValues(values = AppModels.class, message = "Invalid model: must be one of the allowed values.")
   private String model = null;
   @ValidImage(message = "Invalid image: must be a valid image file.")
   private MultipartFile image = null;
