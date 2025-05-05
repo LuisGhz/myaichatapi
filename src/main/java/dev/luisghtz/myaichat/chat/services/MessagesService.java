@@ -24,7 +24,7 @@ import lombok.extern.log4j.Log4j2;
 @Service
 @RequiredArgsConstructor
 @Log4j2
-public class AIService {
+public class MessagesService {
   private final AIProviderService aiProviderService;
   private final ChatRepository chatRepository;
   private final ChatService chatService;

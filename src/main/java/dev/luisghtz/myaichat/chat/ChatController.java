@@ -9,7 +9,7 @@ import dev.luisghtz.myaichat.chat.dtos.ChatErrorResponseDto;
 import dev.luisghtz.myaichat.chat.dtos.ChatsListResponseDto;
 import dev.luisghtz.myaichat.chat.dtos.HistoryChatDto;
 import dev.luisghtz.myaichat.chat.dtos.NewMessageRequestDto;
-import dev.luisghtz.myaichat.chat.services.AIService;
+import dev.luisghtz.myaichat.chat.services.MessagesService;
 import dev.luisghtz.myaichat.chat.services.ChatService;
 import dev.luisghtz.myaichat.chat.services.MessageService;
 import dev.luisghtz.myaichat.image.ImageService;
@@ -34,7 +34,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 @RequiredArgsConstructor
 @Log4j2
 public class ChatController {
-  private final AIService aiService;
+  private final MessagesService aiService;
   private final ImageService imageService;
   private final ChatService chatService;
   private final MessageService messageService;
