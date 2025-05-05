@@ -12,24 +12,25 @@ import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.model.ChatResponse;
-import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.chat.prompt.PromptTemplate;
 import org.springframework.ai.model.Media;
 import org.springframework.ai.vertexai.gemini.VertexAiGeminiChatOptions;
-import org.springframework.ai.vertexai.gemini.VertexAiGeminiChatModel.ChatModel;
 import org.springframework.stereotype.Service;
 import org.springframework.util.MimeType;
 import org.springframework.util.MimeTypeUtils;
 
+import dev.luisghtz.myaichat.ai.enums.Models;
 import dev.luisghtz.myaichat.chat.entities.AppMessage;
 import dev.luisghtz.myaichat.chat.entities.Chat;
 import dev.luisghtz.myaichat.chat.models.ProviderService;
 import dev.luisghtz.myaichat.exceptions.ImageNotValidException;
 import dev.luisghtz.myaichat.prompts.entities.CustomPrompt;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.log4j.Log4j2;
 
 @Service("vertexGeminiService")
 @RequiredArgsConstructor
+@Log4j2
 public class VertexGeminiService implements ProviderService {
   private final ChatClient vertextAIChatClient;
 
@@ -61,21 +62,21 @@ public class VertexGeminiService implements ProviderService {
   public String generateTitle(Chat chat, String userMessage, String assistantMessage) {
     var MAX_COMPLETION_TOKENS = 50;
     List<Message> titleMessages = new ArrayList<>();
-    titleMessages
-        .add(new SystemMessage(
-            "Generate a concise title of no more than 5 words that summarizes this conversation, avoid to use markdown styles, title should be only text."));
     titleMessages.add(new UserMessage(userMessage));
     titleMessages.add(new AssistantMessage(assistantMessage));
+    titleMessages
+        .add(new UserMessage(
+            "Generate a concise title of no more than 5 words that summarizes this conversation, avoid to use markdown styles, title should be only text."));
 
     VertexAiGeminiChatOptions titleOptions = VertexAiGeminiChatOptions.builder()
-        .model(ChatModel.GEMINI_2_0_FLASH_LIGHT)
+        .model(Models.GEMINI_FLASH_2_0_LITE.getValue())
         .maxOutputTokens(MAX_COMPLETION_TOKENS)
         .build();
 
-    ChatResponse titleResponse = vertextAIChatClient.prompt(new Prompt(titleMessages))
-        .options(titleOptions).call().chatResponse();
-
-    return titleResponse.getResult().getOutput().getText();
+    String titleResponse = vertextAIChatClient.prompt()
+        .messages(titleMessages).options(titleOptions).call().content();
+    log.debug("Title response: {}", titleResponse);
+    return titleResponse;
   }
 
   private Message generateUserMessage(AppMessage message) {
