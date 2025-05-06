@@ -19,13 +19,13 @@ public class UniqueObjectsValuesValidator implements ConstraintValidator<UniqueO
   @Override
   public boolean isValid(List<?> value, ConstraintValidatorContext context) {
     if (value == null || value.isEmpty()) {
-      return true; // or false based on your validation logic
+      return true; 
     }
     Set<String> seenValues = new HashSet<>();
     for (Object obj : value) {
       String fieldValue = getFieldValue(obj);
       if (seenValues.contains(fieldValue)) {
-        return false; // Duplicate found
+        return false;
       }
       seenValues.add(fieldValue.toLowerCase());
     }
