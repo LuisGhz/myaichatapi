@@ -20,6 +20,22 @@ if [ -z "$OPENAI_API_KEY" ]; then
   echo "Error: OPENAI_API_KEY environment variable is not set"
   exit 1
 fi
+if [ -z "$GEMINI_PROJECT_ID" ]; then
+  echo "Error: GEMINI_PROJECT_ID environment variable is not set"
+  exit 1
+fi
+if [ -z "$GEMINI_LOCATION" ]; then
+  echo "Error: GEMINI_LOCATION environment variable is not set"
+  exit 1
+fi
+if [ -z "$HOST_VAIG_US_KEY_PATH" ]; then
+  echo "Error: HOST_VAIG_US_KEY_PATH environment variable is not set"
+  exit 1
+fi
+if [ -z "$GOOGLE_APPLICATION_CREDENTIALS" ]; then
+  echo "Error: GOOGLE_APPLICATION_CREDENTIALS environment variable is not set"
+  exit 1
+fi
 if [ -z "$DB_URL" ]; then
   echo "Error: DB_URL environment variable is not set"
   exit 1
@@ -70,6 +86,10 @@ docker run -d \
   -e CDN_DOMAIN=${CDN_DOMAIN} \
   -e ALLOWED_ORIGINS=${ALLOWED_ORIGINS} \
   -e OPENAI_API_KEY=${OPENAI_API_KEY} \
+  -e GEMINI_PROJECT_ID=${GEMINI_PROJECT_ID} \
+  -e GEMINI_LOCATION=${GEMINI_LOCATION} \
+  -e GOOGLE_APPLICATION_CREDENTIALS=${GOOGLE_APPLICATION_CREDENTIALS} \
+  -v ${HOST_VAIG_US_KEY_PATH}:${GOOGLE_APPLICATION_CREDENTIALS} \
   -e DB_URL=${DB_URL} \
   -e S3_ACCESS_KEY=${S3_ACCESS_KEY} \
   -e S3_SECRET_KEY=${S3_SECRET_KEY} \
