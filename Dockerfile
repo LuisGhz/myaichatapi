@@ -6,12 +6,12 @@ RUN chmod +x ./mvnw
 RUN ./mvnw clean package -DskipTests
 
 # Run stage
-FROM azul/zulu-openjdk-alpine:17-jre
+FROM eclipse-temurin:17-jre-ubi9-minimal
 WORKDIR /app
 
 # Create non-root user for security
-RUN addgroup -S appgroup && adduser -S appuser -G appgroup
-USER appuser
+# RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+# USER appuser
 
 # Copy only the JAR file from build stage
 COPY --from=build /app/target/*.jar app.jar
