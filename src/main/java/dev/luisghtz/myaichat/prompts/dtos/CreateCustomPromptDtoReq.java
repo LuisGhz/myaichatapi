@@ -16,7 +16,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class CreateCustomPromptDtoReq {
   @NotBlank
-  @Length(max = 15, message = "Name cannot exceed 15 characters")
+  @Length(max = 30, message = "Name cannot exceed 30 characters")
   private String name;
   @NotBlank
   @Length(max = 10_000, message = "Content cannot exceed 10,000 characters")
