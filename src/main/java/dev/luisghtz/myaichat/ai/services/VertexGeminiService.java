@@ -33,6 +33,9 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 public class VertexGeminiService implements AIProviderService {
   private final ChatClient vertextAIChatClient;
+  private final String TITLE_PROMPT = "Generate a concise title of no more than 5 words that summarizes this conversation, "
+      + "avoid to use markdown styles, title should be only text. "
+      + "The title should be in the same language as the conversation.";
 
   @Override
   public ChatResponse sendNewMessage(List<AppMessage> messages, Chat chat) {
@@ -67,7 +70,7 @@ public class VertexGeminiService implements AIProviderService {
     titleMessages.add(new AssistantMessage(assistantMessage));
     titleMessages
         .add(new UserMessage(
-            "Generate a concise title of no more than 5 words that summarizes this conversation, avoid to use markdown styles, title should be only text."));
+            TITLE_PROMPT));
 
     VertexAiGeminiChatOptions titleOptions = VertexAiGeminiChatOptions.builder()
         .model(AppModels.GEMINI_FLASH_2_0_LITE.getKey())
