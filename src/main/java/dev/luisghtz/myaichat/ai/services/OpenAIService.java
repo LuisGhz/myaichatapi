@@ -35,6 +35,9 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 public class OpenAIService implements AIProviderService {
   private final ChatClient openAIChatClient;
+  private final String TITLE_PROMPT = "Generate a concise title of no more than 5 words that summarizes this conversation, "
+      + "avoid to use markdown styles, title should be only text. "
+      + "The title should be in the same language as the conversation.";
 
   public ChatResponse sendNewMessage(List<AppMessage> messages, Chat chat) {
     List<Message> modelMessages = new ArrayList<>();
@@ -65,7 +68,7 @@ public class OpenAIService implements AIProviderService {
     List<Message> titleMessages = new ArrayList<>();
     titleMessages
         .add(new SystemMessage(
-            "Generate a concise title of no more than 5 words that summarizes this conversation, avoid to use markdown styles, title should be only text."));
+            TITLE_PROMPT));
     titleMessages.add(new UserMessage(userMessage));
     titleMessages.add(new AssistantMessage(assistantMessage));
 
