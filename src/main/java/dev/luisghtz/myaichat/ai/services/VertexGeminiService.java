@@ -9,10 +9,8 @@ import java.util.stream.Collectors;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.Message;
-import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.model.ChatResponse;
-import org.springframework.ai.chat.prompt.PromptTemplate;
 import org.springframework.ai.model.Media;
 import org.springframework.ai.vertexai.gemini.VertexAiGeminiChatOptions;
 import org.springframework.stereotype.Service;
@@ -21,6 +19,7 @@ import org.springframework.util.MimeTypeUtils;
 
 import dev.luisghtz.myaichat.ai.models.AIProviderService;
 import dev.luisghtz.myaichat.ai.models.AppModels;
+import dev.luisghtz.myaichat.ai.utils.MessagesUtil;
 import dev.luisghtz.myaichat.chat.entities.AppMessage;
 import dev.luisghtz.myaichat.chat.entities.Chat;
 import dev.luisghtz.myaichat.exceptions.ImageNotValidException;
@@ -40,7 +39,7 @@ public class VertexGeminiService implements AIProviderService {
   @Override
   public ChatResponse sendNewMessage(List<AppMessage> messages, Chat chat) {
     List<Message> modelMessages = new ArrayList<>();
-    addSystemMessage(chat, modelMessages);
+    MessagesUtil.addSystemMessage(chat, modelMessages);
     addInitialMessagesIfApply(chat, modelMessages);
 
     // Convert AppMessages to the appropriate Message type
@@ -63,7 +62,7 @@ public class VertexGeminiService implements AIProviderService {
   }
 
   @Override
-  public String generateTitle(Chat chat, String userMessage, String assistantMessage) {
+  public String generateTitle(String userMessage, String assistantMessage) {
     final int MAX_TOKENS = 50;
     List<Message> titleMessages = new ArrayList<>();
     titleMessages.add(new UserMessage(userMessage));
@@ -122,21 +121,5 @@ public class VertexGeminiService implements AIProviderService {
         }
       });
     }
-  }
-
-  private void addSystemMessage(Chat chat, List<Message> messages) {
-    if (chat.getCustomPrompt() != null) {
-      CustomPrompt customPrompt = chat.getCustomPrompt();
-      var promptTemplate = new PromptTemplate(customPrompt.getContent());
-      if (customPrompt.getParams() != null && !customPrompt.getParams().isEmpty()) {
-        customPrompt.getParams().forEach((param) -> {
-          promptTemplate.add(param.getName(), param.getValue());
-        });
-      }
-      messages.add(new SystemMessage(promptTemplate.render()));
-      return;
-    }
-
-    messages.add(new SystemMessage("You are a helpful assistant."));
   }
 }
