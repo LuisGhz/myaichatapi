@@ -76,10 +76,11 @@ public class VertexGeminiService implements AIProviderService {
         .maxOutputTokens(MAX_TOKENS)
         .build();
 
-    String titleResponse = vertextAIChatClient.prompt()
-        .messages(titleMessages).options(titleOptions).call().content();
-    log.debug("Title response: {}", titleResponse);
-    return titleResponse;
+    ChatResponse titleResponse = vertextAIChatClient.prompt()
+        .messages(titleMessages).options(titleOptions).call().chatResponse();
+    String title = titleResponse.getResult().getOutput().getText();
+    log.debug("Title response: {}", title);
+    return title;
   }
 
   private Message generateUserMessage(AppMessage message) {
