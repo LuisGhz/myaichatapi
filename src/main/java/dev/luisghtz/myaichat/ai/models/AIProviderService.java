@@ -10,5 +10,5 @@ import dev.luisghtz.myaichat.chat.entities.Chat;
 public interface AIProviderService {
   ChatResponse sendNewMessage(List<AppMessage> messages, Chat chat);
 
-  String generateTitle(Chat chat, String userMessage, String assistantMessage);
+  String generateTitle(String userMessage, String assistantMessage);
 }
