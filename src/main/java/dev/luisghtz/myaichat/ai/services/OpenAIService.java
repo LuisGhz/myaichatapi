@@ -13,7 +13,6 @@ import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.prompt.Prompt;
-import org.springframework.ai.chat.prompt.PromptTemplate;
 import org.springframework.ai.model.Media;
 import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.ai.openai.api.OpenAiApi;
@@ -23,10 +22,10 @@ import org.springframework.util.MimeTypeUtils;
 
 import dev.luisghtz.myaichat.ai.models.AIProviderService;
 import dev.luisghtz.myaichat.ai.models.AppModels;
+import dev.luisghtz.myaichat.ai.utils.MessagesUtil;
 import dev.luisghtz.myaichat.chat.entities.AppMessage;
 import dev.luisghtz.myaichat.chat.entities.Chat;
 import dev.luisghtz.myaichat.exceptions.ImageNotValidException;
-import dev.luisghtz.myaichat.prompts.entities.CustomPrompt;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 
@@ -41,8 +40,8 @@ public class OpenAIService implements AIProviderService {
 
   public ChatResponse sendNewMessage(List<AppMessage> messages, Chat chat) {
     List<Message> modelMessages = new ArrayList<>();
-    addSystemMessage(chat, modelMessages);
-    addInitialMessagesIfApply(chat, modelMessages);
+    MessagesUtil.addSystemMessage(chat, modelMessages);
+    MessagesUtil.addInitialMessagesIfApply(chat, modelMessages);
 
     // Convert AppMessages to the appropriate Message type
     List<Message> convertedMessages = messages.stream().map(message -> {
@@ -63,7 +62,7 @@ public class OpenAIService implements AIProviderService {
     return chatResponse;
   }
 
-  public String generateTitle(Chat chat, String userMessage, String assistantMessage) {
+  public String generateTitle(String userMessage, String assistantMessage) {
     var MAX_COMPLETION_TOKENS = 50;
     List<Message> titleMessages = new ArrayList<>();
     titleMessages
@@ -108,35 +107,5 @@ public class OpenAIService implements AIProviderService {
     } else {
       throw new ImageNotValidException("Image not valid. Supported formats: gif, png, jpg, jpeg.");
     }
-  }
-
-  private void addInitialMessagesIfApply(Chat chat, List<Message> messages) {
-    if (chat.getCustomPrompt() != null && chat.getCustomPrompt().getMessages() != null
-        && !chat.getCustomPrompt().getMessages().isEmpty()) {
-      CustomPrompt customPrompt = chat.getCustomPrompt();
-      customPrompt.getMessages().forEach((message) -> {
-        if (message.getRole().equals("Assistant")) {
-          messages.add(new AssistantMessage(message.getContent()));
-        } else if (message.getRole().equals("User")) {
-          messages.add(new UserMessage(message.getContent()));
-        }
-      });
-    }
-  }
-
-  private void addSystemMessage(Chat chat, List<Message> messages) {
-    if (chat.getCustomPrompt() != null) {
-      CustomPrompt customPrompt = chat.getCustomPrompt();
-      var promptTemplate = new PromptTemplate(customPrompt.getContent());
-      if (customPrompt.getParams() != null && !customPrompt.getParams().isEmpty()) {
-        customPrompt.getParams().forEach((param) -> {
-          promptTemplate.add(param.getName(), param.getValue());
-        });
-      }
-      messages.add(new SystemMessage(promptTemplate.render()));
-      return;
-    }
-
-    messages.add(new SystemMessage("You are a helpful assistant."));
   }
 }
