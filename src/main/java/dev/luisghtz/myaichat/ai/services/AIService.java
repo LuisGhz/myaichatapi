@@ -5,7 +5,7 @@ import java.util.List;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.stereotype.Service;
 
-import dev.luisghtz.myaichat.ai.models.AIProviderService;
+import dev.luisghtz.myaichat.ai.models.AIStrategyService;
 import dev.luisghtz.myaichat.chat.entities.AppMessage;
 import dev.luisghtz.myaichat.chat.entities.Chat;
 import lombok.RequiredArgsConstructor;
@@ -14,7 +14,7 @@ import lombok.extern.log4j.Log4j2;
 @Service
 @RequiredArgsConstructor
 @Log4j2
-public class AIService implements AIProviderService {
+public class AIService implements AIStrategyService {
   private final OpenAIService openAIService;
   private final VertexGeminiService vertexGeminiService;
 
@@ -33,9 +33,9 @@ public class AIService implements AIProviderService {
 
   public String generateTitle(Chat chat, String userMessage, String assistantMessage) {
     if (chat.getModel().startsWith("gpt-")) {
-      return openAIService.generateTitle(chat, userMessage, assistantMessage);
+      return openAIService.generateTitle(userMessage, assistantMessage);
     } else if (chat.getModel().startsWith("gemini-")) {
-      return vertexGeminiService.generateTitle(chat, userMessage, assistantMessage);
+      return vertexGeminiService.generateTitle(userMessage, assistantMessage);
     } else {
       throw new UnsupportedOperationException("Unsupported model: " + chat.getModel());
     }
