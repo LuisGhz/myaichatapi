@@ -19,103 +19,103 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class AIServiceTest {
 
-    @Mock
-    private OpenAIService openAIService;
+  @Mock
+  private OpenAIService openAIService;
 
-    @Mock
-    private VertexGeminiService vertexGeminiService;
+  @Mock
+  private VertexGeminiService vertexGeminiService;
 
-    @InjectMocks
-    private AIService aiService;
+  @InjectMocks
+  private AIService aiService;
 
-    private Chat chat;
-    private List<AppMessage> messages;
+  private Chat chat;
+  private List<AppMessage> messages;
 
-    @BeforeEach
-    void setUp() {
-        chat = new Chat();
-        messages = Collections.singletonList(new AppMessage());
-    }
+  @BeforeEach
+  void setUp() {
+    chat = new Chat();
+    messages = Collections.singletonList(new AppMessage());
+  }
 
-    @Test
-    void sendNewMessage_withGptModel_shouldCallOpenAIService() {
-        chat.setModel("gpt-4");
-        ChatResponse expectedResponse = mock(ChatResponse.class);
-        when(openAIService.sendNewMessage(messages, chat)).thenReturn(expectedResponse);
+  @Test
+  void sendNewMessage_withGptModel_shouldCallOpenAIService() {
+    chat.setModel("gpt-4");
+    ChatResponse expectedResponse = mock(ChatResponse.class);
+    when(openAIService.sendNewMessage(messages, chat)).thenReturn(expectedResponse);
 
-        ChatResponse actualResponse = aiService.sendNewMessage(messages, chat);
+    ChatResponse actualResponse = aiService.sendNewMessage(messages, chat);
 
-        assertEquals(expectedResponse, actualResponse);
-        verify(openAIService, times(1)).sendNewMessage(messages, chat);
-        verify(vertexGeminiService, never()).sendNewMessage(any(), any());
-    }
+    assertEquals(expectedResponse, actualResponse);
+    verify(openAIService, times(1)).sendNewMessage(messages, chat);
+    verify(vertexGeminiService, never()).sendNewMessage(any(), any());
+  }
 
-    @Test
-    void sendNewMessage_withGeminiModel_shouldCallVertexGeminiService() {
-        chat.setModel("gemini-pro");
-        ChatResponse expectedResponse = mock(ChatResponse.class);
-        when(vertexGeminiService.sendNewMessage(messages, chat)).thenReturn(expectedResponse);
+  @Test
+  void sendNewMessage_withGeminiModel_shouldCallVertexGeminiService() {
+    chat.setModel("gemini-pro");
+    ChatResponse expectedResponse = mock(ChatResponse.class);
+    when(vertexGeminiService.sendNewMessage(messages, chat)).thenReturn(expectedResponse);
 
-        ChatResponse actualResponse = aiService.sendNewMessage(messages, chat);
+    ChatResponse actualResponse = aiService.sendNewMessage(messages, chat);
 
-        assertEquals(expectedResponse, actualResponse);
-        verify(vertexGeminiService, times(1)).sendNewMessage(messages, chat);
-        verify(openAIService, never()).sendNewMessage(any(), any());
-    }
+    assertEquals(expectedResponse, actualResponse);
+    verify(vertexGeminiService, times(1)).sendNewMessage(messages, chat);
+    verify(openAIService, never()).sendNewMessage(any(), any());
+  }
 
-    @Test
-    void sendNewMessage_withUnsupportedModel_shouldThrowException() {
-        chat.setModel("unsupported-model");
+  @Test
+  void sendNewMessage_withUnsupportedModel_shouldThrowException() {
+    chat.setModel("unsupported-model");
 
-        assertThrows(UnsupportedOperationException.class, () -> {
-            aiService.sendNewMessage(messages, chat);
-        });
+    assertThrows(UnsupportedOperationException.class, () -> {
+      aiService.sendNewMessage(messages, chat);
+    });
 
-        verify(openAIService, never()).sendNewMessage(any(), any());
-        verify(vertexGeminiService, never()).sendNewMessage(any(), any());
-    }
+    verify(openAIService, never()).sendNewMessage(any(), any());
+    verify(vertexGeminiService, never()).sendNewMessage(any(), any());
+  }
 
-    @Test
-    void generateTitle_withGptModel_shouldCallOpenAIService() {
-        chat.setModel("gpt-4");
-        String userMessage = "Hello";
-        String assistantMessage = "Hi there";
-        String expectedTitle = "GPT Title";
-        when(openAIService.generateTitle(chat, userMessage, assistantMessage)).thenReturn(expectedTitle);
+  @Test
+  void generateTitle_withGptModel_shouldCallOpenAIService() {
+    chat.setModel("gpt-4");
+    String userMessage = "Hello";
+    String assistantMessage = "Hi there";
+    String expectedTitle = "GPT Title";
+    when(openAIService.generateTitle(userMessage, assistantMessage)).thenReturn(expectedTitle);
 
-        String actualTitle = aiService.generateTitle(chat, userMessage, assistantMessage);
+    String actualTitle = aiService.generateTitle(chat, userMessage, assistantMessage);
 
-        assertEquals(expectedTitle, actualTitle);
-        verify(openAIService, times(1)).generateTitle(chat, userMessage, assistantMessage);
-        verify(vertexGeminiService, never()).generateTitle(any(), any(), any());
-    }
+    assertEquals(expectedTitle, actualTitle);
+    verify(openAIService, times(1)).generateTitle(userMessage, assistantMessage);
+    verify(vertexGeminiService, never()).generateTitle(any(), any());
+  }
 
-    @Test
-    void generateTitle_withGeminiModel_shouldCallVertexGeminiService() {
-        chat.setModel("gemini-pro");
-        String userMessage = "Hello";
-        String assistantMessage = "Hi there";
-        String expectedTitle = "Gemini Title";
-        when(vertexGeminiService.generateTitle(chat, userMessage, assistantMessage)).thenReturn(expectedTitle);
+  @Test
+  void generateTitle_withGeminiModel_shouldCallVertexGeminiService() {
+    chat.setModel("gemini-pro");
+    String userMessage = "Hello";
+    String assistantMessage = "Hi there";
+    String expectedTitle = "Gemini Title";
+    when(vertexGeminiService.generateTitle(userMessage, assistantMessage)).thenReturn(expectedTitle);
 
-        String actualTitle = aiService.generateTitle(chat, userMessage, assistantMessage);
+    String actualTitle = aiService.generateTitle(chat, userMessage, assistantMessage);
 
-        assertEquals(expectedTitle, actualTitle);
-        verify(vertexGeminiService, times(1)).generateTitle(chat, userMessage, assistantMessage);
-        verify(openAIService, never()).generateTitle(any(), any(), any());
-    }
+    assertEquals(expectedTitle, actualTitle);
+    verify(vertexGeminiService, times(1)).generateTitle(userMessage, assistantMessage);
+    verify(openAIService, never()).generateTitle(any(), any());
+  }
 
-    @Test
-    void generateTitle_withUnsupportedModel_shouldThrowException() {
-        chat.setModel("unsupported-model");
-        String userMessage = "Hello";
-        String assistantMessage = "Hi there";
+  @Test
+  void generateTitle_withUnsupportedModel_shouldThrowException() {
+    chat.setModel("unsupported-model");
+    String userMessage = "Hello";
+    String assistantMessage = "Hi there";
 
-        assertThrows(UnsupportedOperationException.class, () -> {
-            aiService.generateTitle(chat, userMessage, assistantMessage);
-        });
+    assertThrows(UnsupportedOperationException.class, () -> {
+      aiService.generateTitle(chat, userMessage, assistantMessage);
+    });
 
-        verify(openAIService, never()).generateTitle(any(), any(), any());
-        verify(vertexGeminiService, never()).generateTitle(any(), any(), any());
-    }
+    verify(openAIService, never()).generateTitle(any(), any());
+    verify(vertexGeminiService, never()).generateTitle(any(), any());
+  }
 }
