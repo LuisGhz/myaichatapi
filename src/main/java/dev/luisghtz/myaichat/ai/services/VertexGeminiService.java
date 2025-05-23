@@ -23,7 +23,6 @@ import dev.luisghtz.myaichat.ai.utils.MessagesUtil;
 import dev.luisghtz.myaichat.chat.entities.AppMessage;
 import dev.luisghtz.myaichat.chat.entities.Chat;
 import dev.luisghtz.myaichat.exceptions.ImageNotValidException;
-import dev.luisghtz.myaichat.prompts.entities.CustomPrompt;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 
@@ -40,7 +39,7 @@ public class VertexGeminiService implements AIProviderService {
   public ChatResponse sendNewMessage(List<AppMessage> messages, Chat chat) {
     List<Message> modelMessages = new ArrayList<>();
     MessagesUtil.addSystemMessage(chat, modelMessages);
-    addInitialMessagesIfApply(chat, modelMessages);
+    MessagesUtil.addInitialMessagesIfApply(chat, modelMessages);
 
     // Convert AppMessages to the appropriate Message type
     List<Message> convertedMessages = messages.stream().map(message -> {
@@ -107,20 +106,6 @@ public class VertexGeminiService implements AIProviderService {
       return MimeTypeUtils.IMAGE_JPEG;
     } else {
       throw new ImageNotValidException("Image not valid. Supported formats: gif, png, jpg, jpeg.");
-    }
-  }
-
-  private void addInitialMessagesIfApply(Chat chat, List<Message> messages) {
-    if (chat.getCustomPrompt() != null && chat.getCustomPrompt().getMessages() != null
-        && !chat.getCustomPrompt().getMessages().isEmpty()) {
-      CustomPrompt customPrompt = chat.getCustomPrompt();
-      customPrompt.getMessages().forEach((message) -> {
-        if (message.getRole().equals("Assistant")) {
-          messages.add(new AssistantMessage(message.getContent()));
-        } else if (message.getRole().equals("User")) {
-          messages.add(new UserMessage(message.getContent()));
-        }
-      });
     }
   }
 }
