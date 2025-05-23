@@ -12,7 +12,6 @@ import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.model.ChatResponse;
-import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.model.Media;
 import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.ai.openai.api.OpenAiApi;
@@ -76,7 +75,7 @@ public class OpenAIService implements AIProviderService {
         .maxCompletionTokens(MAX_COMPLETION_TOKENS)
         .build();
 
-    ChatResponse titleResponse = openAIChatClient.prompt(new Prompt(titleMessages))
+    ChatResponse titleResponse = openAIChatClient.prompt().messages(titleMessages)
         .options(titleOptions).call().chatResponse();
 
     return titleResponse.getResult().getOutput().getText();
