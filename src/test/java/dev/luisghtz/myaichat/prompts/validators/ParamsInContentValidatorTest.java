@@ -66,6 +66,19 @@ class ParamsInContentValidatorTest {
   }
 
   @Test
+  void isValid_WhenParamIsEmpty_ShouldReturnTrue() {
+    List<CreateCustomPromptParamsDto> params = List.of(param1, param2);
+    when(request.getParams()).thenReturn(params);
+    when(request.getContent()).thenReturn("Hello {name}, your age is {age}");
+    when(param1.getName()).thenReturn("");
+    when(param2.getName()).thenReturn("age");
+
+    boolean result = validator.isValid(request, context);
+
+    assertTrue(result);
+  }
+
+  @Test
   void isValid_WhenSomeParamsMissingFromContent_ShouldReturnFalse() {
     List<CreateCustomPromptParamsDto> params = List.of(param1, param2);
     when(request.getParams()).thenReturn(params);
