@@ -2,6 +2,7 @@ package dev.luisghtz.myaichat.chat.dtos;
 
 import java.util.UUID;
 
+import org.hibernate.validator.constraints.Length;
 import org.springframework.web.multipart.MultipartFile;
 
 import dev.luisghtz.myaichat.ai.models.AppModels;
@@ -19,6 +20,7 @@ public class NewMessageRequestDto {
 
   private UUID chatId = null;
   @NotEmpty
+  @Length(max = 8_000, message = "Message must be at most 8,000 characters long.")
   private String prompt;
   @AllowedStringValues(values = AppModels.class, message = "Invalid model: must be one of the allowed values.")
   private String model = null;
