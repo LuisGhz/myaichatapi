@@ -8,6 +8,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
+import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import dev.luisghtz.myaichat.chat.dtos.ChatErrorResponseDto;
 import dev.luisghtz.myaichat.exceptions.AppMethodArgumentNotValidException;
@@ -86,7 +87,6 @@ public class GlobalControllerAdviceTest {
     String actual = (String) getErrorMessageMethod.invoke(globalControllerAdvice, input);
     assertEquals(expected, actual);
   }
-
   @Test
   void testHandleMethodArgumentNotValidException() {
     // Arrange
@@ -97,6 +97,7 @@ public class GlobalControllerAdviceTest {
     
     when(ex.getBindingResult()).thenReturn(bindingResult);
     when(bindingResult.getFieldErrors()).thenReturn(Arrays.asList(fieldError, fieldError2));
+    when(bindingResult.getGlobalErrors()).thenReturn(Arrays.asList()); // Empty global errors
     
     // Act
     var response = globalControllerAdvice.handleValidationException(ex);
@@ -213,5 +214,116 @@ public class GlobalControllerAdviceTest {
     ChatErrorResponseDto body = response.getBody();
     assertEquals(HttpStatus.BAD_REQUEST, body.getStatusCode());
     assertEquals("Resource is currently in use", body.getMessage());
+  }
+
+  @Test
+  void testHandleMethodArgumentNotValidException_withGlobalErrorsOnly() {
+    // Arrange
+    MethodArgumentNotValidException ex = mock(MethodArgumentNotValidException.class);
+    BindingResult bindingResult = mock(BindingResult.class);
+    ObjectError globalError = new ObjectError("objectName", "Object validation failed");
+    ObjectError globalError2 = new ObjectError("objectName", "Another global validation failed");
+    
+    when(ex.getBindingResult()).thenReturn(bindingResult);
+    when(bindingResult.getFieldErrors()).thenReturn(Arrays.asList()); // Empty field errors
+    when(bindingResult.getGlobalErrors()).thenReturn(Arrays.asList(globalError, globalError2));
+    
+    // Act
+    var response = globalControllerAdvice.handleValidationException(ex);
+    
+    // Assert
+    assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+    ChatErrorResponseDto body = response.getBody();
+    assertEquals(HttpStatus.BAD_REQUEST, body.getStatusCode());
+    assertTrue(body.getMessage().contains("Object validation failed"));
+    assertTrue(body.getMessage().contains("Another global validation failed"));
+    assertFalse(body.getMessage().contains(":")); // No field prefix
+  }
+
+  @Test
+  void testHandleMethodArgumentNotValidException_withBothFieldAndGlobalErrors() {
+    // Arrange
+    MethodArgumentNotValidException ex = mock(MethodArgumentNotValidException.class);
+    BindingResult bindingResult = mock(BindingResult.class);
+    FieldError fieldError = new FieldError("objectName", "email", "must be valid email");
+    ObjectError globalError = new ObjectError("objectName", "Password and confirm password must match");
+    
+    when(ex.getBindingResult()).thenReturn(bindingResult);
+    when(bindingResult.getFieldErrors()).thenReturn(Arrays.asList(fieldError));
+    when(bindingResult.getGlobalErrors()).thenReturn(Arrays.asList(globalError));
+    
+    // Act
+    var response = globalControllerAdvice.handleValidationException(ex);
+    
+    // Assert
+    assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+    ChatErrorResponseDto body = response.getBody();
+    assertEquals(HttpStatus.BAD_REQUEST, body.getStatusCode());
+    String message = body.getMessage();
+    assertTrue(message.contains("email: must be valid email"));
+    assertTrue(message.contains("Password and confirm password must match"));
+    assertTrue(message.contains(", ")); // Should have comma separator
+  }
+
+  @Test
+  void testHandleMethodArgumentNotValidException_withEmptyBindingResult() {
+    // Arrange
+    MethodArgumentNotValidException ex = mock(MethodArgumentNotValidException.class);
+    BindingResult bindingResult = mock(BindingResult.class);
+    
+    when(ex.getBindingResult()).thenReturn(bindingResult);
+    when(bindingResult.getFieldErrors()).thenReturn(Arrays.asList()); // Empty field errors
+    when(bindingResult.getGlobalErrors()).thenReturn(Arrays.asList()); // Empty global errors
+    
+    // Act
+    var response = globalControllerAdvice.handleValidationException(ex);
+    
+    // Assert
+    assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+    ChatErrorResponseDto body = response.getBody();
+    assertEquals(HttpStatus.BAD_REQUEST, body.getStatusCode());
+    assertEquals("", body.getMessage()); // Should be empty string
+  }
+
+  @Test
+  void testHandleMethodArgumentNotValidException_withSingleFieldError() {
+    // Arrange
+    MethodArgumentNotValidException ex = mock(MethodArgumentNotValidException.class);
+    BindingResult bindingResult = mock(BindingResult.class);
+    FieldError fieldError = new FieldError("userForm", "username", "must not be blank");
+    
+    when(ex.getBindingResult()).thenReturn(bindingResult);
+    when(bindingResult.getFieldErrors()).thenReturn(Arrays.asList(fieldError));
+    when(bindingResult.getGlobalErrors()).thenReturn(Arrays.asList());
+    
+    // Act
+    var response = globalControllerAdvice.handleValidationException(ex);
+    
+    // Assert
+    assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+    ChatErrorResponseDto body = response.getBody();
+    assertEquals(HttpStatus.BAD_REQUEST, body.getStatusCode());
+    assertEquals("username: must not be blank", body.getMessage());
+  }
+
+  @Test
+  void testHandleMethodArgumentNotValidException_withSingleGlobalError() {
+    // Arrange
+    MethodArgumentNotValidException ex = mock(MethodArgumentNotValidException.class);
+    BindingResult bindingResult = mock(BindingResult.class);
+    ObjectError globalError = new ObjectError("userForm", "Passwords do not match");
+    
+    when(ex.getBindingResult()).thenReturn(bindingResult);
+    when(bindingResult.getFieldErrors()).thenReturn(Arrays.asList());
+    when(bindingResult.getGlobalErrors()).thenReturn(Arrays.asList(globalError));
+    
+    // Act
+    var response = globalControllerAdvice.handleValidationException(ex);
+    
+    // Assert
+    assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+    ChatErrorResponseDto body = response.getBody();
+    assertEquals(HttpStatus.BAD_REQUEST, body.getStatusCode());
+    assertEquals("Passwords do not match", body.getMessage());
   }
 }
