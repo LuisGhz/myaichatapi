@@ -21,13 +21,31 @@ import dev.luisghtz.myaichat.exceptions.ResourceInUseException;
 public class GlobalControllerAdvice {
   @ExceptionHandler({ MethodArgumentNotValidException.class })
   public ResponseEntity<ChatErrorResponseDto> handleValidationException(MethodArgumentNotValidException ex) {
-    String message = ex.getBindingResult().getFieldErrors().stream()
-        .map(error -> error.getField() + ": " + error.getDefaultMessage())
-        .collect(Collectors.joining(", "));
+    StringBuilder messageBuilder = new StringBuilder();
+
+    // Handle field errors
+    if (!ex.getBindingResult().getFieldErrors().isEmpty()) {
+      String fieldErrors = ex.getBindingResult().getFieldErrors().stream()
+          .map(error -> error.getField() + ": " + error.getDefaultMessage())
+          .collect(Collectors.joining(", "));
+      messageBuilder.append(fieldErrors);
+    }
+
+    // Handle global/class-level errors
+    if (!ex.getBindingResult().getGlobalErrors().isEmpty()) {
+      String globalErrors = ex.getBindingResult().getGlobalErrors().stream()
+          .map(error -> error.getDefaultMessage())
+          .collect(Collectors.joining(", "));
+
+      if (messageBuilder.length() > 0) {
+        messageBuilder.append(", ");
+      }
+      messageBuilder.append(globalErrors);
+    }
 
     var response = ChatErrorResponseDto.builder()
         .statusCode(HttpStatus.BAD_REQUEST)
-        .message("Validation error: " + message)
+        .message(messageBuilder.toString())
         .build();
 
     return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
