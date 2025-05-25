@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.hibernate.validator.constraints.Length;
 
+import dev.luisghtz.myaichat.prompts.validators.ParamsInContent;
 import dev.luisghtz.myaichat.validators.UniqueObjectsValues;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
@@ -14,6 +15,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@ParamsInContent
 public class CreateCustomPromptDtoReq {
   @NotBlank
   @Length(max = 30, message = "Name cannot exceed 30 characters")
