@@ -18,7 +18,8 @@ public class ParamsInContentValidator implements ConstraintValidator<ParamsInCon
     if (value.getParams() == null || value.getParams().isEmpty())
       return true;
     for (CreateCustomPromptParamsDto param : value.getParams()) {
-      if (!value.getContent().trim().isEmpty() &&
+      // Empty param name is validated by @NotBlank
+      if (!param.getName().trim().isEmpty() &&
           !value.getContent().contains("{" + param.getName() + "}")) {
         context.disableDefaultConstraintViolation();
 
