@@ -22,9 +22,9 @@ public class NewMessageRequestDto {
   @NotEmpty
   @Length(max = 8_000, message = "Message must be at most 8,000 characters long.")
   private String prompt;
-  @AllowedStringValues(values = AppModels.class, message = "Invalid model: must be one of the allowed values.")
+  @AllowedStringValues(values = AppModels.class, message = "Invalid model: must be one of the allowed models.")
   private String model = null;
-  @ValidImage(message = "Invalid image: must be a valid image file.")
+  @ValidImage(message = "File type not supported (Only: jpg, jpeg, png, gif) or file size exceeded (max 2 MB).")
   private MultipartFile image = null;
   private String promptId;
 }
