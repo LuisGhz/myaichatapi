@@ -14,10 +14,10 @@ import lombok.NoArgsConstructor;
 @Builder
 public class UpdateCustomPromptParamsDto {
   private String id;
-  @NoBlankSpace(message = "Name cannot be blank")
-  @Length(max = 15, message = "Name cannot exceed 15 characters")
+  @NoBlankSpace(message = "Param name is required")
+  @Length(max = 15, message = "Param name must be 15 characters or less")
   private String name;
-  @NoBlankSpace(message = "Value cannot be blank")
-  @Length(max = 100, message = "Value cannot exceed 100 characters")
+  @NoBlankSpace(message = "Param value is required")
+  @Length(max = 100, message = "Param value must be 100 characters or less")
   private String value;
 }

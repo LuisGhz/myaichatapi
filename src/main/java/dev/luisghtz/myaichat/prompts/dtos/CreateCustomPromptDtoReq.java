@@ -21,7 +21,7 @@ public class CreateCustomPromptDtoReq {
   @Length(max = 30, message = "Must be 30 characters or less")
   private String name;
   @NotBlank
-  @Length(max = 10_000, message = "Must be 10,000 characters or less")
+  @Length(max = 10_000, message = "Content must be 10,000 characters or less")
   private String content;
   @Valid
   @UniqueObjectsValues(fieldName = "name", message = "Params names must be unique")

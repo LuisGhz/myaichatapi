@@ -16,10 +16,10 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class UpdateCustomPromptMessagesDto {
   private UUID id;
-  @NoBlankSpace(message = "Role cannot be blank")
+  @NoBlankSpace(message = "Role is required")
   @AllowedStringValues(values = AppPrompsRequestsRoles.class, message = "Role should be \"User\" or \"Assistant\"")
   private String role;
-  @NoBlankSpace(message = "Content cannot be blank")
-  @Length(max = 10_000, message = "Content cannot exceed 10,000 characters")
+  @NoBlankSpace(message = "Content is required")
+  @Length(max = 10_000, message = "Message content must be 10,000 characters or less")
   private String content;
 }
