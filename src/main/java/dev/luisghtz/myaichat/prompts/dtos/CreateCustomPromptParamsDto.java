@@ -12,9 +12,9 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class CreateCustomPromptParamsDto {
   @NotBlank
-  @Length(max = 15, message = "Name cannot exceed 15 characters")
+  @Length(max = 15, message = "Must be 15 characters or less")
   private String name;
   @NotBlank
-  @Length(max = 100, message = "Value cannot exceed 100 characters")
+  @Length(max = 100, message = "Must be 100 characters or less")
   private String value;
 }
