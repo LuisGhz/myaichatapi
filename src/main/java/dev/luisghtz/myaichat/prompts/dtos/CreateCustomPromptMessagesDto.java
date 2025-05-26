@@ -17,6 +17,6 @@ public class CreateCustomPromptMessagesDto {
   @AllowedStringValues(values = AppPrompsRequestsRoles.class, message = "Role should be \"User\" or \"Assistant\"")
   private String role;
   @NotBlank
-  @Length(max = 10_000, message = "Content cannot exceed 10,000 characters")
+  @Length(max = 10_000, message = "Must be 10,000 characters or less.")
   private String content;
 }
