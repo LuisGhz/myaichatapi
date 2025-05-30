@@ -46,4 +46,8 @@ public class AwsS3Service {
         .key(fileName)
         .build(), RequestBody.fromBytes(fileContent));
   }
+
+  public void deleteFile(String fileName) {
+    s3Client.deleteObject(builder -> builder.bucket(bucketName).key(fileName));
+  }
 }
