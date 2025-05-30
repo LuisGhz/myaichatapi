@@ -22,4 +22,6 @@ public interface MessageRepository extends JpaRepository<AppMessage, UUID> {
 
   @Query("SELECT new dev.luisghtz.myaichat.chat.models.TokensSum(COALESCE(SUM(m.promptTokens), 0), COALESCE(SUM(m.completionTokens), 0)) FROM AppMessage m WHERE m.chat.id = :chatId")
   TokensSum getSumOfPromptAndCompletionTokensByChatId(@Param("chatId") UUID chatId);
+
+  List<AppMessage> findAllByChatId(UUID id);
 }
