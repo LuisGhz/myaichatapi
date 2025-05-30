@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
@@ -19,6 +20,7 @@ import dev.luisghtz.myaichat.chat.models.TokensSum;
 import dev.luisghtz.myaichat.chat.repositories.MessageRepository;
 import dev.luisghtz.myaichat.chat.entities.AppMessage;
 import dev.luisghtz.myaichat.chat.utils.MessagesUtils;
+import dev.luisghtz.myaichat.image.providers.AwsS3Service;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -30,6 +32,10 @@ public class MessagesService {
   private final AIService aiProviderService;
   private final ChatService chatService;
   private final MessageRepository messageRepository;
+  private final AwsS3Service awsS3Service;
+
+  @Value("${cdn}")
+  private String cdn;
 
   public HistoryChatDto getPreviousMessages(UUID id, Pageable pageable) {
     var chat = chatService.findChatById(id);
@@ -115,6 +121,13 @@ public class MessagesService {
   @Transactional
   public void deleteAllByChat(UUID id) {
     log.info("Deleting messages for chat with ID: '{}'", id);
+    var messages = messageRepository.findAllByChatId(id);
+    var images = messages.stream()
+        .map(AppMessage::getImageUrl)
+        .filter(imageUrl -> imageUrl != null && !imageUrl.isEmpty())
+        .distinct()
+        .collect(Collectors.toList());
+    images.forEach(this::removeImageFromS3);
     messageRepository.deleteAllByChatId(id);
   }
 
@@ -128,5 +141,10 @@ public class MessagesService {
 
   private TokensSum getSumOfPromptAndCompletionTokensByChatId(UUID chatId) {
     return messageRepository.getSumOfPromptAndCompletionTokensByChatId(chatId);
+  }
+
+  private void removeImageFromS3(String imageUrl) {
+    var cleanUrl = imageUrl.replace(cdn, "");
+    awsS3Service.deleteFile(cleanUrl);
   }
 }
