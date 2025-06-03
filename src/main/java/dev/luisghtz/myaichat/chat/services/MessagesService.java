@@ -93,8 +93,6 @@ public class MessagesService {
         .completionTokens(assistantMessage.getCompletionTokens())
         .totalTokens(assistantMessage.getTotalTokens())
         .build();
-    if (isNewChat)
-      message.setChatId(chatId);
     return message;
   }
 
