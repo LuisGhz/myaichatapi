@@ -58,8 +58,10 @@ public class MessagesService {
     AppMessage assistantMessage = getAssistantResponse(chat, userMessage);
     AssistantMessageResponseDto responseDto = createAssistantMessageDto(assistantMessage, chat.getId(), isNewChat);
     saveMessages(userMessage, assistantMessage);
-    if (isNewChat)
+    if (isNewChat) {
       chatService.generateAndSetTitleForNewChat(chat, newMessageRequestDto, responseDto);
+      addNewChatDataToFirstMessage(responseDto, chat);
+    }
     var tokens = getSumOfPromptAndCompletionTokensByChatId(chat.getId());
     responseDto.setTotalChatPromptTokens(tokens.getPromptTokens());
     responseDto.setTotalChatCompletionTokens(tokens.getCompletionTokens());
@@ -94,6 +96,11 @@ public class MessagesService {
     if (isNewChat)
       message.setChatId(chatId);
     return message;
+  }
+
+  private void addNewChatDataToFirstMessage(AssistantMessageResponseDto responseDto, Chat chat) {
+    responseDto.setChatId(chat.getId());
+    responseDto.setChatTitle(chat.getTitle());
   }
 
   private List<AppMessageHistory> getChatPreviousMessages(Chat chat, Pageable pageable) {
