@@ -32,8 +32,8 @@ public class ChatService {
     var chats = chatRepository.findAllByOrderByCreatedAtAsc();
     ChatsListResponseDto chatsListResponseDto = new ChatsListResponseDto();
     chatsListResponseDto.setChats(chats.stream()
-      .map(chat -> new ChatSummary(chat.getId(), chat.getTitle()))
-      .collect(Collectors.toList()));
+        .map(chat -> new ChatSummary(chat.getId(), chat.getTitle()))
+        .collect(Collectors.toList()));
     return chatsListResponseDto;
   }
 
@@ -83,5 +83,12 @@ public class ChatService {
     var chat = findChatById(id);
     log.info("Deleting chat with Title: '{}'' and ID: '{}'", chat.getTitle(), id);
     chatRepository.delete(chat);
+  }
+
+  @Transactional
+  public int renameChatTitleById(UUID id, String title) {
+    var chat = findChatById(id);
+    log.info("Renaming chat with Title: '{}' and ID: '{}'", chat.getTitle(), id);
+    return chatRepository.renameChatTitleById(id, title);
   }
 }
