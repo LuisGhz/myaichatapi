@@ -246,4 +246,20 @@ class ChatServiceTest {
     verify(chatRepository).findById(testChatId);
     verify(chatRepository, never()).delete(any());
   }
+
+  @Test
+  void renameChatTitleById_WithExistingId_ShouldRenameChatTitle() {
+    // Given
+    String newTitle = "New Chat Title";
+    when(chatRepository.findById(testChatId)).thenReturn(Optional.of(testChat));
+    when(chatRepository.renameChatTitleById(testChatId, newTitle)).thenReturn(1);
+
+    // When
+    int result = chatService.renameChatTitleById(testChatId, newTitle);
+
+    // Then
+    assertEquals(1, result);
+    verify(chatRepository).findById(testChatId);
+    verify(chatRepository).renameChatTitleById(testChatId, newTitle);
+  }
 }
