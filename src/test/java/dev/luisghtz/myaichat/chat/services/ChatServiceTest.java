@@ -262,4 +262,20 @@ class ChatServiceTest {
     verify(chatRepository).findById(testChatId);
     verify(chatRepository).renameChatTitleById(testChatId, newTitle);
   }
+
+  @Test
+  void renameChatTitleById_WithNonExistentId_ShouldThrowException() {
+    // Given
+    String newTitle = "New Chat Title";
+    when(chatRepository.findById(testChatId)).thenReturn(Optional.empty());
+
+    // When & Then
+    ResponseStatusException exception = assertThrows(ResponseStatusException.class,
+        () -> chatService.renameChatTitleById(testChatId, newTitle));
+
+    assertEquals(HttpStatus.NOT_FOUND, exception.getStatusCode());
+    assertTrue(exception.getReason().contains("Chat not found with ID: " + testChatId));
+    verify(chatRepository).findById(testChatId);
+    verify(chatRepository, never()).renameChatTitleById(any(), any());
+  }
 }
