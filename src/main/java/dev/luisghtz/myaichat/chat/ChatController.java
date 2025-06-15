@@ -9,9 +9,11 @@ import dev.luisghtz.myaichat.chat.dtos.ChatErrorResponseDto;
 import dev.luisghtz.myaichat.chat.dtos.ChatsListResponseDto;
 import dev.luisghtz.myaichat.chat.dtos.HistoryChatDto;
 import dev.luisghtz.myaichat.chat.dtos.NewMessageRequestDto;
+import dev.luisghtz.myaichat.chat.dtos.RenameChatTitleDto;
 import dev.luisghtz.myaichat.chat.services.MessagesService;
 import dev.luisghtz.myaichat.chat.services.ChatService;
 import dev.luisghtz.myaichat.image.ImageService;
+import org.springframework.web.bind.annotation.RequestBody;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 
@@ -26,6 +28,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 
 @RestController
@@ -65,6 +68,13 @@ public class ChatController {
   public ResponseEntity<Void> deleteChat(@PathVariable UUID id) {
     messagesService.deleteAllByChat(id);
     chatService.deleteChat(id);
+    return ResponseEntity.noContent().build();
+  }
+
+  @PatchMapping("{id}/rename")
+  public ResponseEntity<Void> renameChat(@PathVariable UUID id,
+      @Validated @RequestBody RenameChatTitleDto renameChatTitleDto) {
+    chatService.renameChatTitleById(id, renameChatTitleDto.getTitle());
     return ResponseEntity.noContent().build();
   }
 
