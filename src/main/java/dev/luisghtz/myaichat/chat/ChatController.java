@@ -78,6 +78,13 @@ public class ChatController {
     return ResponseEntity.noContent().build();
   }
 
+  @PatchMapping("{id}/change-max-output-tokens")
+  public ResponseEntity<Void> changeMaxOutputTokens(@PathVariable UUID id,
+      @Validated @RequestBody NewMessageRequestDto newMessageRequestDto) {
+    chatService.changeMaxOutputTokens(id, newMessageRequestDto.getMaxOutputTokens());
+    return ResponseEntity.noContent().build();
+  }
+
   @ExceptionHandler(ResponseStatusException.class)
   public ResponseEntity<ChatErrorResponseDto> handleException(ResponseStatusException ex) {
     var statusCode = ex.getStatusCode();

@@ -92,4 +92,10 @@ public class ChatService {
     log.info("Renaming chat with Title: '{}' and ID: '{}'", chat.getTitle(), id);
     return chatRepository.renameChatTitleById(id, title);
   }
+
+  @Transactional
+  public int changeMaxOutputTokens(UUID id, Short maxOutputTokens) {
+    log.info("Changing max output tokens for chat with ID: '{}'", id);
+    return chatRepository.changeMaxTokens(id, maxOutputTokens);
+  }
 }
