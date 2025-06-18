@@ -46,6 +46,7 @@ public class MessagesService {
         .model(chat.getModel())
         .totalPromptTokens(tokens.getPromptTokens())
         .totalCompletionTokens(tokens.getCompletionTokens())
+        .maxOutputTokens(chat.getMaxOutputTokens())
         .build();
     return appMessageHistory;
   }

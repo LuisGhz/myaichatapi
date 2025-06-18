@@ -36,4 +36,5 @@ public class Chat {
   private List<AppMessage> messages;
   @ManyToOne(fetch = FetchType.LAZY)
   private CustomPrompt customPrompt;
+  private Short maxOutputTokens;
 }

@@ -17,4 +17,5 @@ public class HistoryChatDto {
   private String model;
   private Long totalPromptTokens;
   private Long totalCompletionTokens;
+  private Short maxOutputTokens;
 }

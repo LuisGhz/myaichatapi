@@ -20,7 +20,6 @@ import org.springframework.util.MimeType;
 import org.springframework.util.MimeTypeUtils;
 
 import dev.luisghtz.myaichat.ai.models.AIProviderService;
-import dev.luisghtz.myaichat.ai.models.AppModels;
 import dev.luisghtz.myaichat.ai.utils.MessagesUtil;
 import dev.luisghtz.myaichat.chat.entities.AppMessage;
 import dev.luisghtz.myaichat.chat.entities.Chat;
@@ -53,7 +52,7 @@ public class OpenAIService implements AIProviderService {
     // Always create the chat response
     OpenAiChatOptions options = OpenAiChatOptions.builder()
         .model(chat.getModel())
-        .maxCompletionTokens(AppModels.getMaxTokens(chat.getModel()))
+        .maxCompletionTokens(chat.getMaxOutputTokens().intValue())
         .build();
     ChatResponse chatResponse = openAIChatClient.prompt()
         .messages(modelMessages).options(options).call().chatResponse();
