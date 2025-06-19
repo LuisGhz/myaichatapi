@@ -32,7 +32,7 @@ public class ChatService {
     var chats = chatRepository.findAllByOrderByCreatedAtAsc();
     ChatsListResponseDto chatsListResponseDto = new ChatsListResponseDto();
     chatsListResponseDto.setChats(chats.stream()
-        .map(chat -> new ChatSummary(chat.getId(), chat.getTitle()))
+        .map(chat -> new ChatSummary(chat.getId(), chat.getTitle(), chat.getFav()))
         .collect(Collectors.toList()));
     return chatsListResponseDto;
   }

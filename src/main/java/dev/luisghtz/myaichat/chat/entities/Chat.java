@@ -37,4 +37,5 @@ public class Chat {
   @ManyToOne(fetch = FetchType.LAZY)
   private CustomPrompt customPrompt;
   private Short maxOutputTokens;
+  private Boolean fav;
 }

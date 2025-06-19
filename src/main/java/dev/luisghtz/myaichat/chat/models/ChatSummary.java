@@ -14,4 +14,5 @@ import lombok.NoArgsConstructor;
 public class ChatSummary {
   private UUID id;
   private String title;
+  private Boolean fav;
 }
