@@ -85,6 +85,12 @@ public class ChatController {
     return ResponseEntity.noContent().build();
   }
 
+  @PatchMapping("{id}/toggle-chat-fav")
+  public ResponseEntity<Void> toggleChatFav(@PathVariable UUID id) {
+    chatService.toggleChatFav(id);
+    return ResponseEntity.noContent().build();
+  }
+
   @ExceptionHandler(ResponseStatusException.class)
   public ResponseEntity<ChatErrorResponseDto> handleException(ResponseStatusException ex) {
     var statusCode = ex.getStatusCode();

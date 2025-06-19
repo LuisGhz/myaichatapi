@@ -98,4 +98,12 @@ public class ChatService {
     log.info("Changing max output tokens for chat with ID: '{}'", id);
     return chatRepository.changeMaxTokens(id, maxOutputTokens);
   }
+
+  @Transactional
+  public void toggleChatFav(UUID id) {
+    var chat = findChatById(id);
+    log.info("Toggling favorite status for chat with ID: '{}'", id);
+    chat.setFav(!chat.getFav());
+    chatRepository.setChatFav(id, chat.getFav());
+  }
 }
