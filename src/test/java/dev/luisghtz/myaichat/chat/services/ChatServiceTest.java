@@ -51,6 +51,7 @@ class ChatServiceTest {
         .title("Test Chat")
         .createdAt(new Date())
         .model("gpt-4")
+        .fav(false)
         .build();
 
     testRequest = new NewMessageRequestDto();
@@ -277,5 +278,21 @@ class ChatServiceTest {
     assertTrue(exception.getReason().contains("Chat not found with ID: " + testChatId));
     verify(chatRepository).findById(testChatId);
     verify(chatRepository, never()).renameChatTitleById(any(), any());
+  }
+
+  @Test
+  void toggleChatFav_ShouldToggleFavoriteStatus() {
+    // Given
+    when(chatRepository.findById(testChatId)).thenReturn(Optional.of(testChat));
+    boolean initialFavStatus = testChat.getFav();
+
+    // When
+    chatService.toggleChatFav(testChatId);
+    boolean updatedFavStatus = testChat.getFav();
+    verify(chatRepository).findById(testChatId);
+
+    // Then
+    assertNotEquals(initialFavStatus, updatedFavStatus);
+    verify(chatRepository).setChatFav(testChatId, !initialFavStatus);
   }
 }
