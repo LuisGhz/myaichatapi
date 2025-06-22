@@ -69,6 +69,7 @@ public class ChatService {
         .createdAt(new Date())
         .model(newMessageRequestDto.getModel())
         .maxOutputTokens(newMessageRequestDto.getMaxOutputTokens())
+        .fav(false)
         .build();
     if (newMessageRequestDto.getPromptId() != null && !newMessageRequestDto.getPromptId().isEmpty()) {
       var prompt = customPromptService.findById(newMessageRequestDto.getPromptId())
