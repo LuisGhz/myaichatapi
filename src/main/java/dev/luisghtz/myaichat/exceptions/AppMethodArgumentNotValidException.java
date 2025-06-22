@@ -5,8 +5,4 @@ public class AppMethodArgumentNotValidException extends RuntimeException {
     super(message);
   }
 
-  public AppMethodArgumentNotValidException(String message, Throwable cause) {
-    super(message, cause);
-  }
-
 }

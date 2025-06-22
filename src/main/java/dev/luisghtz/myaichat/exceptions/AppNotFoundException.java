@@ -5,12 +5,4 @@ public class AppNotFoundException extends RuntimeException {
     super(message);
   }
 
-  public AppNotFoundException(String message, Throwable cause) {
-    super(message, cause);
-  }
-
-  public AppNotFoundException(Throwable cause) {
-    super(cause);
-  }
-
 }
