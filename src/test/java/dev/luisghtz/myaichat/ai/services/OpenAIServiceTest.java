@@ -40,6 +40,14 @@ class OpenAIServiceTest {
     openAIService = new OpenAIService(openAIChatClient);
   }
 
+  private Chat createTestChat() {
+    Chat chat = new Chat();
+    chat.setModel(AppModels.GPT_4O_MINI.getKey());
+    chat.setMaxOutputTokens((short) 2000);
+    return chat;
+  }
+
+
   @Test
   void sendNewMessage_success() {
     // Arrange
@@ -48,8 +56,7 @@ class OpenAIServiceTest {
         .role("Assistant")
         .content("Hello")
         .build());
-    Chat chat = new Chat();
-    chat.setModel(AppModels.GPT_4O_MINI.getKey());
+    Chat chat = createTestChat();
     var assistantMessage = new AssistantMessage("Hello");
     ChatResponse mockResponse = new ChatResponse(List.of(new Generation(assistantMessage)));
     CallResponseMock callResponse = new CallResponseMock(mockResponse);
@@ -74,8 +81,7 @@ class OpenAIServiceTest {
         .imageUrl("https://example.com/image.png")
         .build();
     messages.add(appMessage);
-    Chat chat = new Chat();
-    chat.setModel(AppModels.GPT_4O_MINI.getKey());
+    Chat chat = createTestChat();
     var assistantMessage = new AssistantMessage("Hello");
     ChatResponse mockResponse = new ChatResponse(List.of(new Generation(assistantMessage)));
     CallResponseMock callResponse = new CallResponseMock(mockResponse);
@@ -104,8 +110,7 @@ class OpenAIServiceTest {
         .imageUrl("https://example.com/image.jpg")
         .build();
     messages.add(appMessage);
-    Chat chat = new Chat();
-    chat.setModel(AppModels.GPT_4O_MINI.getKey());
+    Chat chat = createTestChat();
     var assistantMessage = new AssistantMessage("Hello");
     ChatResponse mockResponse = new ChatResponse(List.of(new Generation(assistantMessage)));
     CallResponseMock callResponse = new CallResponseMock(mockResponse);
@@ -134,8 +139,7 @@ class OpenAIServiceTest {
         .imageUrl("https://example.com/image.jpeg")
         .build();
     messages.add(appMessage);
-    Chat chat = new Chat();
-    chat.setModel(AppModels.GPT_4O_MINI.getKey());
+    Chat chat = createTestChat();
     var assistantMessage = new AssistantMessage("Hello");
     ChatResponse mockResponse = new ChatResponse(List.of(new Generation(assistantMessage)));
     CallResponseMock callResponse = new CallResponseMock(mockResponse);
@@ -164,8 +168,7 @@ class OpenAIServiceTest {
         .imageUrl("https://example.com/image.gif")
         .build();
     messages.add(appMessage);
-    Chat chat = new Chat();
-    chat.setModel(AppModels.GPT_4O_MINI.getKey());
+    Chat chat = createTestChat();
     var assistantMessage = new AssistantMessage("Hello");
     ChatResponse mockResponse = new ChatResponse(List.of(new Generation(assistantMessage)));
     CallResponseMock callResponse = new CallResponseMock(mockResponse);
@@ -194,8 +197,7 @@ class OpenAIServiceTest {
         .imageUrl("https://example.com/image.raw")
         .build();
     messages.add(appMessage);
-    Chat chat = new Chat();
-    chat.setModel(AppModels.GPT_4O_MINI.getKey());
+    Chat chat = createTestChat();
     // Act
     assertThrows(ImageNotValidException.class, () -> {
       // Assert

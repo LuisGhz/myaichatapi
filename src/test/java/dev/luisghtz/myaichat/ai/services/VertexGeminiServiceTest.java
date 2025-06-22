@@ -50,13 +50,19 @@ class VertexGeminiServiceTest {
     vertexGeminiService = new VertexGeminiService(mockVertextAIChatClient);
   }
 
+  private Chat createTestChat() {
+    Chat chat = new Chat();
+    chat.setModel(AppModels.GEMINI_FLASH_2_0.getKey());
+    chat.setMaxOutputTokens((short) 2000);
+    return chat;
+  }
+
   @Test
   void sendNewMessage_success() {
     // Arrange
     List<AppMessage> appMessages = List.of(
         AppMessage.builder().role("User").content("Hello Gemini").build());
-    Chat chat = new Chat();
-    chat.setModel(AppModels.GEMINI_FLASH_2_0.getKey());
+    Chat chat = createTestChat();
 
     AssistantMessage assistantMessage = new AssistantMessage("Hello there!");
     ChatResponse expectedChatResponse = new ChatResponse(List.of(new Generation(assistantMessage)));
@@ -82,8 +88,7 @@ class VertexGeminiServiceTest {
         .imageUrl("http://example.com/image.png") // id is null
         .build();
     List<AppMessage> appMessages = List.of(appMessageWithImage);
-    Chat chat = new Chat();
-    chat.setModel(AppModels.GEMINI_FLASH_2_5_PRO.getKey());
+    Chat chat = createTestChat();
 
     AssistantMessage assistantMessage = new AssistantMessage("Image received.");
     ChatResponse expectedChatResponse = new ChatResponse(List.of(new Generation(assistantMessage)));
@@ -108,8 +113,7 @@ class VertexGeminiServiceTest {
         .imageUrl("http://example.com/image.jpg")
         .build();
     List<AppMessage> appMessages = List.of(appMessageWithImage);
-    Chat chat = new Chat();
-    chat.setModel(AppModels.GEMINI_FLASH_2_5_PRO.getKey());
+    Chat chat = createTestChat();
 
     AssistantMessage assistantMessage = new AssistantMessage("JPG Image received.");
     ChatResponse expectedChatResponse = new ChatResponse(List.of(new Generation(assistantMessage)));
@@ -134,8 +138,7 @@ class VertexGeminiServiceTest {
         .imageUrl("http://example.com/image.jpeg")
         .build();
     List<AppMessage> appMessages = List.of(appMessageWithImage);
-    Chat chat = new Chat();
-    chat.setModel(AppModels.GEMINI_FLASH_2_5_PRO.getKey());
+    Chat chat = createTestChat();
 
     AssistantMessage assistantMessage = new AssistantMessage("JPEG Image received.");
     ChatResponse expectedChatResponse = new ChatResponse(List.of(new Generation(assistantMessage)));
@@ -160,8 +163,7 @@ class VertexGeminiServiceTest {
         .imageUrl("http://example.com/image.gif")
         .build();
     List<AppMessage> appMessages = List.of(appMessageWithImage);
-    Chat chat = new Chat();
-    chat.setModel(AppModels.GEMINI_FLASH_2_5_PRO.getKey());
+    Chat chat = createTestChat();
 
     AssistantMessage assistantMessage = new AssistantMessage("GIF Image received.");
     ChatResponse expectedChatResponse = new ChatResponse(List.of(new Generation(assistantMessage)));
@@ -186,8 +188,7 @@ class VertexGeminiServiceTest {
         .imageUrl("http://example.com/image.raw") // Invalid extension
         .build();
     List<AppMessage> appMessages = List.of(appMessageWithImage);
-    Chat chat = new Chat();
-    chat.setModel(AppModels.GEMINI_FLASH_2_5_PRO.getKey());
+    Chat chat = createTestChat();
 
     // Act & Assert
     ImageNotValidException exception = assertThrows(ImageNotValidException.class, () -> {
@@ -205,8 +206,7 @@ class VertexGeminiServiceTest {
         .imageUrl("htp:/malformed-url.png") // Malformed URL
         .build();
     List<AppMessage> appMessages = List.of(appMessageWithImage);
-    Chat chat = new Chat();
-    chat.setModel(AppModels.GEMINI_FLASH_2_5_PRO.getKey());
+    Chat chat = createTestChat();
 
     AssistantMessage assistantMessage = new AssistantMessage("Processed without image.");
     ChatResponse expectedChatResponse = new ChatResponse(List.of(new Generation(assistantMessage)));
@@ -249,8 +249,7 @@ class VertexGeminiServiceTest {
         .imageUrl("http://example.com/image.png")
         .build();
     List<AppMessage> appMessages = List.of(appMessageWithImageAndId);
-    Chat chat = new Chat();
-    chat.setModel(AppModels.GEMINI_FLASH_2_0.getKey());
+    Chat chat = createTestChat();
 
     AssistantMessage assistantMessage = new AssistantMessage("Processed text only.");
     ChatResponse expectedChatResponse = new ChatResponse(List.of(new Generation(assistantMessage)));
@@ -288,8 +287,7 @@ class VertexGeminiServiceTest {
     List<AppMessage> appMessages = List.of(
         AppMessage.builder().role("User").content("Follow up question.").build());
 
-    Chat chat = new Chat();
-    chat.setModel(AppModels.GEMINI_FLASH_2_0.getKey());
+    Chat chat = createTestChat();
     CustomPrompt customPrompt = new CustomPrompt();
     customPrompt.setContent("Custom prompt content");
     List<PromptMessage> promptMessages = new ArrayList<>();
