@@ -2,7 +2,7 @@ package dev.luisghtz.myaichat.prompts.models;
 
 import java.util.List;
 
-public class AppPrompsRequestsRoles {
+public class AppPromptsRequestsRoles {
   public static final String USER = "User";
   public static final String ASSISTANT = "Assistant";
 
