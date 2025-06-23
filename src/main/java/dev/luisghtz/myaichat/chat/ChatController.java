@@ -36,10 +36,9 @@ import org.springframework.web.bind.annotation.PathVariable;
 @RequiredArgsConstructor
 @Log4j2
 public class ChatController {
-  private final MessagesService aiService;
+  private final MessagesService messagesService;
   private final ImageService imageService;
   private final ChatService chatService;
-  private final MessagesService messagesService;
 
   @GetMapping("all")
   public ResponseEntity<ChatsListResponseDto> getChatsList() {
@@ -50,7 +49,7 @@ public class ChatController {
   @GetMapping("{id}/messages")
   public ResponseEntity<HistoryChatDto> getChatHistory(@PathVariable UUID id,
       @PageableDefault(size = 10) Pageable pageable) {
-    return ResponseEntity.ok(aiService.getPreviousMessages(id, pageable));
+    return ResponseEntity.ok(messagesService.getPreviousMessages(id, pageable));
   }
 
   @PostMapping("send-message")
@@ -60,7 +59,7 @@ public class ChatController {
     if (newMessageRequestDto.getImage() != null) {
       imageFileName = imageService.uploadImage(newMessageRequestDto.getImage());
     }
-    var response = aiService.sendNewMessage(newMessageRequestDto, imageFileName);
+    var response = messagesService.sendNewMessage(newMessageRequestDto, imageFileName);
     return ResponseEntity.ok(response);
   }
 
