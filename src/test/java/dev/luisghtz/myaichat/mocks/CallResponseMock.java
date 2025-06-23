@@ -1,4 +1,4 @@
-package dev.luisghtz.myaichat.ai.models;
+package dev.luisghtz.myaichat.mocks;
 
 import org.springframework.ai.chat.client.ChatClient.CallResponseSpec;
 import org.springframework.ai.chat.client.ResponseEntity;

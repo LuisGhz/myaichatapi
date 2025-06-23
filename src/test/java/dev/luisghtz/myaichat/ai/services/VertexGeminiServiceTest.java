@@ -1,12 +1,12 @@
 package dev.luisghtz.myaichat.ai.services;
 
 import dev.luisghtz.myaichat.ai.models.AppModels;
-import dev.luisghtz.myaichat.ai.models.CallResponseMock;
-import dev.luisghtz.myaichat.ai.models.ChatClientRequestMock;
 import dev.luisghtz.myaichat.ai.utils.MessagesUtil;
 import dev.luisghtz.myaichat.chat.entities.AppMessage;
 import dev.luisghtz.myaichat.chat.entities.Chat;
 import dev.luisghtz.myaichat.exceptions.ImageNotValidException;
+import dev.luisghtz.myaichat.mocks.CallResponseMock;
+import dev.luisghtz.myaichat.mocks.ChatClientRequestMock;
 import dev.luisghtz.myaichat.prompts.entities.CustomPrompt;
 import dev.luisghtz.myaichat.prompts.entities.PromptMessage;
 import org.junit.jupiter.api.BeforeEach;

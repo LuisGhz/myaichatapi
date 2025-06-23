@@ -1,4 +1,4 @@
-package dev.luisghtz.myaichat.ai.models;
+package dev.luisghtz.myaichat.mocks;
 
 import java.nio.charset.Charset;
 import java.util.List;
