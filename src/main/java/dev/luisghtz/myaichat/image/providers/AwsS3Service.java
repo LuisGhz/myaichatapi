@@ -10,6 +10,7 @@ import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
 @Service
@@ -48,6 +49,10 @@ public class AwsS3Service {
   }
 
   public void deleteFile(String fileName) {
-    s3Client.deleteObject(builder -> builder.bucket(bucketName).key(fileName));
+    var delObjectRequest = DeleteObjectRequest.builder()
+        .bucket(bucketName)
+        .key(fileName)
+        .build();
+    s3Client.deleteObject(delObjectRequest);
   }
 }
