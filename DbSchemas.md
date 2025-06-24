@@ -20,7 +20,7 @@ CREATE TABLE chat (
     created_at TIMESTAMP,
     model VARCHAR(255),
     custom_prompt_id UUID,
-    fav BOOLEAN NOT NULL,
+    fav BOOLEAN NOT NULL DEFAULT false,
     FOREIGN KEY (custom_prompt_id) REFERENCES custom_prompt(id)
 );
 
