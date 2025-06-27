@@ -163,6 +163,54 @@ public class ChatControllerTest {
   }
 
   @Test
+  public void sendNewMessageWithInvalidImage() throws Exception {
+    // Arrange - invalid image file
+    MockMultipartFile invalidImageFile = new MockMultipartFile(
+        "image", "invalid.txt", "text/plain", "This is not an image".getBytes());
+
+    // Act & Assert
+    mockMvc.perform(multipart("/api/chat/send-message")
+        .file(invalidImageFile)
+        .param("prompt", "Invalid image test")
+        .param("chatId", testChatId.toString())
+        .param("maxOutputTokens", "2000")
+        .param("model", "gpt-4o"))
+        .andExpect(status().isBadRequest());
+  }
+
+  @Test
+  public void sendNewMessageWithInvalidModel() throws Exception {
+    // Arrange - invalid model
+    NewMessageRequestDto requestDto = new NewMessageRequestDto();
+    requestDto.setPrompt("Test with invalid model");
+    requestDto.setChatId(testChatId);
+    requestDto.setMaxOutputTokens((short) 2000);
+    requestDto.setModel("invalid-model");
+
+    // Act & Assert
+    mockMvc.perform(multipart("/api/chat/send-message")
+        .param("prompt", requestDto.getPrompt())
+        .param("chatId", requestDto.getChatId().toString())
+        .param("maxOutputTokens", requestDto.getMaxOutputTokens().toString())
+        .param("model", requestDto.getModel()))
+        .andExpect(status().isBadRequest());
+  }
+
+  @Test
+  public void sendNewMessageWithMissingFields() throws Exception {
+    // Arrange - missing required fields
+    NewMessageRequestDto requestDto = new NewMessageRequestDto();
+    requestDto.setPrompt(""); // Empty prompt
+    requestDto.setChatId(null); // No chat ID
+
+    // Act & Assert
+    mockMvc.perform(multipart("/api/chat/send-message")
+        .param("prompt", requestDto.getPrompt())
+        .param("chatId", requestDto.getChatId() != null ? requestDto.getChatId().toString() : ""))
+        .andExpect(status().isBadRequest());
+  }
+
+  @Test
   public void testDeleteChat() throws Exception {
     // Act & Assert
     mockMvc.perform(delete("/api/chat/{id}/delete", testChatId))
