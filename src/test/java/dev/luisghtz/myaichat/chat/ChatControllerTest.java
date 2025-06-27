@@ -65,6 +65,7 @@ public class ChatControllerTest {
   class GetEndpoints {
 
     @Test
+    @DisplayName("GET /api/chat/all - Returns all chats list")
     public void testGetChatsList() throws Exception {
       // Arrange
       List<ChatSummary> chatsList = new ArrayList<>();
@@ -84,6 +85,7 @@ public class ChatControllerTest {
     }
 
     @Test
+    @DisplayName("GET /api/chat/{id}/messages - Returns chat history")
     public void testGetChatHistory() throws Exception {
       // Arrange
       Pageable pageable = PageRequest.of(0, 10);
@@ -105,6 +107,7 @@ public class ChatControllerTest {
     }
 
     @Test
+    @DisplayName("GET /api/chat/{id}/messages - Returns NOT_FOUND for invalid chat id")
     public void testGetChatHistoryWithInvalidId() throws Exception {
       // Arrange
       UUID invalidId = UUID.randomUUID();
@@ -122,6 +125,7 @@ public class ChatControllerTest {
     }
 
     @Test
+    @DisplayName("GET /api/chat/{id}/messages with pagination - Returns paged chat history")
     public void testGetChatHistoryWithPagination() throws Exception {
       // Arrange
       // Pageable pageable = PageRequest.of(2, 5); // Page 2 with 5 items per page
@@ -152,6 +156,7 @@ public class ChatControllerTest {
   class PostEndpoints {
 
     @Test
+    @DisplayName("POST /api/chat/send-message - Sends new message without image")
     public void testNewMessageWithoutImage() throws Exception {
       // Arrange
       NewMessageRequestDto requestDto = new NewMessageRequestDto();
@@ -180,6 +185,7 @@ public class ChatControllerTest {
     }
 
     @Test
+    @DisplayName("POST /api/chat/send-message - Sends new message with image")
     public void testNewMessageWithImage() throws Exception {
       // Arrange
       NewMessageRequestDto requestDto = new NewMessageRequestDto();
@@ -217,6 +223,7 @@ public class ChatControllerTest {
     }
 
     @Test
+    @DisplayName("POST /api/chat/send-message - Returns BAD_REQUEST for invalid image")
     public void sendNewMessageWithInvalidImage() throws Exception {
       // Arrange - invalid image file
       MockMultipartFile invalidImageFile = new MockMultipartFile(
@@ -233,6 +240,7 @@ public class ChatControllerTest {
     }
 
     @Test
+    @DisplayName("POST /api/chat/send-message - Returns BAD_REQUEST for invalid model")
     public void sendNewMessageWithInvalidModel() throws Exception {
       // Arrange - invalid model
       NewMessageRequestDto requestDto = new NewMessageRequestDto();
@@ -251,6 +259,7 @@ public class ChatControllerTest {
     }
 
     @Test
+    @DisplayName("POST /api/chat/send-message - Returns BAD_REQUEST for missing required fields")
     public void sendNewMessageWithMissingFields() throws Exception {
       // Arrange - missing required fields
       NewMessageRequestDto requestDto = new NewMessageRequestDto();
@@ -265,6 +274,7 @@ public class ChatControllerTest {
     }
 
     @Test
+    @DisplayName("POST /api/chat/send-message - Returns BAD_REQUEST for invalid request")
     public void testNewMessageWithInvalidRequest() throws Exception {
       // Arrange - missing required fields
 
@@ -279,6 +289,7 @@ public class ChatControllerTest {
   class DeleteEndpoints {
 
     @Test
+    @DisplayName("DELETE /api/chat/{id}/delete - Deletes chat and its messages")
     public void testDeleteChat() throws Exception {
       // Act & Assert
       mockMvc.perform(delete("/api/chat/{id}/delete", testChatId))
