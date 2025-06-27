@@ -31,10 +31,11 @@ import dev.luisghtz.myaichat.chat.models.AppMessageHistory;
 import dev.luisghtz.myaichat.chat.models.ChatSummary;
 import dev.luisghtz.myaichat.chat.services.ChatService;
 import dev.luisghtz.myaichat.chat.services.MessagesService;
+import dev.luisghtz.myaichat.configurationMock.AIModelsControllerTestConfiguration;
 import dev.luisghtz.myaichat.image.ImageService;
 
 @WebMvcTest(ChatController.class)
-@Import(ChatControllerTestConfiguration.class)
+@Import(AIModelsControllerTestConfiguration.class)
 @ActiveProfiles("test")
 public class ChatControllerTest {
 
