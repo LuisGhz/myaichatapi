@@ -8,3 +8,5 @@ spring:
     hibernate:
       ddl-auto: create-drop
     show-sql: true
+  main:
+    allow-bean-definition-overriding: true  # Allows overriding beans in tests
