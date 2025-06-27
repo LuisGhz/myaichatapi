@@ -10,6 +10,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -58,217 +60,232 @@ public class ChatControllerTest {
     testChatId = UUID.randomUUID();
   }
 
-  @Test
-  public void testGetChatsList() throws Exception {
-    // Arrange
-    List<ChatSummary> chatsList = new ArrayList<>();
-    chatsList.add(ChatSummary.builder().id(UUID.randomUUID()).title("Chat 1").build());
-    chatsList.add(ChatSummary.builder().id(UUID.randomUUID()).title("Chat 2").build());
+  @Nested
+  @DisplayName("GET Endpoints")
+  class GetEndpoints {
 
-    ChatsListResponseDto expectedResponse = new ChatsListResponseDto(chatsList);
-    when(chatService.getAllChats()).thenReturn(expectedResponse);
+    @Test
+    public void testGetChatsList() throws Exception {
+      // Arrange
+      List<ChatSummary> chatsList = new ArrayList<>();
+      chatsList.add(ChatSummary.builder().id(UUID.randomUUID()).title("Chat 1").build());
+      chatsList.add(ChatSummary.builder().id(UUID.randomUUID()).title("Chat 2").build());
 
-    // Act & Assert
-    mockMvc.perform(get("/api/chat/all"))
-        .andExpect(status().isOk())
-        .andExpect(jsonPath("$.chats").isArray())
-        .andExpect(jsonPath("$.chats.length()").value(2));
+      ChatsListResponseDto expectedResponse = new ChatsListResponseDto(chatsList);
+      when(chatService.getAllChats()).thenReturn(expectedResponse);
 
-    verify(chatService, times(1)).getAllChats();
+      // Act & Assert
+      mockMvc.perform(get("/api/chat/all"))
+          .andExpect(status().isOk())
+          .andExpect(jsonPath("$.chats").isArray())
+          .andExpect(jsonPath("$.chats.length()").value(2));
+
+      verify(chatService, times(1)).getAllChats();
+    }
+
+    @Test
+    public void testGetChatHistory() throws Exception {
+      // Arrange
+      Pageable pageable = PageRequest.of(0, 10);
+      List<AppMessageHistory> historyMessages = new ArrayList<>();
+      historyMessages.add(AppMessageHistory.builder().content("Hello").build());
+
+      HistoryChatDto expectedResponse = HistoryChatDto.builder()
+          .historyMessages(historyMessages)
+          .build();
+
+      when(messagesService.getPreviousMessages(testChatId, pageable)).thenReturn(expectedResponse);
+
+      // Act & Assert
+      mockMvc.perform(get("/api/chat/{id}/messages", testChatId))
+          .andExpect(status().isOk())
+          .andExpect(jsonPath("$.historyMessages").isArray());
+
+      verify(messagesService, times(1)).getPreviousMessages(testChatId, pageable);
+    }
+
+    @Test
+    public void testGetChatHistoryWithInvalidId() throws Exception {
+      // Arrange
+      UUID invalidId = UUID.randomUUID();
+      Pageable pageable = PageRequest.of(0, 10);
+
+      ResponseStatusException exception = new ResponseStatusException(HttpStatus.NOT_FOUND, "Chat not found");
+      when(messagesService.getPreviousMessages(invalidId, pageable))
+          .thenThrow(exception);
+
+      // Act & Assert
+      mockMvc.perform(get("/api/chat/{id}/messages", invalidId))
+          .andExpect(status().isNotFound())
+          .andExpect(jsonPath("$.statusCode").value("NOT_FOUND"))
+          .andExpect(jsonPath("$.message").value(exception.getMessage()));
+    }
+
+    @Test
+    public void testGetChatHistoryWithPagination() throws Exception {
+      // Arrange
+      // Pageable pageable = PageRequest.of(2, 5); // Page 2 with 5 items per page
+      List<AppMessageHistory> historyMessages = new ArrayList<>();
+      historyMessages.add(AppMessageHistory.builder().content("Paged message").build());
+
+      HistoryChatDto expectedResponse = HistoryChatDto.builder()
+          .historyMessages(historyMessages)
+          .build();
+
+      when(messagesService.getPreviousMessages(eq(testChatId), any(Pageable.class))).thenReturn(expectedResponse);
+
+      // Act & Assert
+      mockMvc.perform(get("/api/chat/{id}/messages", testChatId)
+          .param("page", "2")
+          .param("size", "5"))
+          .andExpect(status().isOk())
+          .andExpect(jsonPath("$.historyMessages[0].content").value("Paged message"));
+
+      // We can't verify exact pageable because of how MockMvc works, but we can
+      // verify the method was called
+      verify(messagesService, times(1)).getPreviousMessages(eq(testChatId), any(Pageable.class));
+    }
   }
 
-  @Test
-  public void testGetChatHistory() throws Exception {
-    // Arrange
-    Pageable pageable = PageRequest.of(0, 10);
-    List<AppMessageHistory> historyMessages = new ArrayList<>();
-    historyMessages.add(AppMessageHistory.builder().content("Hello").build());
+  @Nested
+  @DisplayName("POST Endpoints")
+  class PostEndpoints {
 
-    HistoryChatDto expectedResponse = HistoryChatDto.builder()
-        .historyMessages(historyMessages)
-        .build();
+    @Test
+    public void testNewMessageWithoutImage() throws Exception {
+      // Arrange
+      NewMessageRequestDto requestDto = new NewMessageRequestDto();
+      requestDto.setPrompt("Hello AI");
+      requestDto.setChatId(testChatId);
+      requestDto.setMaxOutputTokens((short) 1500);
+      requestDto.setImage(null);
+      requestDto.setModel("gpt-4o");
 
-    when(messagesService.getPreviousMessages(testChatId, pageable)).thenReturn(expectedResponse);
+      AssistantMessageResponseDto expectedResponse = AssistantMessageResponseDto.builder()
+          .content("AI response")
+          .build();
 
-    // Act & Assert
-    mockMvc.perform(get("/api/chat/{id}/messages", testChatId))
-        .andExpect(status().isOk())
-        .andExpect(jsonPath("$.historyMessages").isArray());
+      when(messagesService.sendNewMessage(any(NewMessageRequestDto.class), isNull())).thenReturn(expectedResponse);
 
-    verify(messagesService, times(1)).getPreviousMessages(testChatId, pageable);
+      mockMvc.perform(multipart("/api/chat/send-message")
+          .param("prompt", requestDto.getPrompt())
+          .param("chatId", requestDto.getChatId().toString())
+          .param("maxOutputTokens", requestDto.getMaxOutputTokens().toString())
+          .param("model", requestDto.getModel()))
+          .andExpect(status().isOk())
+          .andExpect(jsonPath("$.content").value("AI response"));
+
+      verify(imageService, never()).uploadImage(any());
+      verify(messagesService, times(1)).sendNewMessage(any(NewMessageRequestDto.class), isNull());
+    }
+
+    @Test
+    public void testNewMessageWithImage() throws Exception {
+      // Arrange
+      NewMessageRequestDto requestDto = new NewMessageRequestDto();
+      requestDto.setPrompt("Check this image");
+      requestDto.setChatId(testChatId);
+      requestDto.setMaxOutputTokens((short) 2000);
+      requestDto.setModel("gpt-4o");
+
+      MockMultipartFile imageFile = new MockMultipartFile(
+          "image", "test-image.jpg", "image/jpeg", "test image content".getBytes());
+      requestDto.setImage(imageFile);
+
+      String imageFileName = "uploaded-image.jpg";
+      when(imageService.uploadImage(any())).thenReturn(imageFileName);
+
+      AssistantMessageResponseDto expectedResponse = AssistantMessageResponseDto.builder()
+          .content("AI response to image")
+          .build();
+
+      when(messagesService.sendNewMessage(any(NewMessageRequestDto.class), eq(imageFileName)))
+          .thenReturn(expectedResponse);
+
+      // Act & Assert
+      mockMvc.perform(multipart("/api/chat/send-message")
+          .file(imageFile)
+          .param("prompt", requestDto.getPrompt())
+          .param("chatId", requestDto.getChatId().toString())
+          .param("maxOutputTokens", requestDto.getMaxOutputTokens().toString())
+          .param("model", requestDto.getModel()))
+          .andExpect(status().isOk())
+          .andExpect(jsonPath("$.content").value("AI response to image"));
+
+      verify(imageService, times(1)).uploadImage(any());
+      verify(messagesService, times(1)).sendNewMessage(any(NewMessageRequestDto.class), eq(imageFileName));
+    }
+
+    @Test
+    public void sendNewMessageWithInvalidImage() throws Exception {
+      // Arrange - invalid image file
+      MockMultipartFile invalidImageFile = new MockMultipartFile(
+          "image", "invalid.txt", "text/plain", "This is not an image".getBytes());
+
+      // Act & Assert
+      mockMvc.perform(multipart("/api/chat/send-message")
+          .file(invalidImageFile)
+          .param("prompt", "Invalid image test")
+          .param("chatId", testChatId.toString())
+          .param("maxOutputTokens", "2000")
+          .param("model", "gpt-4o"))
+          .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    public void sendNewMessageWithInvalidModel() throws Exception {
+      // Arrange - invalid model
+      NewMessageRequestDto requestDto = new NewMessageRequestDto();
+      requestDto.setPrompt("Test with invalid model");
+      requestDto.setChatId(testChatId);
+      requestDto.setMaxOutputTokens((short) 2000);
+      requestDto.setModel("invalid-model");
+
+      // Act & Assert
+      mockMvc.perform(multipart("/api/chat/send-message")
+          .param("prompt", requestDto.getPrompt())
+          .param("chatId", requestDto.getChatId().toString())
+          .param("maxOutputTokens", requestDto.getMaxOutputTokens().toString())
+          .param("model", requestDto.getModel()))
+          .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    public void sendNewMessageWithMissingFields() throws Exception {
+      // Arrange - missing required fields
+      NewMessageRequestDto requestDto = new NewMessageRequestDto();
+      requestDto.setPrompt(""); // Empty prompt
+      requestDto.setChatId(null); // No chat ID
+
+      // Act & Assert
+      mockMvc.perform(multipart("/api/chat/send-message")
+          .param("prompt", requestDto.getPrompt())
+          .param("chatId", requestDto.getChatId() != null ? requestDto.getChatId().toString() : ""))
+          .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    public void testNewMessageWithInvalidRequest() throws Exception {
+      // Arrange - missing required fields
+
+      // Act & Assert
+      mockMvc.perform(multipart("/api/chat/send-message"))
+          .andExpect(status().isBadRequest());
+    }
   }
 
-  @Test
-  public void testNewMessageWithoutImage() throws Exception {
-    // Arrange
-    NewMessageRequestDto requestDto = new NewMessageRequestDto();
-    requestDto.setPrompt("Hello AI");
-    requestDto.setChatId(testChatId);
-    requestDto.setMaxOutputTokens((short) 1500);
-    requestDto.setImage(null);
-    requestDto.setModel("gpt-4o");
+  @Nested
+  @DisplayName("DELETE Endpoints")
+  class DeleteEndpoints {
 
-    AssistantMessageResponseDto expectedResponse = AssistantMessageResponseDto.builder()
-        .content("AI response")
-        .build();
+    @Test
+    public void testDeleteChat() throws Exception {
+      // Act & Assert
+      mockMvc.perform(delete("/api/chat/{id}/delete", testChatId))
+          .andExpect(status().isNoContent());
 
-    when(messagesService.sendNewMessage(any(NewMessageRequestDto.class), isNull())).thenReturn(expectedResponse);
-
-    mockMvc.perform(multipart("/api/chat/send-message")
-        .param("prompt", requestDto.getPrompt())
-        .param("chatId", requestDto.getChatId().toString())
-        .param("maxOutputTokens", requestDto.getMaxOutputTokens().toString())
-        .param("model", requestDto.getModel()))
-        .andExpect(status().isOk())
-        .andExpect(jsonPath("$.content").value("AI response"));
-
-    verify(imageService, never()).uploadImage(any());
-    verify(messagesService, times(1)).sendNewMessage(any(NewMessageRequestDto.class), isNull());
-  }
-
-  @Test
-  public void testNewMessageWithImage() throws Exception {
-    // Arrange
-    NewMessageRequestDto requestDto = new NewMessageRequestDto();
-    requestDto.setPrompt("Check this image");
-    requestDto.setChatId(testChatId);
-    requestDto.setMaxOutputTokens((short) 2000);
-    requestDto.setModel("gpt-4o");
-
-    MockMultipartFile imageFile = new MockMultipartFile(
-        "image", "test-image.jpg", "image/jpeg", "test image content".getBytes());
-    requestDto.setImage(imageFile);
-
-    String imageFileName = "uploaded-image.jpg";
-    when(imageService.uploadImage(any())).thenReturn(imageFileName);
-
-    AssistantMessageResponseDto expectedResponse = AssistantMessageResponseDto.builder()
-        .content("AI response to image")
-        .build();
-
-    when(messagesService.sendNewMessage(any(NewMessageRequestDto.class), eq(imageFileName)))
-        .thenReturn(expectedResponse);
-
-    // Act & Assert
-    mockMvc.perform(multipart("/api/chat/send-message")
-        .file(imageFile)
-        .param("prompt", requestDto.getPrompt())
-        .param("chatId", requestDto.getChatId().toString())
-        .param("maxOutputTokens", requestDto.getMaxOutputTokens().toString())
-        .param("model", requestDto.getModel()))
-        .andExpect(status().isOk())
-        .andExpect(jsonPath("$.content").value("AI response to image"));
-
-    verify(imageService, times(1)).uploadImage(any());
-    verify(messagesService, times(1)).sendNewMessage(any(NewMessageRequestDto.class), eq(imageFileName));
-  }
-
-  @Test
-  public void sendNewMessageWithInvalidImage() throws Exception {
-    // Arrange - invalid image file
-    MockMultipartFile invalidImageFile = new MockMultipartFile(
-        "image", "invalid.txt", "text/plain", "This is not an image".getBytes());
-
-    // Act & Assert
-    mockMvc.perform(multipart("/api/chat/send-message")
-        .file(invalidImageFile)
-        .param("prompt", "Invalid image test")
-        .param("chatId", testChatId.toString())
-        .param("maxOutputTokens", "2000")
-        .param("model", "gpt-4o"))
-        .andExpect(status().isBadRequest());
-  }
-
-  @Test
-  public void sendNewMessageWithInvalidModel() throws Exception {
-    // Arrange - invalid model
-    NewMessageRequestDto requestDto = new NewMessageRequestDto();
-    requestDto.setPrompt("Test with invalid model");
-    requestDto.setChatId(testChatId);
-    requestDto.setMaxOutputTokens((short) 2000);
-    requestDto.setModel("invalid-model");
-
-    // Act & Assert
-    mockMvc.perform(multipart("/api/chat/send-message")
-        .param("prompt", requestDto.getPrompt())
-        .param("chatId", requestDto.getChatId().toString())
-        .param("maxOutputTokens", requestDto.getMaxOutputTokens().toString())
-        .param("model", requestDto.getModel()))
-        .andExpect(status().isBadRequest());
-  }
-
-  @Test
-  public void sendNewMessageWithMissingFields() throws Exception {
-    // Arrange - missing required fields
-    NewMessageRequestDto requestDto = new NewMessageRequestDto();
-    requestDto.setPrompt(""); // Empty prompt
-    requestDto.setChatId(null); // No chat ID
-
-    // Act & Assert
-    mockMvc.perform(multipart("/api/chat/send-message")
-        .param("prompt", requestDto.getPrompt())
-        .param("chatId", requestDto.getChatId() != null ? requestDto.getChatId().toString() : ""))
-        .andExpect(status().isBadRequest());
-  }
-
-  @Test
-  public void testDeleteChat() throws Exception {
-    // Act & Assert
-    mockMvc.perform(delete("/api/chat/{id}/delete", testChatId))
-        .andExpect(status().isNoContent());
-
-    verify(messagesService, times(1)).deleteAllByChat(testChatId);
-    verify(chatService, times(1)).deleteChat(testChatId);
-  }
-
-  @Test
-  public void testGetChatHistoryWithInvalidId() throws Exception {
-    // Arrange
-    UUID invalidId = UUID.randomUUID();
-    Pageable pageable = PageRequest.of(0, 10);
-
-    ResponseStatusException exception = new ResponseStatusException(HttpStatus.NOT_FOUND, "Chat not found");
-    when(messagesService.getPreviousMessages(invalidId, pageable))
-        .thenThrow(exception);
-
-    // Act & Assert
-    mockMvc.perform(get("/api/chat/{id}/messages", invalidId))
-        .andExpect(status().isNotFound())
-        .andExpect(jsonPath("$.statusCode").value("NOT_FOUND"))
-        .andExpect(jsonPath("$.message").value(exception.getMessage()));
-  }
-
-  @Test
-  public void testNewMessageWithInvalidRequest() throws Exception {
-    // Arrange - missing required fields
-
-    // Act & Assert
-    mockMvc.perform(multipart("/api/chat/send-message"))
-        .andExpect(status().isBadRequest());
-  }
-
-  @Test
-  public void testGetChatHistoryWithPagination() throws Exception {
-    // Arrange
-    // Pageable pageable = PageRequest.of(2, 5); // Page 2 with 5 items per page
-    List<AppMessageHistory> historyMessages = new ArrayList<>();
-    historyMessages.add(AppMessageHistory.builder().content("Paged message").build());
-
-    HistoryChatDto expectedResponse = HistoryChatDto.builder()
-        .historyMessages(historyMessages)
-        .build();
-
-    when(messagesService.getPreviousMessages(eq(testChatId), any(Pageable.class))).thenReturn(expectedResponse);
-
-    // Act & Assert
-    mockMvc.perform(get("/api/chat/{id}/messages", testChatId)
-        .param("page", "2")
-        .param("size", "5"))
-        .andExpect(status().isOk())
-        .andExpect(jsonPath("$.historyMessages[0].content").value("Paged message"));
-
-    // We can't verify exact pageable because of how MockMvc works, but we can
-    // verify the method was called
-    verify(messagesService, times(1)).getPreviousMessages(eq(testChatId), any(Pageable.class));
+      verify(messagesService, times(1)).deleteAllByChat(testChatId);
+      verify(chatService, times(1)).deleteChat(testChatId);
+    }
   }
 }
