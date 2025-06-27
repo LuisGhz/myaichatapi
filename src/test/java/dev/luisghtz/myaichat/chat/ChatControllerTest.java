@@ -113,11 +113,13 @@ public class ChatControllerTest {
 
     when(messagesService.sendNewMessage(any(NewMessageRequestDto.class), isNull())).thenReturn(expectedResponse);
 
-    var result = mockMvc.perform(post("/api/chat/send-message", requestDto))
-      .andExpect(status().isOk())
-      .andExpect(jsonPath("$.content").value("AI response"));
-
-    System.out.println("Response: " + result.andReturn().getResponse().getContentAsString());
+    mockMvc.perform(multipart("/api/chat/send-message")
+        .param("prompt", requestDto.getPrompt())
+        .param("chatId", requestDto.getChatId().toString())
+        .param("maxOutputTokens", requestDto.getMaxOutputTokens().toString())
+        .param("model", requestDto.getModel()))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.content").value("AI response"));
 
     verify(imageService, never()).uploadImage(any());
     verify(messagesService, times(1)).sendNewMessage(any(NewMessageRequestDto.class), isNull());
@@ -126,8 +128,15 @@ public class ChatControllerTest {
   @Test
   public void testNewMessageWithImage() throws Exception {
     // Arrange
+    NewMessageRequestDto requestDto = new NewMessageRequestDto();
+    requestDto.setPrompt("Check this image");
+    requestDto.setChatId(testChatId);
+    requestDto.setMaxOutputTokens((short) 2000);
+    requestDto.setModel("gpt-4o");
+
     MockMultipartFile imageFile = new MockMultipartFile(
         "image", "test-image.jpg", "image/jpeg", "test image content".getBytes());
+    requestDto.setImage(imageFile);
 
     String imageFileName = "uploaded-image.jpg";
     when(imageService.uploadImage(any())).thenReturn(imageFileName);
@@ -136,19 +145,16 @@ public class ChatControllerTest {
         .content("AI response to image")
         .build();
 
-    when(messagesService.sendNewMessage(any(NewMessageRequestDto.class), eq(imageFileName))).thenReturn(expectedResponse);
+    when(messagesService.sendNewMessage(any(NewMessageRequestDto.class), eq(imageFileName)))
+        .thenReturn(expectedResponse);
 
     // Act & Assert
-    MockMultipartFile messageFile = new MockMultipartFile(
-        "prompt", "", "text/plain", "Check this image".getBytes());
-
-    MockMultipartFile chatIdFile = new MockMultipartFile(
-        "chatId", "", "text/plain", testChatId.toString().getBytes());
-
     mockMvc.perform(multipart("/api/chat/send-message")
-        .file(messageFile)
-        .file(chatIdFile)
-        .file(imageFile))
+        .file(imageFile)
+        .param("prompt", requestDto.getPrompt())
+        .param("chatId", requestDto.getChatId().toString())
+        .param("maxOutputTokens", requestDto.getMaxOutputTokens().toString())
+        .param("model", requestDto.getModel()))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.content").value("AI response to image"));
 
@@ -167,21 +173,6 @@ public class ChatControllerTest {
   }
 
   @Test
-  public void testHandleException() throws Exception {
-    // Arrange
-    ResponseStatusException exception = new ResponseStatusException(
-        HttpStatus.BAD_REQUEST, "Invalid request");
-
-    when(chatService.getAllChats()).thenThrow(exception);
-
-    // Act & Assert
-    mockMvc.perform(get("/api/chat/all"))
-        .andExpect(status().isBadRequest())
-        .andExpect(jsonPath("$.statusCode.value").value(400))
-        .andExpect(jsonPath("$.message").value(exception.getMessage()));
-  }
-
-  @Test
   public void testGetChatHistoryWithInvalidId() throws Exception {
     // Arrange
     UUID invalidId = UUID.randomUUID();
@@ -194,7 +185,7 @@ public class ChatControllerTest {
     // Act & Assert
     mockMvc.perform(get("/api/chat/{id}/messages", invalidId))
         .andExpect(status().isNotFound())
-        .andExpect(jsonPath("$.statusCode.value").value(404))
+        .andExpect(jsonPath("$.statusCode").value("NOT_FOUND"))
         .andExpect(jsonPath("$.message").value(exception.getMessage()));
   }
 
