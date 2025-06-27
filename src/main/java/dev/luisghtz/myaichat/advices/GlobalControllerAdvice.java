@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.server.ResponseStatusException;
 
 import dev.luisghtz.myaichat.chat.dtos.ChatErrorResponseDto;
 import dev.luisghtz.myaichat.exceptions.AppMethodArgumentNotValidException;
@@ -93,6 +94,19 @@ public class GlobalControllerAdvice {
         .build();
 
     return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+  }
+
+  @ExceptionHandler(ResponseStatusException.class)
+  public ResponseEntity<ChatErrorResponseDto> handleResponseStatusException(ResponseStatusException ex) {
+    var statusCode = ex.getStatusCode();
+    var message = ex.getMessage();
+
+    var response = ChatErrorResponseDto.builder()
+        .statusCode(statusCode)
+        .message(message)
+        .build();
+
+    return new ResponseEntity<>(response, statusCode);
   }
 
   @ExceptionHandler(RuntimeException.class)
