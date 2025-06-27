@@ -2,10 +2,8 @@ package dev.luisghtz.myaichat.chat;
 
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.server.ResponseStatusException;
 
 import dev.luisghtz.myaichat.chat.dtos.AssistantMessageResponseDto;
-import dev.luisghtz.myaichat.chat.dtos.ChatErrorResponseDto;
 import dev.luisghtz.myaichat.chat.dtos.ChatsListResponseDto;
 import dev.luisghtz.myaichat.chat.dtos.HistoryChatDto;
 import dev.luisghtz.myaichat.chat.dtos.NewMessageRequestDto;
@@ -24,7 +22,6 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
@@ -88,17 +85,6 @@ public class ChatController {
   public ResponseEntity<Void> toggleChatFav(@PathVariable UUID id) {
     chatService.toggleChatFav(id);
     return ResponseEntity.noContent().build();
-  }
-
-  @ExceptionHandler(ResponseStatusException.class)
-  public ResponseEntity<ChatErrorResponseDto> handleException(ResponseStatusException ex) {
-    var statusCode = ex.getStatusCode();
-    var message = ex.getMessage();
-    var response = ChatErrorResponseDto.builder()
-        .statusCode(statusCode)
-        .message(message)
-        .build();
-    return new ResponseEntity<>(response, statusCode);
   }
 
 }
