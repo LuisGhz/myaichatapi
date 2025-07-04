@@ -53,6 +53,7 @@ public class VertexGeminiService implements AIProviderService {
     VertexAiGeminiChatOptions options = VertexAiGeminiChatOptions.builder()
         .model(chat.getModel())
         .maxOutputTokens(chat.getMaxOutputTokens().intValue())
+        .googleSearchRetrieval(chat.getIsWebSearchMode())
         .build();
     ChatResponse chatResponse = vertextAIChatClient.prompt()
         .messages(modelMessages).options(options).call().chatResponse();
