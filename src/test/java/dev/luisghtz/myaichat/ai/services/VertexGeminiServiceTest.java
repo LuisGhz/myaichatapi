@@ -54,6 +54,7 @@ class VertexGeminiServiceTest {
     Chat chat = new Chat();
     chat.setModel(AppModels.GEMINI_FLASH_2_0.getKey());
     chat.setMaxOutputTokens((short) 2000);
+    chat.setIsWebSearchMode(false);
     return chat;
   }
 
