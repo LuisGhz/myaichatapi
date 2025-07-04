@@ -7,6 +7,7 @@ import java.util.UUID;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import dev.luisghtz.myaichat.prompts.entities.CustomPrompt;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -38,4 +39,6 @@ public class Chat {
   private CustomPrompt customPrompt;
   private Short maxOutputTokens;
   private Boolean fav;
+  @Column(nullable = false, columnDefinition = "boolean default false")
+  private Boolean isWebSearchMode;
 }
