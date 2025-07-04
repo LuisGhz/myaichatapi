@@ -70,6 +70,7 @@ public class ChatService {
         .model(newMessageRequestDto.getModel())
         .maxOutputTokens(newMessageRequestDto.getMaxOutputTokens())
         .fav(false)
+        .isWebSearchMode(newMessageRequestDto.getIsWebSearchMode())
         .build();
     if (newMessageRequestDto.getPromptId() != null && !newMessageRequestDto.getPromptId().isEmpty()) {
       var prompt = customPromptService.findById(newMessageRequestDto.getPromptId())
