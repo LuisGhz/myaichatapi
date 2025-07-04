@@ -34,4 +34,5 @@ public class NewMessageRequestDto {
   @Max(value = 8000, message = "Max output tokens must be at most 8000.")
   @Min(value = 1000, message = "Max output tokens must be at least 1000.")
   private Short maxOutputTokens = 2000;
+  private Boolean isWebSearchMode = false;
 }
