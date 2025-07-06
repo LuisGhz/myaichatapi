@@ -21,6 +21,7 @@ CREATE TABLE chat (
     model VARCHAR(255),
     custom_prompt_id UUID,
     fav BOOLEAN NOT NULL DEFAULT false,
+    is_web_search_mode BOOLEAN NOT NULL DEFAULT false,
     FOREIGN KEY (custom_prompt_id) REFERENCES custom_prompt(id)
 );
 
@@ -67,4 +68,11 @@ CREATE INDEX idx_chat_custom_prompt ON chat(custom_prompt_id);
 CREATE INDEX idx_prompt_messages_prompt ON prompt_messages(custom_prompt_id);
 CREATE INDEX idx_prompt_params_prompt ON prompt_params(custom_prompt_id);
 
+```
+
+## Migration: Add is_web_search_mode to chat
+
+```sql
+ALTER TABLE chat
+ADD COLUMN is_web_search_mode BOOLEAN NOT NULL DEFAULT false;
 ```
