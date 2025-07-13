@@ -34,7 +34,7 @@ import dev.luisghtz.myaichat.chat.models.ChatSummary;
 import dev.luisghtz.myaichat.chat.services.ChatService;
 import dev.luisghtz.myaichat.chat.services.MessagesService;
 import dev.luisghtz.myaichat.configurationMock.AIModelsControllerTestConfiguration;
-import dev.luisghtz.myaichat.image.ImageService;
+import dev.luisghtz.myaichat.file.FileService;
 
 @WebMvcTest(ChatController.class)
 @Import(AIModelsControllerTestConfiguration.class)
@@ -45,7 +45,7 @@ public class ChatControllerTest {
   private MessagesService messagesService;
 
   @MockitoBean
-  private ImageService imageService;
+  private FileService fileService;
 
   @MockitoBean
   private ChatService chatService;
@@ -156,14 +156,14 @@ public class ChatControllerTest {
   class PostEndpoints {
 
     @Test
-    @DisplayName("POST /api/chat/send-message - Sends new message without image")
-    public void testNewMessageWithoutImage() throws Exception {
+    @DisplayName("POST /api/chat/send-message - Sends new message without file")
+    public void testNewMessageWithoutFile() throws Exception {
       // Arrange
       NewMessageRequestDto requestDto = new NewMessageRequestDto();
       requestDto.setPrompt("Hello AI");
       requestDto.setChatId(testChatId);
       requestDto.setMaxOutputTokens((short) 1500);
-      requestDto.setImage(null);
+      requestDto.setFile(null);
       requestDto.setModel("gpt-4o");
 
       AssistantMessageResponseDto expectedResponse = AssistantMessageResponseDto.builder()
@@ -180,59 +180,59 @@ public class ChatControllerTest {
           .andExpect(status().isOk())
           .andExpect(jsonPath("$.content").value("AI response"));
 
-      verify(imageService, never()).uploadImage(any());
+      verify(fileService, never()).uploadFile(any());
       verify(messagesService, times(1)).sendNewMessage(any(NewMessageRequestDto.class), isNull());
     }
 
     @Test
-    @DisplayName("POST /api/chat/send-message - Sends new message with image")
-    public void testNewMessageWithImage() throws Exception {
+    @DisplayName("POST /api/chat/send-message - Sends new message with file")
+    public void testNewMessageWithFile() throws Exception {
       // Arrange
       NewMessageRequestDto requestDto = new NewMessageRequestDto();
-      requestDto.setPrompt("Check this image");
+      requestDto.setPrompt("Check this file");
       requestDto.setChatId(testChatId);
       requestDto.setMaxOutputTokens((short) 2000);
       requestDto.setModel("gpt-4o");
 
-      MockMultipartFile imageFile = new MockMultipartFile(
-          "image", "test-image.jpg", "image/jpeg", "test image content".getBytes());
-      requestDto.setImage(imageFile);
+      MockMultipartFile uploadedFile = new MockMultipartFile(
+          "file", "test-image.jpg", "image/jpeg", "test image content".getBytes());
+      requestDto.setFile(uploadedFile);
 
-      String imageFileName = "uploaded-image.jpg";
-      when(imageService.uploadImage(any())).thenReturn(imageFileName);
+      String fileName = "uploaded-file.jpg";
+      when(fileService.uploadFile(any())).thenReturn(fileName);
 
       AssistantMessageResponseDto expectedResponse = AssistantMessageResponseDto.builder()
-          .content("AI response to image")
+          .content("AI response to file")
           .build();
 
-      when(messagesService.sendNewMessage(any(NewMessageRequestDto.class), eq(imageFileName)))
+      when(messagesService.sendNewMessage(any(NewMessageRequestDto.class), eq(fileName)))
           .thenReturn(expectedResponse);
 
       // Act & Assert
       mockMvc.perform(multipart("/api/chat/send-message")
-          .file(imageFile)
+          .file(uploadedFile)
           .param("prompt", requestDto.getPrompt())
           .param("chatId", requestDto.getChatId().toString())
           .param("maxOutputTokens", requestDto.getMaxOutputTokens().toString())
           .param("model", requestDto.getModel()))
           .andExpect(status().isOk())
-          .andExpect(jsonPath("$.content").value("AI response to image"));
+          .andExpect(jsonPath("$.content").value("AI response to file"));
 
-      verify(imageService, times(1)).uploadImage(any());
-      verify(messagesService, times(1)).sendNewMessage(any(NewMessageRequestDto.class), eq(imageFileName));
+      verify(fileService, times(1)).uploadFile(any());
+      verify(messagesService, times(1)).sendNewMessage(any(NewMessageRequestDto.class), eq(fileName));
     }
 
     @Test
-    @DisplayName("POST /api/chat/send-message - Returns BAD_REQUEST for invalid image")
-    public void sendNewMessageWithInvalidImage() throws Exception {
-      // Arrange - invalid image file
-      MockMultipartFile invalidImageFile = new MockMultipartFile(
-          "image", "invalid.txt", "text/plain", "This is not an image".getBytes());
+    @DisplayName("POST /api/chat/send-message - Returns BAD_REQUEST for invalid file")
+    public void sendNewMessageWithInvalidFile() throws Exception {
+      // Arrange - invalid file
+      MockMultipartFile invalidFile = new MockMultipartFile(
+          "file", "invalid.txt", "text/plain", "This is not a supported file".getBytes());
 
       // Act & Assert
       mockMvc.perform(multipart("/api/chat/send-message")
-          .file(invalidImageFile)
-          .param("prompt", "Invalid image test")
+          .file(invalidFile)
+          .param("prompt", "Invalid file test")
           .param("chatId", testChatId.toString())
           .param("maxOutputTokens", "2000")
           .param("model", "gpt-4o"))

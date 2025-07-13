@@ -30,11 +30,11 @@ class MessagesutilsTest {
     assertEquals("Hello, AI!", message.getContent());
     assertEquals(chat, message.getChat());
     assertNotNull(message.getCreatedAt());
-    assertNull(message.getImageUrl());
+    assertNull(message.getFileUrl());
   }
 
   @Test
-  void processUserMessage_shouldSetImageUrlIfProvided() {
+  void processUserMessage_shouldSetFileUrlIfProvided() {
     NewMessageRequestDto dto = Mockito.mock(NewMessageRequestDto.class);
     Mockito.when(dto.getPrompt()).thenReturn("Prompt with image");
     Chat chat = new Chat();
@@ -42,7 +42,7 @@ class MessagesutilsTest {
 
     AppMessage message = MessagesUtils.processUserMessage(dto, chat, fileUrl);
 
-    assertEquals(fileUrl, message.getImageUrl());
+    assertEquals(fileUrl, message.getFileUrl());
   }
 
   @Test
@@ -72,7 +72,7 @@ class MessagesutilsTest {
   }
 
   @Test
-  void processUserMessage_shouldNotSetImageUrlIfEmpty() {
+  void processUserMessage_shouldNotSetFileUrlIfEmpty() {
     NewMessageRequestDto dto = Mockito.mock(NewMessageRequestDto.class);
     Mockito.when(dto.getPrompt()).thenReturn("Prompt");
     Chat chat = new Chat();
@@ -80,6 +80,6 @@ class MessagesutilsTest {
 
     AppMessage message = MessagesUtils.processUserMessage(dto, chat, fileUrl);
 
-    assertNull(message.getImageUrl());
+    assertNull(message.getFileUrl());
   }
 }

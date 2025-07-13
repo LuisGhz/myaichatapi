@@ -9,7 +9,7 @@ import dev.luisghtz.myaichat.chat.entities.Chat;
 import dev.luisghtz.myaichat.chat.models.TokensSum;
 import dev.luisghtz.myaichat.chat.repositories.MessageRepository;
 import dev.luisghtz.myaichat.chat.utils.MessagesUtils;
-import dev.luisghtz.myaichat.image.providers.AwsS3Service;
+import dev.luisghtz.myaichat.file.providers.AwsS3Service;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.*;
@@ -121,14 +121,14 @@ class MessagesServiceTest {
   }
 
   @Test
-  void testDeleteAllByChat_DeletesMessagesAndImages() {
+  void testDeleteAllByChat_DeletesMessagesAndFiles() {
     UUID chatId = UUID.randomUUID();
     AppMessage msg1 = mock(AppMessage.class);
     AppMessage msg2 = mock(AppMessage.class);
 
     when(messageRepository.findAllByChatId(chatId)).thenReturn(List.of(msg1, msg2));
-    when(msg1.getImageUrl()).thenReturn("https://cdn.example.com/image1.png");
-    when(msg2.getImageUrl()).thenReturn(null);
+    when(msg1.getFileUrl()).thenReturn("https://cdn.example.com/image1.png");
+    when(msg2.getFileUrl()).thenReturn(null);
 
     doNothing().when(awsS3Service).deleteFile("image1.png");
     doNothing().when(messageRepository).deleteAllByChatId(chatId);

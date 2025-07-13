@@ -3,7 +3,7 @@ package dev.luisghtz.myaichat.ai.services;
 import dev.luisghtz.myaichat.ai.models.AppModels;
 import dev.luisghtz.myaichat.chat.entities.AppMessage;
 import dev.luisghtz.myaichat.chat.entities.Chat;
-import dev.luisghtz.myaichat.exceptions.ImageNotValidException;
+import dev.luisghtz.myaichat.exceptions.FileNotValidException;
 import dev.luisghtz.myaichat.mocks.CallResponseMock;
 import dev.luisghtz.myaichat.mocks.ChatClientRequestMock;
 
@@ -78,7 +78,7 @@ class OpenAIServiceTest {
     AppMessage appMessage = AppMessage.builder()
         .role("User")
         .content("Check this image")
-        .imageUrl("https://example.com/image.png")
+        .fileUrl("https://example.com/image.png")
         .build();
     messages.add(appMessage);
     Chat chat = createTestChat();
@@ -107,7 +107,7 @@ class OpenAIServiceTest {
     AppMessage appMessage = AppMessage.builder()
         .role("User")
         .content("Check this image")
-        .imageUrl("https://example.com/image.jpg")
+        .fileUrl("https://example.com/image.jpg")
         .build();
     messages.add(appMessage);
     Chat chat = createTestChat();
@@ -136,7 +136,7 @@ class OpenAIServiceTest {
     AppMessage appMessage = AppMessage.builder()
         .role("User")
         .content("Check this image")
-        .imageUrl("https://example.com/image.jpeg")
+        .fileUrl("https://example.com/image.jpeg")
         .build();
     messages.add(appMessage);
     Chat chat = createTestChat();
@@ -165,7 +165,7 @@ class OpenAIServiceTest {
     AppMessage appMessage = AppMessage.builder()
         .role("User")
         .content("Check this image")
-        .imageUrl("https://example.com/image.gif")
+        .fileUrl("https://example.com/image.gif")
         .build();
     messages.add(appMessage);
     Chat chat = createTestChat();
@@ -194,12 +194,12 @@ class OpenAIServiceTest {
     AppMessage appMessage = AppMessage.builder()
         .role("User")
         .content("Check this image")
-        .imageUrl("https://example.com/image.raw")
+        .fileUrl("https://example.com/image.raw")
         .build();
     messages.add(appMessage);
     Chat chat = createTestChat();
     // Act
-    assertThrows(ImageNotValidException.class, () -> {
+    assertThrows(FileNotValidException.class, () -> {
       // Assert
       openAIService.sendNewMessage(messages, chat);
     });

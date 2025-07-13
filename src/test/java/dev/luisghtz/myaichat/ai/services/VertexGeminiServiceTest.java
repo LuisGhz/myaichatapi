@@ -4,7 +4,7 @@ import dev.luisghtz.myaichat.ai.models.AppModels;
 import dev.luisghtz.myaichat.ai.utils.MessagesUtil;
 import dev.luisghtz.myaichat.chat.entities.AppMessage;
 import dev.luisghtz.myaichat.chat.entities.Chat;
-import dev.luisghtz.myaichat.exceptions.ImageNotValidException;
+import dev.luisghtz.myaichat.exceptions.FileNotValidException;
 import dev.luisghtz.myaichat.mocks.CallResponseMock;
 import dev.luisghtz.myaichat.mocks.ChatClientRequestMock;
 import dev.luisghtz.myaichat.prompts.entities.CustomPrompt;
@@ -86,7 +86,7 @@ class VertexGeminiServiceTest {
     AppMessage appMessageWithImage = AppMessage.builder()
         .role("User")
         .content("Check this PNG image")
-        .imageUrl("http://example.com/image.png") // id is null
+        .fileUrl("http://example.com/image.png") // id is null
         .build();
     List<AppMessage> appMessages = List.of(appMessageWithImage);
     Chat chat = createTestChat();
@@ -111,7 +111,7 @@ class VertexGeminiServiceTest {
     AppMessage appMessageWithImage = AppMessage.builder()
         .role("User")
         .content("Check this JPG image")
-        .imageUrl("http://example.com/image.jpg")
+        .fileUrl("http://example.com/image.jpg")
         .build();
     List<AppMessage> appMessages = List.of(appMessageWithImage);
     Chat chat = createTestChat();
@@ -136,7 +136,7 @@ class VertexGeminiServiceTest {
     AppMessage appMessageWithImage = AppMessage.builder()
         .role("User")
         .content("Check this JPEG image")
-        .imageUrl("http://example.com/image.jpeg")
+        .fileUrl("http://example.com/image.jpeg")
         .build();
     List<AppMessage> appMessages = List.of(appMessageWithImage);
     Chat chat = createTestChat();
@@ -161,7 +161,7 @@ class VertexGeminiServiceTest {
     AppMessage appMessageWithImage = AppMessage.builder()
         .role("User")
         .content("Check this GIF image")
-        .imageUrl("http://example.com/image.gif")
+        .fileUrl("http://example.com/image.gif")
         .build();
     List<AppMessage> appMessages = List.of(appMessageWithImage);
     Chat chat = createTestChat();
@@ -186,16 +186,16 @@ class VertexGeminiServiceTest {
     AppMessage appMessageWithImage = AppMessage.builder()
         .role("User")
         .content("Check this RAW image")
-        .imageUrl("http://example.com/image.raw") // Invalid extension
+        .fileUrl("http://example.com/image.raw") // Invalid extension
         .build();
     List<AppMessage> appMessages = List.of(appMessageWithImage);
     Chat chat = createTestChat();
 
     // Act & Assert
-    ImageNotValidException exception = assertThrows(ImageNotValidException.class, () -> {
+    FileNotValidException exception = assertThrows(FileNotValidException.class, () -> {
       vertexGeminiService.sendNewMessage(appMessages, chat);
     });
-    assertEquals("Image not valid. Supported formats: gif, png, jpg, jpeg.", exception.getMessage());
+    assertEquals("File not valid. Supported formats: gif, png, jpg, jpeg.", exception.getMessage());
   }
 
   @Test
@@ -204,7 +204,7 @@ class VertexGeminiServiceTest {
     AppMessage appMessageWithImage = AppMessage.builder()
         .role("User")
         .content("Check this image with bad URL")
-        .imageUrl("htp:/malformed-url.png") // Malformed URL
+        .fileUrl("htp:/malformed-url.png") // Malformed URL
         .build();
     List<AppMessage> appMessages = List.of(appMessageWithImage);
     Chat chat = createTestChat();
@@ -247,7 +247,7 @@ class VertexGeminiServiceTest {
         .id(id) // ID present
         .role("User")
         .content("This message has an image URL but also an ID")
-        .imageUrl("http://example.com/image.png")
+        .fileUrl("http://example.com/image.png")
         .build();
     List<AppMessage> appMessages = List.of(appMessageWithImageAndId);
     Chat chat = createTestChat();
