@@ -12,7 +12,7 @@ import lombok.NoArgsConstructor;
 public class AppMessageHistory {
   private String role;
   private String content;
-  private String image;
+  private String file;
   private Integer promptTokens;
   private Integer completionTokens;
 }

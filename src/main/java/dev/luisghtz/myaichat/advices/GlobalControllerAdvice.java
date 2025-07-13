@@ -15,7 +15,6 @@ import org.springframework.web.server.ResponseStatusException;
 import dev.luisghtz.myaichat.chat.dtos.ChatErrorResponseDto;
 import dev.luisghtz.myaichat.exceptions.AppMethodArgumentNotValidException;
 import dev.luisghtz.myaichat.exceptions.AppNotFoundException;
-import dev.luisghtz.myaichat.exceptions.ImageNotValidException;
 import dev.luisghtz.myaichat.exceptions.ResourceInUseException;
 
 @ControllerAdvice
@@ -76,15 +75,6 @@ public class GlobalControllerAdvice {
     return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
   }
 
-  @ExceptionHandler(ImageNotValidException.class)
-  public ResponseEntity<ChatErrorResponseDto> handleImageNotValidException(ImageNotValidException ex) {
-    var response = ChatErrorResponseDto.builder()
-        .statusCode(HttpStatus.BAD_REQUEST)
-        .message(ex.getMessage())
-        .build();
-
-    return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
-  }
 
   @ExceptionHandler(AppNotFoundException.class)
   public ResponseEntity<Object> handleNotFoundException(AppNotFoundException ex) {

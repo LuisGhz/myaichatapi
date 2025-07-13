@@ -109,7 +109,7 @@ public class MessagesService {
           return AppMessageHistory.builder()
               .content(message.getContent())
               .role(message.getRole())
-              .image(message.getFileUrl())
+              .file(message.getFileUrl())
               .promptTokens(message.getPromptTokens())
               .completionTokens(message.getCompletionTokens())
               .build();
