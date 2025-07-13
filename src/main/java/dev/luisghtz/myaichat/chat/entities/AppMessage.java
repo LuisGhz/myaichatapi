@@ -37,7 +37,7 @@ public class AppMessage {
   @Column(nullable = true)
   private Integer totalTokens;
   @Column(nullable = true)
-  private String imageUrl;
+  private String fileUrl;
   @JsonIgnore
   @ManyToOne()
   private Chat chat;

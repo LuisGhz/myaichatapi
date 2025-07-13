@@ -6,7 +6,7 @@ import org.hibernate.validator.constraints.Length;
 import org.springframework.web.multipart.MultipartFile;
 
 import dev.luisghtz.myaichat.ai.models.AppModels;
-import dev.luisghtz.myaichat.image.validators.ValidImage;
+import dev.luisghtz.myaichat.file.validators.ValidFile;
 import dev.luisghtz.myaichat.validators.AllowedStringValues;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -27,8 +27,8 @@ public class NewMessageRequestDto {
   private String prompt;
   @AllowedStringValues(values = AppModels.class, message = "Invalid model: must be one of the allowed models.")
   private String model = null;
-  @ValidImage(message = "File type not supported (Only: jpg, jpeg, png, gif) or file size exceeded (max 2 MB).")
-  private MultipartFile image = null;
+  @ValidFile(message = "File type not supported (Only: jpg, jpeg, png, gif) or file size exceeded (max 2 MB).")
+  private MultipartFile file = null;
   private String promptId;
   @NotNull(message = "Max output tokens is required.")
   @Max(value = 8000, message = "Max output tokens must be at most 8000.")

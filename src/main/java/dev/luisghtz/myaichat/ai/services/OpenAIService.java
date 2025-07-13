@@ -23,7 +23,7 @@ import dev.luisghtz.myaichat.ai.models.AIProviderService;
 import dev.luisghtz.myaichat.ai.utils.MessagesUtil;
 import dev.luisghtz.myaichat.chat.entities.AppMessage;
 import dev.luisghtz.myaichat.chat.entities.Chat;
-import dev.luisghtz.myaichat.exceptions.ImageNotValidException;
+import dev.luisghtz.myaichat.exceptions.FileNotValidException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 
@@ -81,12 +81,12 @@ public class OpenAIService implements AIProviderService {
   }
 
   private Message generateUserMessage(AppMessage message) {
-    if (message.getImageUrl() != null &&
+    if (message.getFileUrl() != null &&
         message.getId() == null) {
       try {
-        MimeType mimeType = getMimeType(message.getImageUrl());
+        MimeType mimeType = getMimeType(message.getFileUrl());
         return new UserMessage(message.getContent(),
-            new Media(mimeType, new URL(message.getImageUrl())));
+            new Media(mimeType, new URL(message.getFileUrl())));
       } catch (MalformedURLException e) {
         e.printStackTrace();
       }
@@ -95,15 +95,15 @@ public class OpenAIService implements AIProviderService {
     return new UserMessage(message.getContent());
   }
 
-  private MimeType getMimeType(String imageUrl) {
-    if (imageUrl.endsWith(".gif")) {
+  private MimeType getMimeType(String fileUrl) {
+    if (fileUrl.endsWith(".gif")) {
       return MimeTypeUtils.IMAGE_GIF;
-    } else if (imageUrl.endsWith(".png")) {
+    } else if (fileUrl.endsWith(".png")) {
       return MimeTypeUtils.IMAGE_PNG;
-    } else if (imageUrl.endsWith(".jpg") || imageUrl.endsWith(".jpeg")) {
+    } else if (fileUrl.endsWith(".jpg") || fileUrl.endsWith(".jpeg")) {
       return MimeTypeUtils.IMAGE_JPEG;
     } else {
-      throw new ImageNotValidException("Image not valid. Supported formats: gif, png, jpg, jpeg.");
+      throw new FileNotValidException("File not valid. Supported formats: gif, png, jpg, jpeg.");
     }
   }
 }

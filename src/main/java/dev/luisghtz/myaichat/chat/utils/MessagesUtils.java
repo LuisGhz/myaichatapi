@@ -16,7 +16,7 @@ public class MessagesUtils {
         .createdAt(new Date())
         .chat(chat)
         .build();
-    newMessage = addImageUrlIfApply(newMessage, fileUrl);
+    newMessage = addFileUrlIfApply(newMessage, fileUrl);
     return newMessage;
   }
 
@@ -33,9 +33,9 @@ public class MessagesUtils {
         .build();
   }
 
-  private static AppMessage addImageUrlIfApply(AppMessage message, String imageFileUrl) {
-    if (imageFileUrl != null && !imageFileUrl.isEmpty())
-      message.setImageUrl(imageFileUrl);
+  private static AppMessage addFileUrlIfApply(AppMessage message, String fileUrl) {
+    if (fileUrl != null && !fileUrl.isEmpty())
+      message.setFileUrl(fileUrl);
     return message;
   }
 

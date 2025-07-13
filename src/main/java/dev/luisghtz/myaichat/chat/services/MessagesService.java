@@ -20,7 +20,7 @@ import dev.luisghtz.myaichat.chat.models.TokensSum;
 import dev.luisghtz.myaichat.chat.repositories.MessageRepository;
 import dev.luisghtz.myaichat.chat.entities.AppMessage;
 import dev.luisghtz.myaichat.chat.utils.MessagesUtils;
-import dev.luisghtz.myaichat.image.providers.AwsS3Service;
+import dev.luisghtz.myaichat.file.providers.AwsS3Service;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -109,7 +109,7 @@ public class MessagesService {
           return AppMessageHistory.builder()
               .content(message.getContent())
               .role(message.getRole())
-              .image(message.getImageUrl())
+              .image(message.getFileUrl())
               .promptTokens(message.getPromptTokens())
               .completionTokens(message.getCompletionTokens())
               .build();
@@ -128,12 +128,12 @@ public class MessagesService {
   public void deleteAllByChat(UUID id) {
     log.info("Deleting messages for chat with ID: '{}'", id);
     var messages = messageRepository.findAllByChatId(id);
-    var images = messages.stream()
-        .map(AppMessage::getImageUrl)
-        .filter(imageUrl -> imageUrl != null && !imageUrl.isEmpty())
+    var files = messages.stream()
+        .map(AppMessage::getFileUrl)
+        .filter(fileUrl -> fileUrl != null && !fileUrl.isEmpty())
         .distinct()
         .collect(Collectors.toList());
-    images.forEach(this::removeImageFromS3);
+    files.forEach(this::removeFileFromS3);
     messageRepository.deleteAllByChatId(id);
   }
 
@@ -149,8 +149,8 @@ public class MessagesService {
     return messageRepository.getSumOfPromptAndCompletionTokensByChatId(chatId);
   }
 
-  private void removeImageFromS3(String imageUrl) {
-    var cleanUrl = imageUrl.replace(cdn, "");
+  private void removeFileFromS3(String fileUrl) {
+    var cleanUrl = fileUrl.replace(cdn, "");
     awsS3Service.deleteFile(cleanUrl);
   }
 }

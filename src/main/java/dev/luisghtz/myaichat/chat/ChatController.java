@@ -10,7 +10,7 @@ import dev.luisghtz.myaichat.chat.dtos.NewMessageRequestDto;
 import dev.luisghtz.myaichat.chat.dtos.RenameChatTitleDto;
 import dev.luisghtz.myaichat.chat.services.MessagesService;
 import dev.luisghtz.myaichat.chat.services.ChatService;
-import dev.luisghtz.myaichat.image.ImageService;
+import dev.luisghtz.myaichat.file.FileService;
 import org.springframework.web.bind.annotation.RequestBody;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -34,7 +34,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 @Log4j2
 public class ChatController {
   private final MessagesService messagesService;
-  private final ImageService imageService;
+  private final FileService fileService;
   private final ChatService chatService;
 
   @GetMapping("all")
@@ -52,11 +52,11 @@ public class ChatController {
   @PostMapping("send-message")
   public ResponseEntity<AssistantMessageResponseDto> newMessage(
       @Validated @ModelAttribute NewMessageRequestDto newMessageRequestDto) {
-    String imageFileName = null;
-    if (newMessageRequestDto.getImage() != null) {
-      imageFileName = imageService.uploadImage(newMessageRequestDto.getImage());
+    String fileName = null;
+    if (newMessageRequestDto.getFile() != null) {
+      fileName = fileService.uploadFile(newMessageRequestDto.getFile());
     }
-    var response = messagesService.sendNewMessage(newMessageRequestDto, imageFileName);
+    var response = messagesService.sendNewMessage(newMessageRequestDto, fileName);
     return ResponseEntity.ok(response);
   }
 
