@@ -9,6 +9,7 @@ import dev.luisghtz.myaichat.audio.services.TranscribeService;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 
@@ -19,7 +20,7 @@ public class AudioController {
   private final TranscribeService transcribeService;
 
   @PostMapping("transcribe")
-  public ResponseEntity<TranscriptionResDto> transcribeAudio(@ModelAttribute TranscriptionReqDto dto) {
+  public ResponseEntity<TranscriptionResDto> transcribeAudio(@Validated @ModelAttribute TranscriptionReqDto dto) {
     TranscriptionResDto result = transcribeService.transcribe(dto.getAudio());
     return ResponseEntity.ok(result);
   }
