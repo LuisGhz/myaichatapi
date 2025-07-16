@@ -19,16 +19,21 @@ import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import dev.luisghtz.myaichat.chat.dtos.AssistantMessageResponseDto;
+import dev.luisghtz.myaichat.chat.dtos.ChangeMaxOutputTokensReqDto;
 import dev.luisghtz.myaichat.chat.dtos.ChatsListResponseDto;
 import dev.luisghtz.myaichat.chat.dtos.HistoryChatDto;
 import dev.luisghtz.myaichat.chat.dtos.NewMessageRequestDto;
+import dev.luisghtz.myaichat.chat.dtos.RenameChatTitleDto;
 import dev.luisghtz.myaichat.chat.models.AppMessageHistory;
 import dev.luisghtz.myaichat.chat.models.ChatSummary;
 import dev.luisghtz.myaichat.chat.services.ChatService;
@@ -52,6 +57,9 @@ public class ChatControllerTest {
 
   @Autowired
   private MockMvc mockMvc;
+
+  @Autowired
+  private ObjectMapper objectMapper;
 
   private UUID testChatId;
 
@@ -281,6 +289,159 @@ public class ChatControllerTest {
       // Act & Assert
       mockMvc.perform(multipart("/api/chat/send-message"))
           .andExpect(status().isBadRequest());
+    }
+  }
+
+  @Nested
+  @DisplayName("PATCH Endpoints")
+  class PatchEndpoints {
+
+    @Test
+    @DisplayName("PATCH /api/chat/{id}/rename - Should rename chat title successfully")
+    public void testRenameChatSuccess() throws Exception {
+      // Arrange
+      String newTitle = "Updated Chat Title";
+      RenameChatTitleDto requestDto = new RenameChatTitleDto();
+      requestDto.setTitle(newTitle);
+
+      // Act & Assert
+      mockMvc.perform(patch("/api/chat/{id}/rename", testChatId)
+          .contentType(MediaType.APPLICATION_JSON)
+          .content(objectMapper.writeValueAsString(requestDto)))
+          .andExpect(status().isNoContent());
+
+      verify(chatService, times(1)).renameChatTitleById(testChatId, newTitle);
+    }
+
+    @Test
+    @DisplayName("PATCH /api/chat/{id}/rename - Should return BAD_REQUEST for blank title")
+    public void testRenameChatWithBlankTitle() throws Exception {
+      // Arrange
+      RenameChatTitleDto requestDto = new RenameChatTitleDto();
+      requestDto.setTitle(""); // Blank title should fail validation
+
+      // Act & Assert
+      mockMvc.perform(patch("/api/chat/{id}/rename", testChatId)
+          .contentType(MediaType.APPLICATION_JSON)
+          .content(objectMapper.writeValueAsString(requestDto)))
+          .andExpect(status().isBadRequest());
+
+      verify(chatService, never()).renameChatTitleById(any(), any());
+    }
+
+    @Test
+    @DisplayName("PATCH /api/chat/{id}/rename - Should return BAD_REQUEST for title too long")
+    public void testRenameChatWithTooLongTitle() throws Exception {
+      // Arrange
+      String longTitle = "a".repeat(51); // Exceeds max length of 50
+      RenameChatTitleDto requestDto = new RenameChatTitleDto();
+      requestDto.setTitle(longTitle);
+
+      // Act & Assert
+      mockMvc.perform(patch("/api/chat/{id}/rename", testChatId)
+          .contentType(MediaType.APPLICATION_JSON)
+          .content(objectMapper.writeValueAsString(requestDto)))
+          .andExpect(status().isBadRequest());
+
+      verify(chatService, never()).renameChatTitleById(any(), any());
+    }
+
+    @Test
+    @DisplayName("PATCH /api/chat/{id}/rename - Should return NOT_FOUND for invalid chat id")
+    public void testRenameChatWithInvalidId() throws Exception {
+      // Arrange
+      UUID invalidId = UUID.randomUUID();
+      String newTitle = "New Title";
+      RenameChatTitleDto requestDto = new RenameChatTitleDto();
+      requestDto.setTitle(newTitle);
+
+      ResponseStatusException exception = new ResponseStatusException(HttpStatus.NOT_FOUND, "Chat not found");
+      doThrow(exception).when(chatService).renameChatTitleById(invalidId, newTitle);
+
+      // Act & Assert
+      mockMvc.perform(patch("/api/chat/{id}/rename", invalidId)
+          .contentType(MediaType.APPLICATION_JSON)
+          .content(objectMapper.writeValueAsString(requestDto)))
+          .andExpect(status().isNotFound())
+          .andExpect(jsonPath("$.statusCode").value("NOT_FOUND"))
+          .andExpect(jsonPath("$.message").value(exception.getMessage()));
+    }
+
+    @Test
+    @DisplayName("PATCH /api/chat/{id}/change-max-output-tokens - Should change max output tokens successfully")
+    public void testChangeMaxOutputTokensSuccess() throws Exception {
+      // Arrange
+      Short newMaxTokens = 2000;
+      ChangeMaxOutputTokensReqDto requestDto = new ChangeMaxOutputTokensReqDto();
+      requestDto.setMaxOutputTokens(newMaxTokens);
+
+      // Act & Assert
+      mockMvc.perform(patch("/api/chat/{id}/change-max-output-tokens", testChatId)
+          .contentType(MediaType.APPLICATION_JSON)
+          .content(objectMapper.writeValueAsString(requestDto)))
+          .andExpect(status().isNoContent());
+
+      verify(chatService, times(1)).changeMaxOutputTokens(testChatId, newMaxTokens);
+    }
+
+    @Test
+    @DisplayName("PATCH /api/chat/{id}/change-max-output-tokens - Should return NOT_FOUND for invalid chat id")
+    public void testChangeMaxOutputTokensWithInvalidId() throws Exception {
+      // Arrange
+      UUID invalidId = UUID.randomUUID();
+      Short newMaxTokens = 1500;
+      ChangeMaxOutputTokensReqDto requestDto = new ChangeMaxOutputTokensReqDto();
+      requestDto.setMaxOutputTokens(newMaxTokens);
+
+      ResponseStatusException exception = new ResponseStatusException(HttpStatus.NOT_FOUND, "Chat not found");
+      doThrow(exception).when(chatService).changeMaxOutputTokens(invalidId, newMaxTokens);
+
+      // Act & Assert
+      mockMvc.perform(patch("/api/chat/{id}/change-max-output-tokens", invalidId)
+          .contentType(MediaType.APPLICATION_JSON)
+          .content(objectMapper.writeValueAsString(requestDto)))
+          .andExpect(status().isNotFound())
+          .andExpect(jsonPath("$.statusCode").value("NOT_FOUND"))
+          .andExpect(jsonPath("$.message").value(exception.getMessage()));
+    }
+
+    @Test
+    @DisplayName("PATCH /api/chat/{id}/change-max-output-tokens - Should handle null max tokens")
+    public void testChangeMaxOutputTokensWithNullValue() throws Exception {
+      // Arrange
+      ChangeMaxOutputTokensReqDto requestDto = new ChangeMaxOutputTokensReqDto();
+
+      // Act & Assert
+      mockMvc.perform(patch("/api/chat/{id}/change-max-output-tokens", testChatId)
+          .contentType(MediaType.APPLICATION_JSON)
+          .content(objectMapper.writeValueAsString(requestDto)))
+          .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("PATCH /api/chat/{id}/toggle-chat-fav - Should toggle chat favorite successfully")
+    public void testToggleChatFavSuccess() throws Exception {
+      // Act & Assert
+      mockMvc.perform(patch("/api/chat/{id}/toggle-chat-fav", testChatId))
+          .andExpect(status().isNoContent());
+
+      verify(chatService, times(1)).toggleChatFav(testChatId);
+    }
+
+    @Test
+    @DisplayName("PATCH /api/chat/{id}/toggle-chat-fav - Should return NOT_FOUND for invalid chat id")
+    public void testToggleChatFavWithInvalidId() throws Exception {
+      // Arrange
+      UUID invalidId = UUID.randomUUID();
+
+      ResponseStatusException exception = new ResponseStatusException(HttpStatus.NOT_FOUND, "Chat not found");
+      doThrow(exception).when(chatService).toggleChatFav(invalidId);
+
+      // Act & Assert
+      mockMvc.perform(patch("/api/chat/{id}/toggle-chat-fav", invalidId))
+          .andExpect(status().isNotFound())
+          .andExpect(jsonPath("$.statusCode").value("NOT_FOUND"))
+          .andExpect(jsonPath("$.message").value(exception.getMessage()));
     }
   }
 
