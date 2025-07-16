@@ -4,6 +4,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import dev.luisghtz.myaichat.chat.dtos.AssistantMessageResponseDto;
+import dev.luisghtz.myaichat.chat.dtos.ChangeMaxOutputTokensReqDto;
 import dev.luisghtz.myaichat.chat.dtos.ChatsListResponseDto;
 import dev.luisghtz.myaichat.chat.dtos.HistoryChatDto;
 import dev.luisghtz.myaichat.chat.dtos.NewMessageRequestDto;
@@ -76,8 +77,8 @@ public class ChatController {
 
   @PatchMapping("{id}/change-max-output-tokens")
   public ResponseEntity<Void> changeMaxOutputTokens(@PathVariable UUID id,
-      @Validated @RequestBody NewMessageRequestDto newMessageRequestDto) {
-    chatService.changeMaxOutputTokens(id, newMessageRequestDto.getMaxOutputTokens());
+      @Validated @RequestBody ChangeMaxOutputTokensReqDto changeMaxOutputTokensReqDto) {
+    chatService.changeMaxOutputTokens(id, changeMaxOutputTokensReqDto.getMaxOutputTokens());
     return ResponseEntity.noContent().build();
   }
 
