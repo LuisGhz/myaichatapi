@@ -6,6 +6,8 @@ import java.util.Map;
 public class AppModels {
   public static final AppModel GPT_4O_MINI = new AppModel("gpt-4o-mini", 5_000);
   public static final AppModel GPT_4O = new AppModel("gpt-4o", 10_000);
+  public static final AppModel GPT_4_1 = new AppModel("gpt-4.1-2025-04-14", 10_000);
+  public static final AppModel GPT_4_1_MINI = new AppModel("gpt-4.1-mini-2025-04-14", 10_000);
   public static final AppModel GEMINI_FLASH_2_0_LITE = new AppModel("gemini-2.0-flash-lite", 5_000);
   public static final AppModel GEMINI_FLASH_2_0 = new AppModel("gemini-2.0-flash", 8_000);
   public static final AppModel GEMINI_FLASH_2_5_FLASH = new AppModel("gemini-2.5-flash", 10_000);
@@ -14,6 +16,8 @@ public class AppModels {
   private static final Map<String, Integer> MODEL_MAX_TOKENS = Map.of(
       GPT_4O_MINI.getKey(), GPT_4O_MINI.getMaxTokens(),
       GPT_4O.getKey(), GPT_4O.getMaxTokens(),
+      GPT_4_1.getKey(), GPT_4_1.getMaxTokens(),
+      GPT_4_1_MINI.getKey(), GPT_4_1_MINI.getMaxTokens(),
       GEMINI_FLASH_2_0_LITE.getKey(), GEMINI_FLASH_2_0_LITE.getMaxTokens(),
       GEMINI_FLASH_2_0.getKey(), GEMINI_FLASH_2_0.getMaxTokens(),
       GEMINI_FLASH_2_5_FLASH.getKey(), GEMINI_FLASH_2_5_FLASH.getMaxTokens(),
@@ -26,6 +30,8 @@ public class AppModels {
     return List.of(
         GPT_4O_MINI.getKey(),
         GPT_4O.getKey(),
+        GPT_4_1.getKey(),
+        GPT_4_1_MINI.getKey(),
         GEMINI_FLASH_2_0_LITE.getKey(),
         GEMINI_FLASH_2_0.getKey(),
         GEMINI_FLASH_2_5_FLASH.getKey(),
