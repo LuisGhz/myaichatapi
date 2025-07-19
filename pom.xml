@@ -114,6 +114,21 @@
       <artifactId>java-uuid-generator</artifactId>
       <version>5.1.0</version>
     </dependency>
+    <!-- OAuth2 dependencies -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-oauth2-client</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-security</artifactId>
+    </dependency>
+    <!-- JWT dependencies -->
+    <dependency>
+      <groupId>com.auth0</groupId>
+      <artifactId>java-jwt</artifactId>
+      <version>4.5.0</version>
+    </dependency>
   </dependencies>
 
   <build>
