@@ -6,7 +6,10 @@ import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
+
+import dev.luisghtz.myaichat.chat.entities.Chat;
 
 @Entity
 @Table(name = "users")
@@ -49,6 +52,9 @@ public class User {
 
   @Column(name = "updated_at")
   private LocalDateTime updatedAt;
+
+  @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
+  private List<Chat> chats;
 
   @PrePersist
   protected void onCreate() {

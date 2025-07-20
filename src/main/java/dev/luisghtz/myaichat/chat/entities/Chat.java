@@ -6,6 +6,7 @@ import java.util.UUID;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import dev.luisghtz.myaichat.auth.entities.User;
 import dev.luisghtz.myaichat.prompts.entities.CustomPrompt;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -41,4 +42,6 @@ public class Chat {
   private Boolean fav;
   @Column(nullable = false, columnDefinition = "boolean default false")
   private Boolean isWebSearchMode;
+  @ManyToOne(fetch = FetchType.LAZY)
+  private User user;
 }
