@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import dev.luisghtz.myaichat.ai.services.AIService;
+import dev.luisghtz.myaichat.auth.services.JwtService;
 import dev.luisghtz.myaichat.chat.dtos.AssistantMessageResponseDto;
 import dev.luisghtz.myaichat.chat.dtos.ChatsListResponseDto;
 import dev.luisghtz.myaichat.chat.dtos.NewMessageRequestDto;
@@ -27,9 +28,11 @@ public class ChatService {
   private final ChatRepository chatRepository;
   private final CustomPromptService customPromptService;
   private final AIService aiProviderService;
+  private final JwtService jwtService;
 
-  public ChatsListResponseDto getAllChats() {
-    var chats = chatRepository.findAllByOrderByCreatedAtAsc();
+  public ChatsListResponseDto getAllChats(String authHeader) {
+    UUID userId = jwtService.getUserIdFromToken(authHeader);
+    var chats = chatRepository.findAllByUserIdOrderByCreatedAtAsc(userId);
     ChatsListResponseDto chatsListResponseDto = new ChatsListResponseDto();
     chatsListResponseDto.setChats(chats.stream()
         .map(chat -> new ChatSummary(chat.getId(), chat.getTitle(), chat.getFav()))

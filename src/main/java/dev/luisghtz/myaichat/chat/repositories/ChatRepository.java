@@ -13,6 +13,8 @@ import dev.luisghtz.myaichat.chat.entities.Chat;
 public interface ChatRepository extends JpaRepository<Chat, UUID> {
   List<Chat> findAllByOrderByCreatedAtAsc();
 
+  List<Chat> findAllByUserIdOrderByCreatedAtAsc(@Param("userId") UUID userId);
+
   @Modifying
   @Query("UPDATE Chat c SET c.title = :title WHERE c.id = :id")
   int renameChatTitleById(@Param("id") UUID id, @Param("title") String title);

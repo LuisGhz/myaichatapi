@@ -13,6 +13,8 @@ import dev.luisghtz.myaichat.chat.services.MessagesService;
 import dev.luisghtz.myaichat.chat.services.ChatService;
 import dev.luisghtz.myaichat.file.FileService;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 
@@ -39,8 +41,10 @@ public class ChatController {
   private final ChatService chatService;
 
   @GetMapping("all")
-  public ResponseEntity<ChatsListResponseDto> getChatsList() {
-    var chats = chatService.getAllChats();
+  public ResponseEntity<ChatsListResponseDto> getChatsList(
+      @RequestHeader(value = "Authorization") String authHeader) {
+    var userId = authHeader.replace("Bearer ", "");
+    var chats = chatService.getAllChats(userId);
     return ResponseEntity.ok(chats);
   }
 
