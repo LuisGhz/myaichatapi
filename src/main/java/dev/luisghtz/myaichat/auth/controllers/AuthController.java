@@ -30,7 +30,7 @@ public class AuthController {
     }
     
     @PostMapping("/validate")
-    public ResponseEntity<Map<String, Object>> validateToken(@RequestHeader("Authorization") String authHeader) {
+    public ResponseEntity<Map<String, Object>> validateToken(@RequestHeader(value = "Authorization", required = false) String authHeader) {
         try {
             if (authHeader == null || !authHeader.startsWith("Bearer ")) {
                 return ResponseEntity.badRequest().body(Map.of("valid", false, "message", "Invalid token format"));
@@ -59,7 +59,7 @@ public class AuthController {
     }
     
     @GetMapping("/user")
-    public ResponseEntity<UserDto> getCurrentUser(@RequestHeader("Authorization") String authHeader) {
+    public ResponseEntity<UserDto> getCurrentUser(@RequestHeader(value = "Authorization", required = false) String authHeader) {
         try {
             if (authHeader == null || !authHeader.startsWith("Bearer ")) {
                 return ResponseEntity.badRequest().build();
