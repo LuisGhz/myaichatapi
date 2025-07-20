@@ -2,6 +2,7 @@ package dev.luisghtz.myaichat.auth.controllers;
 
 import dev.luisghtz.myaichat.auth.dtos.LoginResDto;
 import dev.luisghtz.myaichat.auth.dtos.UserDto;
+import dev.luisghtz.myaichat.auth.dtos.ValidateResDto;
 import dev.luisghtz.myaichat.auth.entities.User;
 import dev.luisghtz.myaichat.auth.services.AuthService;
 import dev.luisghtz.myaichat.auth.services.UserService;
@@ -31,11 +32,11 @@ public class AuthController {
   }
 
   @PostMapping("/validate")
-  public ResponseEntity<Map<String, Object>> validateToken(
+  public ResponseEntity<ValidateResDto> validateToken(
       @RequestHeader(value = "Authorization", required = false) String authHeader) {
     try {
       if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-        return ResponseEntity.badRequest().body(Map.of("valid", false, "message", "Invalid token format"));
+        return ResponseEntity.badRequest().body(ValidateResDto.failure("Invalid token format"));
       }
 
       String token = authHeader.substring(7);
@@ -45,17 +46,15 @@ public class AuthController {
         User user = authService.getUserFromToken(token);
         if (user != null) {
           UserDto userDto = userService.convertToDto(user);
-          return ResponseEntity.ok(Map.of(
-              "valid", true,
-              "user", userDto));
+          return ResponseEntity.ok(ValidateResDto.success(userDto));
         }
       }
 
-      return ResponseEntity.ok(Map.of("valid", false, "message", "Invalid token"));
+      return ResponseEntity.ok(ValidateResDto.failure("Invalid token"));
 
     } catch (Exception e) {
       log.error("Error validating token", e);
-      return ResponseEntity.ok(Map.of("valid", false, "message", "Token validation failed"));
+      return ResponseEntity.ok(ValidateResDto.failure("Token validation failed"));
     }
   }
 
