@@ -8,6 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.Map;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -18,7 +19,7 @@ public class AuthService {
     private final JwtService jwtService;
     
     public AuthResponse authenticateWithGitHub(Map<String, Object> githubUser) {
-        log.info("Authenticating user with GitHub: {}", githubUser.get("login"));
+        log.info("Authenticating user with GitHub: {}", githubUser != null ? githubUser.get("login") : null);
         
         // Create or update user
         User user = userService.createOrUpdateUserFromGitHub(githubUser);
@@ -38,7 +39,8 @@ public class AuthService {
     }
     
     public User getUserFromToken(String token) {
-        String userId = jwtService.getUserIdFromToken(token).toString();
-        return userService.findById(userId).orElse(null);
+        UUID userId = jwtService.getUserIdFromToken(token);
+        String userIdString = userId != null ? userId.toString() : "null";
+        return userService.findById(userIdString).orElse(null);
     }
 }
