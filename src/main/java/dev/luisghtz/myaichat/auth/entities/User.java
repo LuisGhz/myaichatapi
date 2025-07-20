@@ -1,9 +1,12 @@
 package dev.luisghtz.myaichat.auth.entities;
 
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
+import lombok.ToString;
+import lombok.EqualsAndHashCode;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -13,9 +16,12 @@ import dev.luisghtz.myaichat.chat.entities.Chat;
 
 @Entity
 @Table(name = "users")
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@ToString(exclude = {"chats"})
+@EqualsAndHashCode(exclude = {"chats"})
 public class User {
 
   @Id
