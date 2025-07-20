@@ -26,13 +26,18 @@ public class JwtService {
     public String generateToken(User user) {
         Algorithm algorithm = Algorithm.HMAC256(jwtSecret);
         
+        long now = System.currentTimeMillis();
+        // Add a random nonce to ensure uniqueness even for same user at same millisecond
+        String nonce = UUID.randomUUID().toString().substring(0, 8);
+        
         return JWT.create()
                 .withSubject(user.getId().toString())
                 .withClaim("username", user.getUsername())
                 .withClaim("email", user.getEmail())
                 .withClaim("role", user.getRole().getName().name())
-                .withIssuedAt(new Date())
-                .withExpiresAt(new Date(System.currentTimeMillis() + jwtExpiration))
+                .withClaim("nonce", nonce)
+                .withIssuedAt(new Date(now))
+                .withExpiresAt(new Date(now + jwtExpiration))
                 .sign(algorithm);
     }
     
