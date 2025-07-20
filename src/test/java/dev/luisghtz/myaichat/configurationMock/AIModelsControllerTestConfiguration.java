@@ -1,5 +1,7 @@
 package dev.luisghtz.myaichat.configurationMock;
 
+import dev.luisghtz.myaichat.auth.services.JwtService;
+import dev.luisghtz.myaichat.auth.services.UserService;
 import org.springframework.ai.audio.transcription.AudioTranscriptionPrompt;
 import org.springframework.ai.audio.transcription.AudioTranscriptionResponse;
 import org.springframework.ai.chat.client.ChatClient;
@@ -9,6 +11,9 @@ import org.springframework.ai.vertexai.gemini.VertexAiGeminiChatModel;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.web.SecurityFilterChain;
 
 import static org.mockito.Mockito.mock;
 
@@ -43,5 +48,26 @@ public class AIModelsControllerTestConfiguration {
     @Primary
     Model<AudioTranscriptionPrompt, AudioTranscriptionResponse> audioTranscriptionModel() {
         return mock(Model.class);
+    }
+
+    @Bean
+    @Primary
+    JwtService jwtService() {
+        return mock(JwtService.class);
+    }
+
+    @Bean
+    @Primary
+    UserService userService() {
+        return mock(UserService.class);
+    }
+
+    @Bean
+    @Primary
+    public SecurityFilterChain testSecurityFilterChain(HttpSecurity http) throws Exception {
+        return http
+                .csrf(AbstractHttpConfigurer::disable)
+                .authorizeHttpRequests(authz -> authz.anyRequest().permitAll())
+                .build();
     }
 }
