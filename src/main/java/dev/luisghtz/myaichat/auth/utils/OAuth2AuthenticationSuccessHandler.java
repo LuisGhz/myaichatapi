@@ -33,8 +33,20 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
                                       HttpServletResponse response, 
                                       Authentication authentication) throws IOException {
         
+        if (authentication == null || !(authentication instanceof OAuth2AuthenticationToken)) {
+            log.error("Invalid authentication object");
+            response.sendRedirect(successRedirectUrl + "?error=invalid_authentication");
+            return;
+        }
+        
         OAuth2AuthenticationToken oAuth2Token = (OAuth2AuthenticationToken) authentication;
         OAuth2User oAuth2User = oAuth2Token.getPrincipal();
+        
+        if (oAuth2User == null) {
+            log.error("OAuth2User is null");
+            response.sendRedirect(successRedirectUrl + "?error=user_not_found");
+            return;
+        }
         
         String registrationId = oAuth2Token.getAuthorizedClientRegistrationId();
         
