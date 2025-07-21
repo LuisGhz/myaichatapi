@@ -22,7 +22,9 @@ CREATE TABLE chat (
     custom_prompt_id UUID,
     fav BOOLEAN NOT NULL DEFAULT false,
     is_web_search_mode BOOLEAN NOT NULL DEFAULT false,
-    FOREIGN KEY (custom_prompt_id) REFERENCES custom_prompt(id)
+    user_id UUID,
+    FOREIGN KEY (custom_prompt_id) REFERENCES custom_prompt(id),
+    FOREIGN KEY (user_id) REFERENCES users(id)
 );
 
 CREATE TABLE app_message (
@@ -62,17 +64,28 @@ CREATE TABLE prompt_params (
     FOREIGN KEY (custom_prompt_id) REFERENCES custom_prompt(id)
 );
 
+CREATE TABLE roles (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL UNIQUE
+);
+
+CREATE TABLE users (
+    id UUID PRIMARY KEY,
+    username VARCHAR(255) NOT NULL UNIQUE,
+    email VARCHAR(255) NOT NULL UNIQUE,
+    password VARCHAR(255),
+    locked BOOLEAN NOT NULL DEFAULT false,
+    disabled BOOLEAN NOT NULL DEFAULT false,
+    role_id INTEGER,
+    github_id VARCHAR(255),
+    avatar_url TEXT,
+    created_at TIMESTAMP,
+    updated_at TIMESTAMP,
+    FOREIGN KEY (role_id) REFERENCES roles(id)
+);
+
 -- Optional: Add indexes
 CREATE INDEX idx_app_message_chat ON app_message(chat_id);
 CREATE INDEX idx_chat_custom_prompt ON chat(custom_prompt_id);
 CREATE INDEX idx_prompt_messages_prompt ON prompt_messages(custom_prompt_id);
 CREATE INDEX idx_prompt_params_prompt ON prompt_params(custom_prompt_id);
-
-```
-
-## Migration: Add is_web_search_mode to chat
-
-```sql
-ALTER TABLE chat
-ADD COLUMN is_web_search_mode BOOLEAN NOT NULL DEFAULT false;
-```
