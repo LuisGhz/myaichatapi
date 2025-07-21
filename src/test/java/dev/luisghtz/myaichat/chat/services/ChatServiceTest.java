@@ -1,6 +1,7 @@
 package dev.luisghtz.myaichat.chat.services;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 import java.util.Arrays;
 import java.util.Date;
@@ -16,6 +17,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 import dev.luisghtz.myaichat.ai.services.AIService;
+import dev.luisghtz.myaichat.auth.services.JwtService;
 import dev.luisghtz.myaichat.chat.dtos.AssistantMessageResponseDto;
 import dev.luisghtz.myaichat.chat.dtos.ChatsListResponseDto;
 import dev.luisghtz.myaichat.chat.dtos.NewMessageRequestDto;
@@ -35,6 +37,9 @@ class ChatServiceTest {
 
   @Mock
   private AIService aiProviderService;
+
+  @Mock
+  private JwtService jwtService;
 
   @InjectMocks
   private ChatService chatService;
@@ -62,18 +67,19 @@ class ChatServiceTest {
   @Test
   void getAllChats_ShouldReturnChatsListResponseDto() {
     // Given
+    var authkey = "Bearer test-auth-key";
     List<Chat> chats = Arrays.asList(testChat);
-    when(chatRepository.findAllByOrderByCreatedAtAsc()).thenReturn(chats);
-
+    when(jwtService.getUserIdFromToken(authkey)).thenReturn(UUID.randomUUID());
+    when(chatRepository.findAllByUserIdOrderByCreatedAtAsc(any(UUID.class))).thenReturn(chats);
     // When
-    ChatsListResponseDto result = chatService.getAllChats();
+    ChatsListResponseDto result = chatService.getAllChats(authkey);
 
     // Then
     assertNotNull(result);
     assertEquals(1, result.getChats().size());
     assertEquals(testChatId, result.getChats().get(0).getId());
     assertEquals("Test Chat", result.getChats().get(0).getTitle());
-    verify(chatRepository).findAllByOrderByCreatedAtAsc();
+    verify(chatRepository).findAllByUserIdOrderByCreatedAtAsc(any(UUID.class));
   }
 
   @Test
