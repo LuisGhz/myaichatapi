@@ -65,7 +65,7 @@ CREATE TABLE prompt_params (
 );
 
 CREATE TABLE roles (
-    id SERIAL PRIMARY KEY,
+    id BIGINT PRIMARY KEY,
     name VARCHAR(255) NOT NULL UNIQUE
 );
 
@@ -76,7 +76,7 @@ CREATE TABLE users (
     password VARCHAR(255),
     locked BOOLEAN NOT NULL DEFAULT false,
     disabled BOOLEAN NOT NULL DEFAULT false,
-    role_id INTEGER,
+    role_id BIGINT,
     github_id VARCHAR(255),
     avatar_url TEXT,
     created_at TIMESTAMP,
