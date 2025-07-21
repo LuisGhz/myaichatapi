@@ -25,7 +25,7 @@ spring:
   jpa:
     show-sql: true
     hibernate:
-      ddl-auto: validate
+      ddl-auto: update
   servlet:
     multipart:
       max-file-size: 2MB # Maximum size for a single file
@@ -56,6 +56,7 @@ aws:
 files:
   max-mb-size: 1 # This is MB
 app:
+  base-url: ${APP_BASE_URL}
   jwt:
     secret: ${JWT_SECRET:myaichat-secret-key-change-in-production}
     expiration: ${JWT_EXPIRATION:86400000} # 24 hours

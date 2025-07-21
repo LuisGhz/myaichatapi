@@ -18,6 +18,9 @@ public class OAuth2Config {
     @Value("${spring.security.oauth2.client.registration.github.client-secret:placeholder-client-secret}")
     private String githubClientSecret;
     
+    @Value("${app.base-url}")
+    private String baseUrl;
+    
     @Bean
     public ClientRegistrationRepository clientRegistrationRepository() {
         return new InMemoryClientRegistrationRepository(getGithubClientRegistration());
@@ -29,7 +32,7 @@ public class OAuth2Config {
                 .clientSecret(githubClientSecret)
                 .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
                 .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
-                .redirectUri("{baseUrl}/login/oauth2/code/{registrationId}")
+                .redirectUri(baseUrl + "/login/oauth2/code/github")
                 .scope("user:email", "read:user")
                 .authorizationUri("https://github.com/login/oauth/authorize")
                 .tokenUri("https://github.com/login/oauth/access_token")
