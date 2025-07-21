@@ -76,20 +76,33 @@ public class ChatControllerTest {
     @DisplayName("GET /api/chat/all - Returns all chats list")
     public void testGetChatsList() throws Exception {
       // Arrange
+      String userId = "test-user-id";
+      String authHeader = "Bearer " + userId;
       List<ChatSummary> chatsList = new ArrayList<>();
       chatsList.add(ChatSummary.builder().id(UUID.randomUUID()).title("Chat 1").build());
       chatsList.add(ChatSummary.builder().id(UUID.randomUUID()).title("Chat 2").build());
 
       ChatsListResponseDto expectedResponse = new ChatsListResponseDto(chatsList);
-      when(chatService.getAllChats()).thenReturn(expectedResponse);
+      when(chatService.getAllChats(userId)).thenReturn(expectedResponse);
 
       // Act & Assert
-      mockMvc.perform(get("/api/chat/all"))
+      mockMvc.perform(get("/api/chat/all")
+          .header("Authorization", authHeader))
           .andExpect(status().isOk())
           .andExpect(jsonPath("$.chats").isArray())
           .andExpect(jsonPath("$.chats.length()").value(2));
 
-      verify(chatService, times(1)).getAllChats();
+      verify(chatService, times(1)).getAllChats(userId);
+    }
+
+    @Test
+    @DisplayName("GET /api/chat/all - Returns BAD_REQUEST when Authorization header is missing")
+    public void testGetChatsListWithoutAuthHeader() throws Exception {
+      // Act & Assert
+      mockMvc.perform(get("/api/chat/all"))
+          .andExpect(status().isBadRequest());
+
+      verify(chatService, never()).getAllChats(any());
     }
 
     @Test
