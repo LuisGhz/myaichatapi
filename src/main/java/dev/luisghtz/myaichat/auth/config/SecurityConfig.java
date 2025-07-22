@@ -26,72 +26,71 @@ import java.util.List;
 @EnableWebSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
-    
-    private final OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
-    private final OAuth2AuthenticationFailureHandler oAuth2AuthenticationFailureHandler;
-    private final JwtAuthenticationFilter jwtAuthenticationFilter;
-    
-    @Value("${app.base-url}")
-    private String baseUrl;
-    
-    @Bean
-    public OAuth2AuthorizationRequestResolver authorizationRequestResolver(
-            ClientRegistrationRepository clientRegistrationRepository) {
-        String authorizationRequestBaseUri = isProductionEnvironment() ? 
-            "/myaichat/oauth2/authorization" : "/oauth2/authorization";
-        
-        return new DefaultOAuth2AuthorizationRequestResolver(
-                clientRegistrationRepository, authorizationRequestBaseUri);
-    }
-    
-    private boolean isProductionEnvironment() {
-        return baseUrl != null && baseUrl.contains("/myaichat");
-    }
-    
-    @Bean
-    SecurityFilterChain filterChain(HttpSecurity http, ClientRegistrationRepository clientRegistrationRepository) throws Exception {
-        String loginRedirectionEndpoint = isProductionEnvironment() ? 
-            "/myaichat/login/oauth2/code/*" : "/login/oauth2/code/*";
-        
-        http
-            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-            .csrf(AbstractHttpConfigurer::disable)
-            .sessionManagement(session -> session
-                .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
-                .maximumSessions(1)
-                .maxSessionsPreventsLogin(false)
-            )
-            .authorizeHttpRequests(authz -> authz
-                .requestMatchers("/auth/**", "/login/**", "/oauth2/**").permitAll()
-                .requestMatchers("/myaichat/auth/**", "/myaichat/login/**", "/myaichat/oauth2/**").permitAll()
-                .requestMatchers("/actuator/**").permitAll()
-                .anyRequest().authenticated()
-            )
-            .oauth2Login(oauth2 -> oauth2
-                .authorizationEndpoint(authorization -> authorization
-                    .authorizationRequestResolver(authorizationRequestResolver(clientRegistrationRepository))
-                )
-                .redirectionEndpoint(redirection -> redirection
-                    .baseUri(loginRedirectionEndpoint)
-                )
-                .successHandler(oAuth2AuthenticationSuccessHandler)
-                .failureHandler(oAuth2AuthenticationFailureHandler)
-            )
-            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
-        
-        return http.build();
-    }
-    
-    @Bean
-    CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOriginPatterns(List.of("*"));
-        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(List.of("*"));
-        configuration.setAllowCredentials(true);
-        
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", configuration);
-        return source;
-    }
+
+  private final OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
+  private final OAuth2AuthenticationFailureHandler oAuth2AuthenticationFailureHandler;
+  private final JwtAuthenticationFilter jwtAuthenticationFilter;
+
+  @Value("${app.base-url}")
+  private String baseUrl;
+
+  @Bean
+  public OAuth2AuthorizationRequestResolver authorizationRequestResolver(
+      ClientRegistrationRepository clientRegistrationRepository) {
+    String authorizationRequestBaseUri = isProductionEnvironment() ? "/myaichat/oauth2/authorization"
+        : "/oauth2/authorization";
+
+    DefaultOAuth2AuthorizationRequestResolver authorizationRequestResolver = new DefaultOAuth2AuthorizationRequestResolver(
+        clientRegistrationRepository, authorizationRequestBaseUri);
+
+    return authorizationRequestResolver;
+  }
+
+  private boolean isProductionEnvironment() {
+    return baseUrl != null && baseUrl.contains("/myaichat");
+  }
+
+  @Bean
+  SecurityFilterChain filterChain(HttpSecurity http, ClientRegistrationRepository clientRegistrationRepository)
+      throws Exception {
+    String loginRedirectionEndpoint = isProductionEnvironment() ? "/myaichat/login/oauth2/code/*"
+        : "/login/oauth2/code/*";
+
+    http
+        .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+        .csrf(AbstractHttpConfigurer::disable)
+        .sessionManagement(session -> session
+            .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
+            .maximumSessions(1)
+            .maxSessionsPreventsLogin(false))
+        .authorizeHttpRequests(authz -> authz
+            .requestMatchers("/auth/**", "/login/**", "/oauth2/**").permitAll()
+            .requestMatchers("/myaichat/auth/**", "/myaichat/login/**", "/myaichat/oauth2/**").permitAll()
+            .requestMatchers("/actuator/**").permitAll()
+            .anyRequest().authenticated())
+        .oauth2Login(oauth2 -> oauth2
+            .authorizationEndpoint(authorization -> authorization
+                .baseUri(isProductionEnvironment() ? "/myaichat/oauth2/authorization" : "/oauth2/authorization")
+                .authorizationRequestResolver(authorizationRequestResolver(clientRegistrationRepository)))
+            .redirectionEndpoint(redirection -> redirection
+                .baseUri(loginRedirectionEndpoint))
+            .successHandler(oAuth2AuthenticationSuccessHandler)
+            .failureHandler(oAuth2AuthenticationFailureHandler))
+        .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+
+    return http.build();
+  }
+
+  @Bean
+  CorsConfigurationSource corsConfigurationSource() {
+    CorsConfiguration configuration = new CorsConfiguration();
+    configuration.setAllowedOriginPatterns(List.of("*"));
+    configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+    configuration.setAllowedHeaders(List.of("*"));
+    configuration.setAllowCredentials(true);
+
+    UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+    source.registerCorsConfiguration("/**", configuration);
+    return source;
+  }
 }
