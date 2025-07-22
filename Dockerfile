@@ -20,7 +20,7 @@ COPY --from=build /app/target/*.jar app.jar
 EXPOSE 8080
 
 # Healthcheck to verify container is running properly
-HEALTHCHECK --interval=30s --timeout=3s CMD wget -q --spider http://localhost:8080/actuator/health || exit 1
+HEALTHCHECK --interval=30s --timeout=3s CMD wget -q --spider http://localhost:8080/myaichat/actuator/health || exit 1
 
 # Run the application
 ENTRYPOINT ["java", "-Xms64m", "-Xmx96m", "-XX:MaxRAM=128M", "-XX:+UseSerialGC", "-XX:+UseStringDeduplication", "-XX:+ExitOnOutOfMemoryError", "-jar", "/app/app.jar", "--spring.profiles.active=prod"]
