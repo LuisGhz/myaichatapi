@@ -23,7 +23,7 @@ EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=3s CMD wget -q --spider http://localhost:8080/actuator/health || exit 1
 
 # Run the application
-ENTRYPOINT ["java", "-Xms64m", "-Xmx96m", "-XX:MaxRAM=128M", "-XX:+UseSerialGC", "-XX:+UseStringDeduplication", "-XX:+ExitOnOutOfMemoryError", "-jar", "/app/app.jar"]
+ENTRYPOINT ["java", "-Xms64m", "-Xmx96m", "-XX:MaxRAM=128M", "-XX:+UseSerialGC", "-XX:+UseStringDeduplication", "-XX:+ExitOnOutOfMemoryError", "-jar", "/app/app.jar", "--spring.profiles.active=prod"]
 
 # Docker network information in comments:
 # This container should be started with:
