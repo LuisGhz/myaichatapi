@@ -32,16 +32,19 @@ public class OAuth2Config {
   }
 
   private ClientRegistration getGithubClientRegistration() {
-    String redirectUri = baseUrl + "/login/oauth2/code/github";
+    // Ensure HTTPS is used for production redirect URI
+    String httpsBaseUrl = baseUrl.startsWith("http://") ? baseUrl.replace("http://", "https://") : baseUrl;
+    String redirectUri = httpsBaseUrl + "/login/oauth2/code/github";
 
     log.info("GitHub OAuth2 Configuration:");
     log.info("Client ID: {}", githubClientId);
     log.info("Base URL: {}", baseUrl);
+    log.info("HTTPS Base URL: {}", httpsBaseUrl);
     log.info("Redirect URI: {}", redirectUri);
     log.info("Client Secret: {}",
         githubClientSecret != null && !githubClientSecret.isEmpty() ? "***SET***" : "***NOT SET***");
 
-    return ClientRegistration.withRegistrationId("github")
+    ClientRegistration registration = ClientRegistration.withRegistrationId("github")
         .clientId(githubClientId)
         .clientSecret(githubClientSecret)
         .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
@@ -54,5 +57,9 @@ public class OAuth2Config {
         .userNameAttributeName("id")
         .clientName("GitHub")
         .build();
+        
+    log.info("Final ClientRegistration redirect URI: {}", registration.getRedirectUri());
+    
+    return registration;
   }
 }

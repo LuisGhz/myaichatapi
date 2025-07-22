@@ -2,3 +2,9 @@ server:
   servlet:
     context-path: /myaichat
   forward-headers-strategy: native
+  tomcat:
+    redirect-context-root: false
+    use-relative-redirects: false
+    remoteip:
+      protocol-header: X-Forwarded-Proto
+      remote-ip-header: X-Forwarded-For

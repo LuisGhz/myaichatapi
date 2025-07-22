@@ -17,6 +17,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.oauth2.client.web.DefaultOAuth2AuthorizationRequestResolver;
 import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestResolver;
+import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
@@ -24,7 +25,9 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.http.client.support.HttpRequestWrapper;
+import lombok.extern.slf4j.Slf4j;
 
+import jakarta.servlet.http.HttpServletRequest;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
@@ -32,6 +35,7 @@ import java.util.List;
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
+@Slf4j
 public class SecurityConfig {
 
   private final OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
@@ -48,8 +52,40 @@ public class SecurityConfig {
 
     DefaultOAuth2AuthorizationRequestResolver authorizationRequestResolver = new DefaultOAuth2AuthorizationRequestResolver(
         clientRegistrationRepository, authorizationRequestBaseUri);
+        
+    // Create a custom resolver that ensures HTTPS redirect URIs
+    return new OAuth2AuthorizationRequestResolver() {
+      @Override
+      public OAuth2AuthorizationRequest resolve(HttpServletRequest request) {
+        return resolveWithHttps(authorizationRequestResolver.resolve(request));
+      }
 
-    return authorizationRequestResolver;
+      @Override
+      public OAuth2AuthorizationRequest resolve(HttpServletRequest request, String clientRegistrationId) {
+        return resolveWithHttps(authorizationRequestResolver.resolve(request, clientRegistrationId));
+      }
+      
+      private OAuth2AuthorizationRequest resolveWithHttps(OAuth2AuthorizationRequest authorizationRequest) {
+        if (authorizationRequest == null) {
+          return null;
+        }
+        
+        String redirectUri = authorizationRequest.getRedirectUri();
+        log.info("Original OAuth2 redirect URI: {}", redirectUri);
+        
+        if (redirectUri != null && redirectUri.startsWith("http://") && redirectUri.contains("apis.luisghtz.dev")) {
+          String httpsRedirectUri = redirectUri.replace("http://", "https://");
+          log.info("Converting HTTP to HTTPS redirect URI: {} -> {}", redirectUri, httpsRedirectUri);
+          
+          return OAuth2AuthorizationRequest
+              .from(authorizationRequest)
+              .redirectUri(httpsRedirectUri)
+              .build();
+        }
+        
+        return authorizationRequest;
+      }
+    };
   }
 
   @Bean
@@ -68,6 +104,8 @@ public class SecurityConfig {
             .requestMatchers("/actuator/**").permitAll()
             .anyRequest().authenticated())
         .oauth2Login(oauth2 -> oauth2
+            .authorizationEndpoint(authorization -> authorization
+                .authorizationRequestResolver(authorizationRequestResolver(clientRegistrationRepository)))
             .successHandler(oAuth2AuthenticationSuccessHandler)
             .failureHandler(oAuth2AuthenticationFailureHandler)
             .redirectionEndpoint(endpoint -> endpoint
