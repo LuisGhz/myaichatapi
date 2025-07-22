@@ -32,7 +32,7 @@ public class OAuth2Config {
     }
     
     private ClientRegistration getGithubClientRegistration() {
-        String redirectUri = baseUrl + "/login/oauth2/code/github";
+        String redirectUri = baseUrl + "/myaichat/login/oauth2/code/github";
         log.info("GitHub OAuth2 Configuration:");
         log.info("Client ID: {}", githubClientId);
         log.info("Base URL: {}", baseUrl);
