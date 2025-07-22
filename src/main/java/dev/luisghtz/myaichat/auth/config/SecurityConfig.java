@@ -35,40 +35,19 @@ public class SecurityConfig {
   private String baseUrl;
 
   @Bean
-  public OAuth2AuthorizationRequestResolver authorizationRequestResolver(
+  OAuth2AuthorizationRequestResolver authorizationRequestResolver(
       ClientRegistrationRepository clientRegistrationRepository) {
-    String authorizationRequestBaseUri = isProductionEnvironment() ? "/myaichat/oauth2/authorization"
-        : "/oauth2/authorization";
+    String authorizationRequestBaseUri = "/oauth2/authorization";
 
     DefaultOAuth2AuthorizationRequestResolver authorizationRequestResolver = new DefaultOAuth2AuthorizationRequestResolver(
         clientRegistrationRepository, authorizationRequestBaseUri);
 
-    // Add custom redirect URI resolver for production
-    if (isProductionEnvironment()) {
-      authorizationRequestResolver.setAuthorizationRequestCustomizer(
-          authorizationRequestBuilder -> {
-            String redirectUri = authorizationRequestBuilder.build().getRedirectUri();
-            if (redirectUri != null && !redirectUri.contains("/myaichat/")) {
-              redirectUri = redirectUri.replace("/login/oauth2/code/", "/myaichat/login/oauth2/code/");
-              authorizationRequestBuilder.redirectUri(redirectUri);
-            }
-          });
-    }
-
     return authorizationRequestResolver;
-  }
-
-  private boolean isProductionEnvironment() {
-    return baseUrl != null && baseUrl.contains("/myaichat");
   }
 
   @Bean
   SecurityFilterChain filterChain(HttpSecurity http, ClientRegistrationRepository clientRegistrationRepository)
       throws Exception {
-    String authorizationBaseUri = isProductionEnvironment() ? 
-        "/myaichat/oauth2/authorization" : "/oauth2/authorization";
-    String loginRedirectionEndpoint = isProductionEnvironment() ? 
-        "/myaichat/login/oauth2/code/*" : "/login/oauth2/code/*";
 
     http
         .cors(cors -> cors.configurationSource(corsConfigurationSource()))
@@ -79,15 +58,9 @@ public class SecurityConfig {
             .maxSessionsPreventsLogin(false))
         .authorizeHttpRequests(authz -> authz
             .requestMatchers("/auth/**", "/login/**", "/oauth2/**").permitAll()
-            .requestMatchers("/myaichat/auth/**", "/myaichat/login/**", "/myaichat/oauth2/**").permitAll()
             .requestMatchers("/actuator/**").permitAll()
             .anyRequest().authenticated())
         .oauth2Login(oauth2 -> oauth2
-            .authorizationEndpoint(authorization -> authorization
-                .baseUri(authorizationBaseUri)
-                .authorizationRequestResolver(authorizationRequestResolver(clientRegistrationRepository)))
-            .redirectionEndpoint(redirection -> redirection
-                .baseUri(loginRedirectionEndpoint))
             .successHandler(oAuth2AuthenticationSuccessHandler)
             .failureHandler(oAuth2AuthenticationFailureHandler))
         .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
