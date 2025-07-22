@@ -65,7 +65,9 @@ public class SecurityConfig {
             .anyRequest().authenticated())
         .oauth2Login(oauth2 -> oauth2
             .successHandler(oAuth2AuthenticationSuccessHandler)
-            .failureHandler(oAuth2AuthenticationFailureHandler))
+            .failureHandler(oAuth2AuthenticationFailureHandler)
+            .redirectionEndpoint(endpoint -> endpoint
+                .baseUri("/login/oauth2/code/*")))
         .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
     return http.build();
