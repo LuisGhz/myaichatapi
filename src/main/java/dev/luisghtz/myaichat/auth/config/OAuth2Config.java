@@ -34,7 +34,7 @@ public class OAuth2Config {
   private ClientRegistration getGithubClientRegistration() {
     String baseDomain = baseUrl;
     if (baseDomain.endsWith("/myaichat")) {
-      baseDomain = baseDomain.substring(0, baseDomain.length() - 10); // Remove "/myaichat"
+      baseDomain = baseDomain.substring(0, baseDomain.length() - 9); // Remove "/myaichat"
     }
 
     String redirectUri = baseDomain + "/myaichat/login/oauth2/code/github";
