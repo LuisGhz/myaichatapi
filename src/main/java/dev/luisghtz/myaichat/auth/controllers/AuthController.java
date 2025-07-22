@@ -27,7 +27,7 @@ public class AuthController {
   public ResponseEntity<LoginResDto> login() {
     var response = new LoginResDto(
         "Please initiate OAuth2 login",
-        "/oauth2/authorization/github");
+        "myaichat/oauth2/authorization/github");
     return ResponseEntity.ok(response);
   }
 
