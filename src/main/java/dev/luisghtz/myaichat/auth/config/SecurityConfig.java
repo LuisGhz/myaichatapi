@@ -22,7 +22,11 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.http.client.support.HttpRequestWrapper;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.List;
 
 @Configuration
@@ -92,5 +96,30 @@ public class SecurityConfig {
     bean.setFilter(new ForwardedHeaderFilter());
     bean.setOrder(Ordered.HIGHEST_PRECEDENCE);
     return bean;
+  }
+
+  @Bean
+  RestTemplate oauth2RestTemplate() {
+    RestTemplate restTemplate = new RestTemplate();
+    restTemplate.getInterceptors().add((request, body, execution) -> {
+      URI uri = request.getURI();
+      if (uri.getScheme().equals("http") && uri.getHost().equals("apis.luisghtz.dev")) {
+        try {
+          URI httpsUri = new URI("https", uri.getUserInfo(), uri.getHost(),
+              uri.getPort(), uri.getPath(), uri.getQuery(), uri.getFragment());
+          return execution.execute(
+              new HttpRequestWrapper(request) {
+                @Override
+                public URI getURI() {
+                  return httpsUri;
+                }
+              }, body);
+        } catch (URISyntaxException e) {
+          // Log error
+        }
+      }
+      return execution.execute(request, body);
+    });
+    return restTemplate;
   }
 }
