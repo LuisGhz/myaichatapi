@@ -4,12 +4,16 @@ import dev.luisghtz.myaichat.auth.utils.JwtAuthenticationFilter;
 import dev.luisghtz.myaichat.auth.utils.OAuth2AuthenticationSuccessHandler;
 import dev.luisghtz.myaichat.auth.utils.OAuth2AuthenticationFailureHandler;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
+import org.springframework.security.oauth2.client.web.DefaultOAuth2AuthorizationRequestResolver;
+import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestResolver;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
@@ -27,8 +31,28 @@ public class SecurityConfig {
     private final OAuth2AuthenticationFailureHandler oAuth2AuthenticationFailureHandler;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     
+    @Value("${app.base-url}")
+    private String baseUrl;
+    
     @Bean
-    SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    public OAuth2AuthorizationRequestResolver authorizationRequestResolver(
+            ClientRegistrationRepository clientRegistrationRepository) {
+        String authorizationRequestBaseUri = isProductionEnvironment() ? 
+            "/myaichat/oauth2/authorization" : "/oauth2/authorization";
+        
+        return new DefaultOAuth2AuthorizationRequestResolver(
+                clientRegistrationRepository, authorizationRequestBaseUri);
+    }
+    
+    private boolean isProductionEnvironment() {
+        return baseUrl != null && baseUrl.contains("/myaichat");
+    }
+    
+    @Bean
+    SecurityFilterChain filterChain(HttpSecurity http, ClientRegistrationRepository clientRegistrationRepository) throws Exception {
+        String loginRedirectionEndpoint = isProductionEnvironment() ? 
+            "/myaichat/login/oauth2/code/*" : "/login/oauth2/code/*";
+        
         http
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .csrf(AbstractHttpConfigurer::disable)
@@ -44,6 +68,12 @@ public class SecurityConfig {
                 .anyRequest().authenticated()
             )
             .oauth2Login(oauth2 -> oauth2
+                .authorizationEndpoint(authorization -> authorization
+                    .authorizationRequestResolver(authorizationRequestResolver(clientRegistrationRepository))
+                )
+                .redirectionEndpoint(redirection -> redirection
+                    .baseUri(loginRedirectionEndpoint)
+                )
                 .successHandler(oAuth2AuthenticationSuccessHandler)
                 .failureHandler(oAuth2AuthenticationFailureHandler)
             )

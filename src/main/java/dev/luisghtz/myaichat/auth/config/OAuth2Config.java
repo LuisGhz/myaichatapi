@@ -37,10 +37,16 @@ public class OAuth2Config {
       baseDomain = baseDomain.substring(0, baseDomain.length() - 9); // Remove "/myaichat"
     }
 
-    String redirectUri = baseDomain + "/myaichat/login/oauth2/code/github";
+    // Determine if we're in production (based on baseUrl containing /myaichat)
+    boolean isProduction = baseUrl != null && baseUrl.contains("/myaichat");
+    String redirectUri = isProduction ? 
+        baseDomain + "/myaichat/login/oauth2/code/github" : 
+        baseDomain + "/login/oauth2/code/github";
+    
     log.info("GitHub OAuth2 Configuration:");
     log.info("Client ID: {}", githubClientId);
     log.info("Base URL: {}", baseUrl);
+    log.info("Environment: {}", isProduction ? "Production" : "Development");
     log.info("Redirect URI: {}", redirectUri);
     log.info("Client Secret: {}",
         githubClientSecret != null && !githubClientSecret.isEmpty() ? "***SET***" : "***NOT SET***");

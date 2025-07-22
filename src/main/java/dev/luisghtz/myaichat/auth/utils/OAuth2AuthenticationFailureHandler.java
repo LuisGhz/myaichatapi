@@ -41,6 +41,8 @@ public class OAuth2AuthenticationFailureHandler implements AuthenticationFailure
         var loginpath = successRedirectUrl.replace("success", "login");
         // Redirect to the same base URL as success, but with error parameter
         String failureRedirectUrl = loginpath + "?error=authentication_failed";
+        
+        log.info("Redirecting to failure URL: {}", failureRedirectUrl);
         response.sendRedirect(failureRedirectUrl);
     }
 }
