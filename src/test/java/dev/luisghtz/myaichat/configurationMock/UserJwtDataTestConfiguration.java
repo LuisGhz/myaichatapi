@@ -34,7 +34,7 @@ public class UserJwtDataTestConfiguration {
         String authHeader = webRequest.getHeader("Authorization");
         String userId = authHeader != null && authHeader.startsWith("Bearer ")
             ? authHeader.substring(7)
-            : "test-user-id";
+            : "550e8400-e29b-41d4-a716-446655440000"; // Default test user ID as valid UUID
         UserJwtDataDto user = new UserJwtDataDto();
         user.setId(userId);
         user.setUsername("testuser");
