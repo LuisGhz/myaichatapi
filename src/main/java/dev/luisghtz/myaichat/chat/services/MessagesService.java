@@ -42,8 +42,7 @@ public class MessagesService {
 
   public HistoryChatDto getPreviousMessages(UUID id, Pageable pageable, UserJwtDataDto user) {
     var chat = chatService.findChatById(id);
-    if (!chat.getUser().getId().equals(UUID.fromString(user.getId())))
-      throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You don't have access to this chat");
+    returnBadRequestIfChatNotCorrespondToUser(chat, user);
     var tokens = getSumOfPromptAndCompletionTokensByChatId(id);
     var historyMessages = getChatPreviousMessages(chat, pageable);
     var appMessageHistory = HistoryChatDto.builder()
@@ -157,5 +156,10 @@ public class MessagesService {
   private void removeFileFromS3(String fileUrl) {
     var cleanUrl = fileUrl.replace(cdn, "");
     awsS3Service.deleteFile(cleanUrl);
+  }
+
+  private void returnBadRequestIfChatNotCorrespondToUser(Chat chat, UserJwtDataDto user) {
+    if (!chat.getUser().getId().equals(UUID.fromString(user.getId())))
+      throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You don't have access to this chat");
   }
 }
