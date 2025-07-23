@@ -56,12 +56,13 @@ public class ChatController {
 
   @PostMapping("send-message")
   public ResponseEntity<AssistantMessageResponseDto> newMessage(
-      @Validated @ModelAttribute NewMessageRequestDto newMessageRequestDto) {
+      @Validated @ModelAttribute NewMessageRequestDto newMessageRequestDto,
+      @UserJwtData UserJwtDataDto user) {
     String fileName = null;
     if (newMessageRequestDto.getFile() != null) {
       fileName = fileService.uploadFile(newMessageRequestDto.getFile());
     }
-    var response = messagesService.sendNewMessage(newMessageRequestDto, fileName);
+    var response = messagesService.sendNewMessage(newMessageRequestDto, fileName, user);
     return ResponseEntity.ok(response);
   }
 
