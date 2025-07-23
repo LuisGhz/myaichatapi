@@ -10,6 +10,8 @@ import org.springframework.web.server.ResponseStatusException;
 
 import dev.luisghtz.myaichat.ai.services.AIService;
 import dev.luisghtz.myaichat.auth.services.JwtService;
+import dev.luisghtz.myaichat.auth.services.UserService;
+import dev.luisghtz.myaichat.auth.dtos.UserJwtDataDto;
 import dev.luisghtz.myaichat.chat.dtos.AssistantMessageResponseDto;
 import dev.luisghtz.myaichat.chat.dtos.ChatsListResponseDto;
 import dev.luisghtz.myaichat.chat.dtos.NewMessageRequestDto;
@@ -27,6 +29,7 @@ import lombok.extern.log4j.Log4j2;
 public class ChatService {
   private final ChatRepository chatRepository;
   private final CustomPromptService customPromptService;
+  private final UserService userService;
   private final AIService aiProviderService;
   private final JwtService jwtService;
 
@@ -40,12 +43,12 @@ public class ChatService {
     return chatsListResponseDto;
   }
 
-  public Chat getChat(NewMessageRequestDto newMessageRequestDto) {
+  public Chat getChat(NewMessageRequestDto newMessageRequestDto, String userId) {
     Chat chat = null;
     if (newMessageRequestDto.getChatId() != null)
       chat = findChatById(newMessageRequestDto.getChatId());
     if (chat == null) {
-      chat = getNewChat(newMessageRequestDto);
+      chat = getNewChat(newMessageRequestDto, userId);
     }
     return chat;
   }
@@ -66,7 +69,9 @@ public class ChatService {
   }
 
   @Transactional
-  public Chat getNewChat(NewMessageRequestDto newMessageRequestDto) {
+  public Chat getNewChat(NewMessageRequestDto newMessageRequestDto, String userId) {
+    var user = userService.findById(userId)
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found with ID: " + userId));
     var newChat = Chat.builder()
         .title("Title")
         .createdAt(new Date())
@@ -74,6 +79,7 @@ public class ChatService {
         .maxOutputTokens(newMessageRequestDto.getMaxOutputTokens())
         .fav(false)
         .isWebSearchMode(newMessageRequestDto.getIsWebSearchMode())
+        .user(user)
         .build();
     if (newMessageRequestDto.getPromptId() != null && !newMessageRequestDto.getPromptId().isEmpty()) {
       var prompt = customPromptService.findById(newMessageRequestDto.getPromptId())
@@ -85,30 +91,41 @@ public class ChatService {
   }
 
   @Transactional
-  public void deleteChat(UUID id) {
+  public void deleteChat(UUID id, UserJwtDataDto user) {
     var chat = findChatById(id);
+    validateChatBelongsToUser(chat, user);
     log.info("Deleting chat with Title: '{}'' and ID: '{}'", chat.getTitle(), id);
     chatRepository.delete(chat);
   }
 
   @Transactional
-  public int renameChatTitleById(UUID id, String title) {
+  public int renameChatTitleById(UUID id, String title, UserJwtDataDto user) {
     var chat = findChatById(id);
+    validateChatBelongsToUser(chat, user);
     log.info("Renaming chat with Title: '{}' and ID: '{}'", chat.getTitle(), id);
     return chatRepository.renameChatTitleById(id, title);
   }
 
   @Transactional
-  public int changeMaxOutputTokens(UUID id, Short maxOutputTokens) {
+  public int changeMaxOutputTokens(UUID id, Short maxOutputTokens, UserJwtDataDto user) {
+    var chat = findChatById(id);
+    validateChatBelongsToUser(chat, user);
     log.info("Changing max output tokens for chat with ID: '{}'", id);
     return chatRepository.changeMaxTokens(id, maxOutputTokens);
   }
 
   @Transactional
-  public void toggleChatFav(UUID id) {
+  public void toggleChatFav(UUID id, UserJwtDataDto user) {
     var chat = findChatById(id);
+    validateChatBelongsToUser(chat, user);
     log.info("Toggling favorite status for chat with ID: '{}'", id);
     chat.setFav(!chat.getFav());
     chatRepository.setChatFav(id, chat.getFav());
+  }
+
+  private void validateChatBelongsToUser(Chat chat, UserJwtDataDto user) {
+    if (!chat.getUser().getId().equals(UUID.fromString(user.getId()))) {
+      throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You don't have access to this chat");
+    }
   }
 }
