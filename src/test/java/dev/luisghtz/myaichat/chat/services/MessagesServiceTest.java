@@ -150,7 +150,7 @@ class MessagesServiceTest {
       var userJwt = createUserJwtData(UUID.randomUUID().toString());
 
       // Only stub what's needed
-      when(chatService.getChat(requestDto)).thenReturn(chat);
+      when(chatService.getChat(requestDto, userJwt.getId())).thenReturn(chat);
       when(messageRepository.getSumOfPromptAndCompletionTokensByChatId(chat.getId())).thenReturn(tokensSum);
 
       try (MockedStatic<MessagesUtils> utils = Mockito.mockStatic(MessagesUtils.class)) {
@@ -195,7 +195,7 @@ class MessagesServiceTest {
 
       var userJwt = createUserJwtData(UUID.randomUUID().toString());
 
-      when(chatService.getChat(requestDto)).thenReturn(chat);
+      when(chatService.getChat(requestDto, userJwt.getId())).thenReturn(chat);
 
       assertThrows(ResponseStatusException.class, () -> messagesService.sendNewMessage(requestDto, null, userJwt));
     }
@@ -229,9 +229,17 @@ class MessagesServiceTest {
     @DisplayName("deleteAllByChat - Should delete messages and associated files")
     void testDeleteAllByChat_DeletesMessagesAndFiles() {
       UUID chatId = UUID.randomUUID();
+      var userId = UUID.randomUUID();
+      var userJwt = createUserJwtData(userId.toString());
+      var userChat = new User();
+      userChat.setId(userId);
+      
+      Chat chat = mock(Chat.class);
       AppMessage msg1 = mock(AppMessage.class);
       AppMessage msg2 = mock(AppMessage.class);
 
+      when(chatService.findChatById(chatId)).thenReturn(chat);
+      when(chat.getUser()).thenReturn(userChat);
       when(messageRepository.findAllByChatId(chatId)).thenReturn(List.of(msg1, msg2));
       when(msg1.getFileUrl()).thenReturn("https://cdn.example.com/image1.png");
       when(msg2.getFileUrl()).thenReturn(null);
@@ -239,10 +247,32 @@ class MessagesServiceTest {
       doNothing().when(awsS3Service).deleteFile("image1.png");
       doNothing().when(messageRepository).deleteAllByChatId(chatId);
 
-      messagesService.deleteAllByChat(chatId);
+      messagesService.deleteAllByChat(chatId, userJwt);
 
+      verify(chatService).findChatById(chatId);
       verify(awsS3Service).deleteFile("image1.png");
       verify(messageRepository).deleteAllByChatId(chatId);
+    }
+
+    @Test
+    @DisplayName("deleteAllByChat - Should throw exception when user ID differs from chat user ID")
+    void testDeleteAllByChat_ShouldThrowException_WhenUserIdIsDifferentFromChatUserId() {
+      UUID chatId = UUID.randomUUID();
+      var userId = UUID.randomUUID();
+      var userJwt = createUserJwtData(userId.toString());
+      var userChat = new User();
+      userChat.setId(UUID.randomUUID()); // Different user ID
+      
+      Chat chat = mock(Chat.class);
+
+      when(chatService.findChatById(chatId)).thenReturn(chat);
+      when(chat.getUser()).thenReturn(userChat);
+
+      assertThrows(ResponseStatusException.class, () -> messagesService.deleteAllByChat(chatId, userJwt));
+      
+      verify(chatService).findChatById(chatId);
+      verify(messageRepository, never()).findAllByChatId(any());
+      verify(messageRepository, never()).deleteAllByChatId(any());
     }
   }
 
