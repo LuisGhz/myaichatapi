@@ -67,29 +67,30 @@ public class ChatController {
   }
 
   @DeleteMapping("{id}/delete")
-  public ResponseEntity<Void> deleteChat(@PathVariable UUID id) {
-    messagesService.deleteAllByChat(id);
-    chatService.deleteChat(id);
+  public ResponseEntity<Void> deleteChat(@PathVariable UUID id, @UserJwtData UserJwtDataDto user) {
+    messagesService.deleteAllByChat(id, user);
+    chatService.deleteChat(id, user);
     return ResponseEntity.noContent().build();
   }
 
   @PatchMapping("{id}/rename")
   public ResponseEntity<Void> renameChat(@PathVariable UUID id,
-      @Validated @RequestBody RenameChatTitleDto renameChatTitleDto) {
-    chatService.renameChatTitleById(id, renameChatTitleDto.getTitle());
+      @Validated @RequestBody RenameChatTitleDto renameChatTitleDto, @UserJwtData UserJwtDataDto user) {
+    chatService.renameChatTitleById(id, renameChatTitleDto.getTitle(), user);
     return ResponseEntity.noContent().build();
   }
 
   @PatchMapping("{id}/change-max-output-tokens")
   public ResponseEntity<Void> changeMaxOutputTokens(@PathVariable UUID id,
-      @Validated @RequestBody ChangeMaxOutputTokensReqDto changeMaxOutputTokensReqDto) {
-    chatService.changeMaxOutputTokens(id, changeMaxOutputTokensReqDto.getMaxOutputTokens());
+      @Validated @RequestBody ChangeMaxOutputTokensReqDto changeMaxOutputTokensReqDto,
+      @UserJwtData UserJwtDataDto user) {
+    chatService.changeMaxOutputTokens(id, changeMaxOutputTokensReqDto.getMaxOutputTokens(), user);
     return ResponseEntity.noContent().build();
   }
 
   @PatchMapping("{id}/toggle-chat-fav")
-  public ResponseEntity<Void> toggleChatFav(@PathVariable UUID id) {
-    chatService.toggleChatFav(id);
+  public ResponseEntity<Void> toggleChatFav(@PathVariable UUID id, @UserJwtData UserJwtDataDto user) {
+    chatService.toggleChatFav(id, user);
     return ResponseEntity.noContent().build();
   }
 
