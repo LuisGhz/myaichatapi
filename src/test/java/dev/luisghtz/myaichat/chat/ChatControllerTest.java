@@ -28,6 +28,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import dev.luisghtz.myaichat.auth.dtos.UserJwtDataDto;
 import dev.luisghtz.myaichat.chat.dtos.AssistantMessageResponseDto;
 import dev.luisghtz.myaichat.chat.dtos.ChangeMaxOutputTokensReqDto;
 import dev.luisghtz.myaichat.chat.dtos.ChatsListResponseDto;
@@ -74,6 +75,14 @@ public class ChatControllerTest {
     testChatId = UUID.randomUUID();
   }
 
+  private UserJwtDataDto createTestUserJwtData() {
+    UserJwtDataDto user = new UserJwtDataDto();
+    user.setId("test-user-id");
+    user.setEmail("testuser@example.com");
+    user.setUsername("testuser");
+    return user;
+  }
+
   @Nested
   @DisplayName("GET Endpoints")
   class GetEndpoints {
@@ -110,15 +119,16 @@ public class ChatControllerTest {
       HistoryChatDto expectedResponse = HistoryChatDto.builder()
           .historyMessages(historyMessages)
           .build();
-
-      when(messagesService.getPreviousMessages(testChatId, pageable)).thenReturn(expectedResponse);
+      var user = createTestUserJwtData();
+      when(messagesService.getPreviousMessages(eq(testChatId), eq(pageable), any(UserJwtDataDto.class)))
+          .thenReturn(expectedResponse);
 
       // Act & Assert
       mockMvc.perform(get("/api/chat/{id}/messages", testChatId))
           .andExpect(status().isOk())
           .andExpect(jsonPath("$.historyMessages").isArray());
 
-      verify(messagesService, times(1)).getPreviousMessages(testChatId, pageable);
+      verify(messagesService, times(1)).getPreviousMessages(eq(testChatId), eq(pageable), eq(user));
     }
 
     @Test
@@ -129,7 +139,8 @@ public class ChatControllerTest {
       Pageable pageable = PageRequest.of(0, 10);
 
       ResponseStatusException exception = new ResponseStatusException(HttpStatus.NOT_FOUND, "Chat not found");
-      when(messagesService.getPreviousMessages(invalidId, pageable))
+      var user = createTestUserJwtData();
+      when(messagesService.getPreviousMessages(invalidId, pageable, user))
           .thenThrow(exception);
 
       // Act & Assert
@@ -151,7 +162,9 @@ public class ChatControllerTest {
           .historyMessages(historyMessages)
           .build();
 
-      when(messagesService.getPreviousMessages(eq(testChatId), any(Pageable.class))).thenReturn(expectedResponse);
+      var user = createTestUserJwtData();
+      when(messagesService.getPreviousMessages(eq(testChatId), any(Pageable.class), eq(user)))
+          .thenReturn(expectedResponse);
 
       // Act & Assert
       mockMvc.perform(get("/api/chat/{id}/messages", testChatId)
@@ -162,7 +175,7 @@ public class ChatControllerTest {
 
       // We can't verify exact pageable because of how MockMvc works, but we can
       // verify the method was called
-      verify(messagesService, times(1)).getPreviousMessages(eq(testChatId), any(Pageable.class));
+      verify(messagesService, times(1)).getPreviousMessages(eq(testChatId), any(Pageable.class), eq(user));
     }
   }
 
