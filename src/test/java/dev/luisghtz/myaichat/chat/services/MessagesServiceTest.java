@@ -9,6 +9,7 @@ import dev.luisghtz.myaichat.chat.dtos.NewMessageRequestDto;
 import dev.luisghtz.myaichat.chat.entities.AppMessage;
 import dev.luisghtz.myaichat.chat.entities.Chat;
 import dev.luisghtz.myaichat.chat.models.TokensSum;
+import dev.luisghtz.myaichat.chat.repositories.ChatRepository;
 import dev.luisghtz.myaichat.chat.repositories.MessageRepository;
 import dev.luisghtz.myaichat.chat.utils.MessagesUtils;
 import dev.luisghtz.myaichat.file.providers.AwsS3Service;
@@ -40,6 +41,8 @@ class MessagesServiceTest {
   private MessageRepository messageRepository;
   @Mock
   private AwsS3Service awsS3Service;
+  @Mock
+  private ChatRepository chatRepository;
 
   @InjectMocks
   private MessagesService messagesService;
@@ -117,6 +120,15 @@ class MessagesServiceTest {
     AppMessage userMessage = mock(AppMessage.class);
     AppMessage assistantMessage = mock(AppMessage.class);
     TokensSum tokensSum = new TokensSum(1L, 2L);
+    var userJwt = createUserJwtData(UUID.randomUUID().toString());
+    when(requestDto.getChatId()).thenReturn(null);
+    when(chatService.getChat(requestDto)).thenReturn(chat);
+    when(chat.getMessages()).thenReturn(Collections.emptyList());
+    when(chat.getId()).thenReturn(UUID.randomUUID());
+    when(chat.getTitle()).thenReturn("New Chat");
+    when(chat.getModel()).thenReturn("gpt-3");
+    when(chat.getMaxOutputTokens()).thenReturn((short) 100);
+    when(chat.getIsWebSearchMode()).thenReturn(false);
     when(chatService.getChat(requestDto)).thenReturn(chat);
     when(chat.getMessages()).thenReturn(Collections.emptyList());
     try (MockedStatic<MessagesUtils> utils = Mockito.mockStatic(MessagesUtils.class)) {
@@ -132,12 +144,36 @@ class MessagesServiceTest {
       when(chat.getId()).thenReturn(UUID.randomUUID());
       when(chat.getTitle()).thenReturn("Chat Title");
 
-      AssistantMessageResponseDto result = messagesService.sendNewMessage(requestDto, fileUrl);
+      AssistantMessageResponseDto result = messagesService.sendNewMessage(requestDto, fileUrl, userJwt);
 
       assertThat(result).isNotNull();
       assertThat(result.getTotalChatPromptTokens()).isEqualTo(1);
       assertThat(result.getTotalChatCompletionTokens()).isEqualTo(2);
     }
+  }
+
+  @Test
+  void testSendNewMessage_ShouldThrowException_WhenUserIdIsDifferentFromChatUserId() throws Exception {
+    NewMessageRequestDto requestDto = mock(NewMessageRequestDto.class);
+    Chat chat = mock(Chat.class);
+    var user = new User();
+    user.setId(UUID.randomUUID());
+    var userJwt = createUserJwtData(UUID.randomUUID().toString());
+    var messages = List.of(
+        new AppMessage(UUID.randomUUID(), "user", "Hello", null, null, null, null, null, null),
+        new AppMessage(UUID.randomUUID(), "assistant", "Hi there!", null, null, null, null, null, null));
+    when(requestDto.getChatId()).thenReturn(null);
+    when(chatService.getChat(requestDto)).thenReturn(chat);
+    when(chat.getMessages()).thenReturn(messages);
+    when(chat.getId()).thenReturn(UUID.randomUUID());
+    when(chat.getTitle()).thenReturn("New Chat");
+    when(chat.getModel()).thenReturn("gpt-3");
+    when(chat.getMaxOutputTokens()).thenReturn((short) 100);
+    when(chat.getIsWebSearchMode()).thenReturn(false);
+    when(chat.getUser()).thenReturn(user);
+    when(chatService.getChat(requestDto)).thenReturn(chat);
+    when(chatRepository.findById(any(UUID.class))).thenReturn(Optional.of(chat));
+    assertThrows(ResponseStatusException.class, () -> messagesService.sendNewMessage(requestDto, null, userJwt));
   }
 
   @Test
