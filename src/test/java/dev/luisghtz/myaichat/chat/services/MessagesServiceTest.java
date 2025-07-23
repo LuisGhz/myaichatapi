@@ -54,7 +54,6 @@ class MessagesServiceTest {
 
   @BeforeEach
   void setUp() {
-    // MockitoAnnotations.openMocks(this);
     // Set the private field 'cdn' using reflection
     try {
       java.lang.reflect.Field cdnField = MessagesService.class.getDeclaredField("cdn");
@@ -191,8 +190,7 @@ class MessagesServiceTest {
 
       List<AppMessage> messages = List.of(
           new AppMessage(UUID.randomUUID(), "user", "Hello", null, null, null, null, null, null),
-          new AppMessage(UUID.randomUUID(), "assistant", "Hi there!", null, null, null, null, null, null)
-      );
+          new AppMessage(UUID.randomUUID(), "assistant", "Hi there!", null, null, null, null, null, null));
       chat.setMessages(messages);
 
       var userJwt = createUserJwtData(UUID.randomUUID().toString());
