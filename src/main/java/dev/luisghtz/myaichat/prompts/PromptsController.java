@@ -48,7 +48,6 @@ public class PromptsController {
   }
 
   @PostMapping()
-  @Transactional
   public ResponseEntity<CustomPrompt> create(
       @Valid @RequestBody CreateCustomPromptDtoReq createCustomPromptDtoReq,
       @UserJwtData UserJwtDataDto userJwtData) {
