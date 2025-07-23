@@ -1,6 +1,8 @@
 package dev.luisghtz.myaichat.chat.services;
 
 import dev.luisghtz.myaichat.ai.services.AIService;
+import dev.luisghtz.myaichat.auth.dtos.UserJwtDataDto;
+import dev.luisghtz.myaichat.auth.entities.User;
 import dev.luisghtz.myaichat.chat.dtos.AssistantMessageResponseDto;
 import dev.luisghtz.myaichat.chat.dtos.HistoryChatDto;
 import dev.luisghtz.myaichat.chat.dtos.NewMessageRequestDto;
@@ -18,8 +20,11 @@ import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.web.server.ResponseStatusException;
+
 import java.util.*;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
@@ -52,9 +57,22 @@ class MessagesServiceTest {
     }
   }
 
+  private UserJwtDataDto createUserJwtData(String userId) {
+    UserJwtDataDto user = new UserJwtDataDto();
+    user.setId(userId);
+    return user;
+  }
+
   @Test
   void testGetPreviousMessages_ReturnsHistoryChatDto() {
     UUID chatId = UUID.randomUUID();
+    var userId = UUID.randomUUID();
+    var userJwt = createUserJwtData(userId.toString());
+    var userChat = new User();
+    userChat.setId(userId);
+    when(chatService.findChatById(chatId)).thenReturn(mock(Chat.class));
+    when(messageRepository.getSumOfPromptAndCompletionTokensByChatId(chatId))
+        .thenReturn(new TokensSum(5L, 10L));
     Pageable pageable = PageRequest.of(0, 10);
     Chat chat = mock(Chat.class);
     TokensSum tokensSum = new TokensSum(5L, 10L);
@@ -66,13 +84,29 @@ class MessagesServiceTest {
     when(chat.getModel()).thenReturn("gpt-3");
     Short maxOutputTokens = 100;
     when(chat.getMaxOutputTokens()).thenReturn(maxOutputTokens);
+    when(chat.getUser()).thenReturn(userChat);
 
-    HistoryChatDto result = messagesService.getPreviousMessages(chatId, pageable);
+    HistoryChatDto result = messagesService.getPreviousMessages(chatId, pageable, userJwt);
 
     assertThat(result).isNotNull();
     assertThat(result.getModel()).isEqualTo("gpt-3");
     assertThat(result.getTotalPromptTokens()).isEqualTo(5);
     assertThat(result.getTotalCompletionTokens()).isEqualTo(10);
+  }
+
+  @Test
+  void testGetPreviousMessages_ShouldThrowException_WhenUserIdIsDifferentFromChatUserId() {
+    UUID chatId = UUID.randomUUID();
+    var userId = UUID.randomUUID();
+    var userJwt = createUserJwtData(userId.toString());
+    var userChat = new User();
+    Chat chat = mock(Chat.class);
+    Pageable pageable = PageRequest.of(0, 10);
+    userChat.setId(UUID.randomUUID());
+    when(chatService.findChatById(chatId)).thenReturn(chat);
+    when(chat.getUser()).thenReturn(userChat);
+
+    assertThrows(ResponseStatusException.class, () -> messagesService.getPreviousMessages(chatId, pageable, userJwt));
   }
 
   @Test
