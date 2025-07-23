@@ -3,6 +3,8 @@ package dev.luisghtz.myaichat.chat;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import dev.luisghtz.myaichat.auth.annotation.UserJwtData;
+import dev.luisghtz.myaichat.auth.dtos.UserJwtDataDto;
 import dev.luisghtz.myaichat.chat.dtos.AssistantMessageResponseDto;
 import dev.luisghtz.myaichat.chat.dtos.ChangeMaxOutputTokensReqDto;
 import dev.luisghtz.myaichat.chat.dtos.ChatsListResponseDto;
@@ -13,7 +15,6 @@ import dev.luisghtz.myaichat.chat.services.MessagesService;
 import dev.luisghtz.myaichat.chat.services.ChatService;
 import dev.luisghtz.myaichat.file.FileService;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -42,9 +43,8 @@ public class ChatController {
 
   @GetMapping("all")
   public ResponseEntity<ChatsListResponseDto> getChatsList(
-      @RequestHeader(value = "Authorization") String authHeader) {
-    var userId = authHeader.replace("Bearer ", "");
-    var chats = chatService.getAllChats(userId);
+      @UserJwtData UserJwtDataDto user) {
+    var chats = chatService.getAllChats(user.getId());
     return ResponseEntity.ok(chats);
   }
 
