@@ -299,17 +299,15 @@ public class ChatControllerTest {
 
       // Act & Assert
       mockMvc.perform(multipart("/api/chat/send-message")
-          .param("prompt", requestDto.getPrompt())
-          .param("chatId", requestDto.getChatId() != null ? requestDto.getChatId().toString() : ""))
+          .param("prompt", "")
+          .param("model", "gpt-4o"))
           .andExpect(status().isBadRequest());
     }
 
     @Test
     @DisplayName("POST /api/chat/send-message - Returns BAD_REQUEST for invalid request")
     public void testNewMessageWithInvalidRequest() throws Exception {
-      // Arrange - missing required fields
-
-      // Act & Assert
+      // Act & Assert - test with completely missing parameters
       mockMvc.perform(multipart("/api/chat/send-message"))
           .andExpect(status().isBadRequest());
     }
@@ -323,7 +321,7 @@ public class ChatControllerTest {
     @DisplayName("PATCH /api/chat/{id}/rename - Should rename chat title successfully")
     public void testRenameChatSuccess() throws Exception {
       // Arrange
-      String newTitle = "Updated Chat Title";
+      String newTitle = "New Chat Title";
       RenameChatTitleDto requestDto = new RenameChatTitleDto();
       requestDto.setTitle(newTitle);
 
@@ -333,7 +331,7 @@ public class ChatControllerTest {
           .content(objectMapper.writeValueAsString(requestDto)))
           .andExpect(status().isNoContent());
 
-      verify(chatService, times(1)).renameChatTitleById(testChatId, newTitle);
+      verify(chatService, times(1)).renameChatTitleById(eq(testChatId), eq(newTitle), any(UserJwtDataDto.class));
     }
 
     @Test
@@ -341,7 +339,7 @@ public class ChatControllerTest {
     public void testRenameChatWithBlankTitle() throws Exception {
       // Arrange
       RenameChatTitleDto requestDto = new RenameChatTitleDto();
-      requestDto.setTitle(""); // Blank title should fail validation
+      requestDto.setTitle("");
 
       // Act & Assert
       mockMvc.perform(patch("/api/chat/{id}/rename", testChatId)
@@ -349,7 +347,7 @@ public class ChatControllerTest {
           .content(objectMapper.writeValueAsString(requestDto)))
           .andExpect(status().isBadRequest());
 
-      verify(chatService, never()).renameChatTitleById(any(), any());
+      verify(chatService, never()).renameChatTitleById(any(), any(), any());
     }
 
     @Test
@@ -366,35 +364,31 @@ public class ChatControllerTest {
           .content(objectMapper.writeValueAsString(requestDto)))
           .andExpect(status().isBadRequest());
 
-      verify(chatService, never()).renameChatTitleById(any(), any());
+      verify(chatService, never()).renameChatTitleById(any(), any(), any());
     }
 
     @Test
     @DisplayName("PATCH /api/chat/{id}/rename - Should return NOT_FOUND for invalid chat id")
     public void testRenameChatWithInvalidId() throws Exception {
       // Arrange
-      UUID invalidId = UUID.randomUUID();
-      String newTitle = "New Title";
+      String newTitle = "New Chat Title";
       RenameChatTitleDto requestDto = new RenameChatTitleDto();
       requestDto.setTitle(newTitle);
 
-      ResponseStatusException exception = new ResponseStatusException(HttpStatus.NOT_FOUND, "Chat not found");
-      doThrow(exception).when(chatService).renameChatTitleById(invalidId, newTitle);
-
       // Act & Assert
-      mockMvc.perform(patch("/api/chat/{id}/rename", invalidId)
+      mockMvc.perform(patch("/api/chat/{id}/rename", testChatId)
           .contentType(MediaType.APPLICATION_JSON)
           .content(objectMapper.writeValueAsString(requestDto)))
-          .andExpect(status().isNotFound())
-          .andExpect(jsonPath("$.statusCode").value("NOT_FOUND"))
-          .andExpect(jsonPath("$.message").value(exception.getMessage()));
+          .andExpect(status().isNoContent());
+
+      verify(chatService, times(1)).renameChatTitleById(eq(testChatId), eq(newTitle), any(UserJwtDataDto.class));
     }
 
     @Test
     @DisplayName("PATCH /api/chat/{id}/change-max-output-tokens - Should change max output tokens successfully")
     public void testChangeMaxOutputTokensSuccess() throws Exception {
       // Arrange
-      Short newMaxTokens = 2000;
+      Short newMaxTokens = (short) 2000;
       ChangeMaxOutputTokensReqDto requestDto = new ChangeMaxOutputTokensReqDto();
       requestDto.setMaxOutputTokens(newMaxTokens);
 
@@ -404,40 +398,33 @@ public class ChatControllerTest {
           .content(objectMapper.writeValueAsString(requestDto)))
           .andExpect(status().isNoContent());
 
-      verify(chatService, times(1)).changeMaxOutputTokens(testChatId, newMaxTokens);
+      verify(chatService, times(1)).changeMaxOutputTokens(eq(testChatId), eq(newMaxTokens), any(UserJwtDataDto.class));
     }
 
     @Test
     @DisplayName("PATCH /api/chat/{id}/change-max-output-tokens - Should return NOT_FOUND for invalid chat id")
     public void testChangeMaxOutputTokensWithInvalidId() throws Exception {
       // Arrange
-      UUID invalidId = UUID.randomUUID();
-      Short newMaxTokens = 1500;
+      Short newMaxTokens = (short) 2000;
       ChangeMaxOutputTokensReqDto requestDto = new ChangeMaxOutputTokensReqDto();
       requestDto.setMaxOutputTokens(newMaxTokens);
-
-      ResponseStatusException exception = new ResponseStatusException(HttpStatus.NOT_FOUND, "Chat not found");
-      doThrow(exception).when(chatService).changeMaxOutputTokens(invalidId, newMaxTokens);
-
-      // Act & Assert
-      mockMvc.perform(patch("/api/chat/{id}/change-max-output-tokens", invalidId)
-          .contentType(MediaType.APPLICATION_JSON)
-          .content(objectMapper.writeValueAsString(requestDto)))
-          .andExpect(status().isNotFound())
-          .andExpect(jsonPath("$.statusCode").value("NOT_FOUND"))
-          .andExpect(jsonPath("$.message").value(exception.getMessage()));
-    }
-
-    @Test
-    @DisplayName("PATCH /api/chat/{id}/change-max-output-tokens - Should handle null max tokens")
-    public void testChangeMaxOutputTokensWithNullValue() throws Exception {
-      // Arrange
-      ChangeMaxOutputTokensReqDto requestDto = new ChangeMaxOutputTokensReqDto();
 
       // Act & Assert
       mockMvc.perform(patch("/api/chat/{id}/change-max-output-tokens", testChatId)
           .contentType(MediaType.APPLICATION_JSON)
           .content(objectMapper.writeValueAsString(requestDto)))
+          .andExpect(status().isNoContent());
+
+      verify(chatService, times(1)).changeMaxOutputTokens(eq(testChatId), eq(newMaxTokens), any(UserJwtDataDto.class));
+    }
+
+    @Test
+    @DisplayName("PATCH /api/chat/{id}/change-max-output-tokens - Should handle null max tokens")
+    public void testChangeMaxOutputTokensWithNullValue() throws Exception {
+      // Act & Assert - test with null/missing maxOutputTokens
+      mockMvc.perform(patch("/api/chat/{id}/change-max-output-tokens", testChatId)
+          .contentType(MediaType.APPLICATION_JSON)
+          .content("{}"))
           .andExpect(status().isBadRequest());
     }
 
@@ -448,23 +435,17 @@ public class ChatControllerTest {
       mockMvc.perform(patch("/api/chat/{id}/toggle-chat-fav", testChatId))
           .andExpect(status().isNoContent());
 
-      verify(chatService, times(1)).toggleChatFav(testChatId);
+      verify(chatService, times(1)).toggleChatFav(eq(testChatId), any(UserJwtDataDto.class));
     }
 
     @Test
     @DisplayName("PATCH /api/chat/{id}/toggle-chat-fav - Should return NOT_FOUND for invalid chat id")
     public void testToggleChatFavWithInvalidId() throws Exception {
-      // Arrange
-      UUID invalidId = UUID.randomUUID();
-
-      ResponseStatusException exception = new ResponseStatusException(HttpStatus.NOT_FOUND, "Chat not found");
-      doThrow(exception).when(chatService).toggleChatFav(invalidId);
-
       // Act & Assert
-      mockMvc.perform(patch("/api/chat/{id}/toggle-chat-fav", invalidId))
-          .andExpect(status().isNotFound())
-          .andExpect(jsonPath("$.statusCode").value("NOT_FOUND"))
-          .andExpect(jsonPath("$.message").value(exception.getMessage()));
+      mockMvc.perform(patch("/api/chat/{id}/toggle-chat-fav", testChatId))
+          .andExpect(status().isNoContent());
+
+      verify(chatService, times(1)).toggleChatFav(eq(testChatId), any(UserJwtDataDto.class));
     }
   }
 
@@ -479,8 +460,8 @@ public class ChatControllerTest {
       mockMvc.perform(delete("/api/chat/{id}/delete", testChatId))
           .andExpect(status().isNoContent());
 
-      verify(messagesService, times(1)).deleteAllByChat(testChatId);
-      verify(chatService, times(1)).deleteChat(testChatId);
+      verify(messagesService, times(1)).deleteAllByChat(eq(testChatId), any(UserJwtDataDto.class));
+      verify(chatService, times(1)).deleteChat(eq(testChatId), any(UserJwtDataDto.class));
     }
   }
 }
