@@ -1,3 +1,7 @@
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: validate
 server:
   servlet:
     context-path: /myaichat
