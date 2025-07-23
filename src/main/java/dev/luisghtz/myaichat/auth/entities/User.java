@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.UUID;
 
 import dev.luisghtz.myaichat.chat.entities.Chat;
+import dev.luisghtz.myaichat.prompts.entities.CustomPrompt;
 
 @Entity
 @Table(name = "users")
@@ -20,8 +21,8 @@ import dev.luisghtz.myaichat.chat.entities.Chat;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@ToString(exclude = {"chats"})
-@EqualsAndHashCode(exclude = {"chats"})
+@ToString(exclude = { "chats" })
+@EqualsAndHashCode(exclude = { "chats" })
 public class User {
 
   @Id
@@ -61,6 +62,9 @@ public class User {
 
   @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
   private List<Chat> chats;
+
+  @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
+  private List<CustomPrompt> customPrompts;
 
   @PrePersist
   protected void onCreate() {
