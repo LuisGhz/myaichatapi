@@ -21,7 +21,6 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class CustomPromptService {
   private final CustomRepository promptRepository;
-  private final PromptParamService promptParamService;
   private final PromptMessageService promptMessageService;
   private final UserService userService;
 
@@ -56,7 +55,6 @@ public class CustomPromptService {
         .createdAt(new Date())
         .build();
     promptMessageService.addPromptMessagesIfExists(createCustomPromptDtoReq, newCustomPrompt);
-    promptParamService.addPromptParamsIfExists(createCustomPromptDtoReq, newCustomPrompt);
     return promptRepository.save(newCustomPrompt);
   }
 
@@ -70,24 +68,9 @@ public class CustomPromptService {
       customPrompt.setContent(updateCustomPromptDtoReq.getContent());
 
     promptMessageService.addPromptMessagesIfExistsToExistingPrompt(updateCustomPromptDtoReq, customPrompt);
-    promptParamService.addPromptParamsIfExistsToExistingPrompt(updateCustomPromptDtoReq, customPrompt);
-
-    promptParamService.handleUpdatedExistingParams(updateCustomPromptDtoReq, customPrompt);
     promptMessageService.handleUpdatedExistingMessages(updateCustomPromptDtoReq, customPrompt);
 
     customPrompt.setUpdatedAt(new Date());
-    promptRepository.save(customPrompt);
-  }
-
-  @Transactional
-  public void deleteParam(String promptId, String paramId, UUID userId) throws Exception {
-    var customPrompt = getCustomPromptByIdAndUserId(promptId, userId);
-    var param = customPrompt.getParams().stream()
-        .filter(p -> p.getId().toString().equals(paramId))
-        .findFirst()
-        .orElseThrow(() -> new AppNotFoundException("Prompt param not found"));
-    customPrompt.getParams().remove(param);
-    promptParamService.deleteByIdAndPromptId(paramId, promptId);
     promptRepository.save(customPrompt);
   }
 

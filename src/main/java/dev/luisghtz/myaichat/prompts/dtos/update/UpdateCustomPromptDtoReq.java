@@ -23,7 +23,5 @@ public class UpdateCustomPromptDtoReq {
   @Length(max = 10_000, message = "Content must be 10,000 characters or less")
   private String content;
   @Valid
-  private List<UpdateCustomPromptParamsDto> params;
-  @Valid
   private List<UpdateCustomPromptMessagesDto> messages;
 }

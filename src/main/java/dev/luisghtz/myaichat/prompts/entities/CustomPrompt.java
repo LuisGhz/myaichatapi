@@ -46,8 +46,6 @@ public class CustomPrompt {
   private User user;
   @OneToMany(mappedBy = "prompt", cascade = CascadeType.ALL, orphanRemoval = true)
   private List<PromptMessage> messages;
-  @OneToMany(mappedBy = "prompt", cascade = CascadeType.ALL, orphanRemoval = true)
-  private List<PromptParam> params;
   @OneToMany(mappedBy = "customPrompt", fetch = FetchType.LAZY)
   @JsonIgnore
   private List<Chat> chats;

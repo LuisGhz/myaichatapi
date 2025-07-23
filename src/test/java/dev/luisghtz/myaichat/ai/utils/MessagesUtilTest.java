@@ -3,7 +3,6 @@ package dev.luisghtz.myaichat.ai.utils;
 import dev.luisghtz.myaichat.chat.entities.Chat;
 import dev.luisghtz.myaichat.prompts.entities.CustomPrompt;
 import dev.luisghtz.myaichat.prompts.entities.PromptMessage;
-import dev.luisghtz.myaichat.prompts.entities.PromptParam;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -46,19 +45,17 @@ class MessagesUtilTest {
     }
 
     @Test
-    @DisplayName("Should add custom system message and params")
+    @DisplayName("Should add custom system message without params")
     void addSystemMessage_customPromptNoParams_addsCustom() {
       CustomPrompt customPrompt = new CustomPrompt();
-      customPrompt.setContent("This is a custom system prompt in {language}.");
+      customPrompt.setContent("This is a custom system prompt.");
       chat.setCustomPrompt(customPrompt);
-      var params = new ArrayList<PromptParam>();
-      params.add(PromptParam.builder().name("language").value("English").build());
-      customPrompt.setParams(params);
+
       MessagesUtil.addSystemMessage(chat, messages);
 
       assertEquals(1, messages.size());
       assertTrue(messages.get(0) instanceof SystemMessage);
-      assertEquals("This is a custom system prompt in English.", messages.get(0).getText());
+      assertEquals("This is a custom system prompt.", messages.get(0).getText());
     }
   }
 

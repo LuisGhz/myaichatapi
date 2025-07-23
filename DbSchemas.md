@@ -58,14 +58,6 @@ CREATE TABLE prompt_messages (
     FOREIGN KEY (custom_prompt_id) REFERENCES custom_prompt(id)
 );
 
-CREATE TABLE prompt_params (
-    id UUID PRIMARY KEY,
-    name VARCHAR(255),
-    value VARCHAR(255),
-    custom_prompt_id UUID,
-    FOREIGN KEY (custom_prompt_id) REFERENCES custom_prompt(id)
-);
-
 CREATE TABLE roles (
     id BIGINT PRIMARY KEY,
     name VARCHAR(255) NOT NULL UNIQUE
@@ -91,5 +83,4 @@ CREATE INDEX idx_app_message_chat ON app_message(chat_id);
 CREATE INDEX idx_chat_custom_prompt ON chat(custom_prompt_id);
 CREATE INDEX idx_chat_user ON chat(user_id);
 CREATE INDEX idx_prompt_messages_prompt ON prompt_messages(custom_prompt_id);
-CREATE INDEX idx_prompt_params_prompt ON prompt_params(custom_prompt_id);
 CREATE INDEX idx_custom_prompt_user ON custom_prompt(user_id);

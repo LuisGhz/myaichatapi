@@ -1,7 +1,6 @@
 package dev.luisghtz.myaichat.prompts;
 
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.transaction.annotation.Transactional;
 
 import dev.luisghtz.myaichat.auth.annotation.UserJwtData;
 import dev.luisghtz.myaichat.auth.dtos.UserJwtDataDto;
@@ -64,16 +63,6 @@ public class PromptsController {
         UUID.fromString(userJwtData.getId()));
     var res = new UpdatedCustomPromptDtoRes("Prompt updated successfully");
     return ResponseEntity.ok(res);
-  }
-
-  @DeleteMapping("/{promptId}/{paramId}/delete-param")
-  public ResponseEntity<Void> deleteParam(
-      @PathVariable UUID promptId,
-      @PathVariable UUID paramId,
-      @UserJwtData UserJwtDataDto userJwtData) throws Exception {
-    customPromptService.deleteParam(promptId.toString(), paramId.toString(),
-        UUID.fromString(userJwtData.getId()));
-    return ResponseEntity.ok().build();
   }
 
   @DeleteMapping("/{promptId}/{messageId}/delete-message")
