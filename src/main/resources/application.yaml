@@ -58,7 +58,7 @@ files:
 app:
   base-url: ${APP_BASE_URL}
   jwt:
-    secret: ${JWT_SECRET:myaichat-secret-key-change-in-production}
+    secret: ${APP_JWT_SECRET}
     expiration: ${JWT_EXPIRATION:86400000} # 24 hours
   oauth2:
     success-redirect-url: ${OAUTH2_SUCCESS_REDIRECT_URL}
