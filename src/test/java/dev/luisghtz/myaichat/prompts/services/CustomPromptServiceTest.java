@@ -21,7 +21,10 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.fasterxml.uuid.Generators;
 
+import dev.luisghtz.myaichat.auth.entities.User;
+import dev.luisghtz.myaichat.auth.services.UserService;
 import dev.luisghtz.myaichat.exceptions.AppNotFoundException;
+import dev.luisghtz.myaichat.exceptions.ResourceInUseException;
 import dev.luisghtz.myaichat.prompts.dtos.CreateCustomPromptDtoReq;
 import dev.luisghtz.myaichat.prompts.dtos.CreateCustomPromptMessagesDto;
 import dev.luisghtz.myaichat.prompts.dtos.CreateCustomPromptParamsDto;
@@ -40,15 +43,28 @@ public class CustomPromptServiceTest {
   private PromptParamService promptParamService;
   @Mock
   private PromptMessageService promptMessageService;
+  @Mock
+  private UserService userService;
 
   @InjectMocks
   private CustomPromptService customPromptService;
 
   private CreateCustomPromptDtoReq createCustomPromptDtoReq;
   private CustomPrompt savedCustomPrompt;
+  private User testUser;
+  private String userId;
+  private UUID userIdUuid;
 
   @BeforeEach
   void setUp() {
+    // Initialize test user data
+    userIdUuid = UUID.randomUUID();
+    userId = userIdUuid.toString();
+    testUser = new User();
+    testUser.setId(userIdUuid);
+    testUser.setUsername("testuser");
+    testUser.setEmail("test@example.com");
+
     // Initialize the request DTO
     createCustomPromptDtoReq = new CreateCustomPromptDtoReq();
     createCustomPromptDtoReq.setName("Test Prompt");
@@ -60,6 +76,7 @@ public class CustomPromptServiceTest {
         .id(id)
         .name("Test Prompt")
         .content("You are a helpful assistant")
+        .user(testUser)
         .createdAt(new Date())
         .build();
   }
@@ -67,9 +84,11 @@ public class CustomPromptServiceTest {
   @Test
   @DisplayName("Should successfully create a custom prompt")
   void testCreateCustomPrompt() throws Exception {
+    when(userService.findById(userId)).thenReturn(Optional.of(testUser));
     when(promptRepository.save(any(CustomPrompt.class))).thenReturn(savedCustomPrompt);
+    
     // Act
-    CustomPrompt result = customPromptService.create(createCustomPromptDtoReq);
+    CustomPrompt result = customPromptService.create(createCustomPromptDtoReq, userId);
 
     // Assert
     assertNotNull(result);
@@ -78,6 +97,7 @@ public class CustomPromptServiceTest {
     assertEquals(createCustomPromptDtoReq.getContent(), result.getContent());
 
     // Verify repository was called with the correct entity
+    verify(userService).findById(userId);
     verify(promptRepository).save(any(CustomPrompt.class));
   }
 
@@ -85,6 +105,7 @@ public class CustomPromptServiceTest {
   @DisplayName("Should map DTO fields correctly to entity")
   void testDtoToEntityMapping() throws Exception {
     // Arrange
+    when(userService.findById(userId)).thenReturn(Optional.of(testUser));
     // Override the default mock behavior to capture the actual entity being saved
     when(promptRepository.save(any(CustomPrompt.class))).thenAnswer(invocation -> {
       CustomPrompt entityToSave = invocation.getArgument(0);
@@ -97,9 +118,10 @@ public class CustomPromptServiceTest {
     });
 
     // Act
-    customPromptService.create(createCustomPromptDtoReq);
+    customPromptService.create(createCustomPromptDtoReq, userId);
 
     // Verify repository was called
+    verify(userService).findById(userId);
     verify(promptRepository).save(any(CustomPrompt.class));
   }
 
@@ -107,11 +129,25 @@ public class CustomPromptServiceTest {
   @DisplayName("Should handle repository exceptions")
   void testRepositoryException() {
     // Arrange
+    when(userService.findById(userId)).thenReturn(Optional.of(testUser));
     when(promptRepository.save(any(CustomPrompt.class))).thenThrow(new RuntimeException("Database error"));
 
     // Act & Assert
-    assertThrows(RuntimeException.class, () -> customPromptService.create(createCustomPromptDtoReq));
+    assertThrows(RuntimeException.class, () -> customPromptService.create(createCustomPromptDtoReq, userId));
+    verify(userService).findById(userId);
     verify(promptRepository).save(any(CustomPrompt.class));
+  }
+
+  @Test
+  @DisplayName("Should handle user not found exception")
+  void testUserNotFoundException() {
+    // Arrange
+    when(userService.findById(userId)).thenReturn(Optional.empty());
+
+    // Act & Assert
+    assertThrows(RuntimeException.class, () -> customPromptService.create(createCustomPromptDtoReq, userId));
+    verify(userService).findById(userId);
+    verify(promptRepository, never()).save(any(CustomPrompt.class));
   }
 
   @Test
@@ -131,10 +167,11 @@ public class CustomPromptServiceTest {
         .build();
     savedCustomPrompt.setMessages(List.of(promptMessage));
 
+    when(userService.findById(userId)).thenReturn(Optional.of(testUser));
     when(promptRepository.save(any(CustomPrompt.class))).thenReturn(savedCustomPrompt);
 
     // Act
-    CustomPrompt result = customPromptService.create(createCustomPromptDtoReq);
+    CustomPrompt result = customPromptService.create(createCustomPromptDtoReq, userId);
 
     // Assert
     assertNotNull(result.getMessages());
@@ -143,6 +180,7 @@ public class CustomPromptServiceTest {
     assertEquals("Hello!", result.getMessages().get(0).getContent());
 
     // Verify repository was called
+    verify(userService).findById(userId);
     verify(promptRepository).save(any(CustomPrompt.class));
   }
 
@@ -163,10 +201,11 @@ public class CustomPromptServiceTest {
         .build();
     savedCustomPrompt.setParams(List.of(promptParam));
 
+    when(userService.findById(userId)).thenReturn(Optional.of(testUser));
     when(promptRepository.save(any(CustomPrompt.class))).thenReturn(savedCustomPrompt);
 
     // Act
-    CustomPrompt result = customPromptService.create(createCustomPromptDtoReq);
+    CustomPrompt result = customPromptService.create(createCustomPromptDtoReq, userId);
 
     // Assert
     assertNotNull(result.getParams());
@@ -175,6 +214,7 @@ public class CustomPromptServiceTest {
     assertEquals("0.7", result.getParams().get(0).getValue());
 
     // Verify repository was called
+    verify(userService).findById(userId);
     verify(promptRepository).save(any(CustomPrompt.class));
   }
 
@@ -210,10 +250,11 @@ public class CustomPromptServiceTest {
     savedCustomPrompt.setMessages(List.of(promptMessage));
     savedCustomPrompt.setParams(List.of(promptParam));
 
+    when(userService.findById(userId)).thenReturn(Optional.of(testUser));
     when(promptRepository.save(any(CustomPrompt.class))).thenReturn(savedCustomPrompt);
 
     // Act
-    CustomPrompt result = customPromptService.create(createCustomPromptDtoReq);
+    CustomPrompt result = customPromptService.create(createCustomPromptDtoReq, userId);
 
     // Assert final result
     assertNotNull(result);
@@ -227,6 +268,7 @@ public class CustomPromptServiceTest {
     assertEquals("1000", result.getParams().get(0).getValue());
 
     // Verify repository was called
+    verify(userService).findById(userId);
     verify(promptRepository).save(any(CustomPrompt.class));
   }
 
@@ -237,16 +279,18 @@ public class CustomPromptServiceTest {
     createCustomPromptDtoReq.setMessages(List.of());
     createCustomPromptDtoReq.setParams(List.of());
 
+    when(userService.findById(userId)).thenReturn(Optional.of(testUser));
     when(promptRepository.save(any(CustomPrompt.class))).thenReturn(savedCustomPrompt);
 
     // Act
-    CustomPrompt result = customPromptService.create(createCustomPromptDtoReq);
+    CustomPrompt result = customPromptService.create(createCustomPromptDtoReq, userId);
 
     // Assert
     assertNotNull(result);
     assertEquals(savedCustomPrompt.getId(), result.getId());
 
     // Verify repository was called
+    verify(userService).findById(userId);
     verify(promptRepository).save(any(CustomPrompt.class));
   }
 
@@ -259,6 +303,7 @@ public class CustomPromptServiceTest {
         .id(UUID.fromString(promptId))
         .name("Old Name")
         .content("Old Content")
+        .user(testUser)
         .createdAt(new Date())
         .build();
 
@@ -266,11 +311,11 @@ public class CustomPromptServiceTest {
     updateDto.setName("New Name");
     updateDto.setContent("New Content");
 
-    when(promptRepository.findById(UUID.fromString(promptId))).thenReturn(Optional.of(existingPrompt));
+    when(promptRepository.findByIdAndUserId(UUID.fromString(promptId), userIdUuid)).thenReturn(Optional.of(existingPrompt));
     when(promptRepository.save(any(CustomPrompt.class))).thenReturn(existingPrompt);
 
     // Act
-    customPromptService.update(promptId, updateDto);
+    customPromptService.update(promptId, updateDto, userIdUuid);
 
     // Assert
     assertEquals("New Name", existingPrompt.getName());
@@ -291,6 +336,7 @@ public class CustomPromptServiceTest {
         .id(UUID.fromString(promptId))
         .name("Old Name")
         .content("Old Content")
+        .user(testUser)
         .createdAt(new Date())
         .build();
 
@@ -298,10 +344,10 @@ public class CustomPromptServiceTest {
     updateDto.setName("New Name");
     updateDto.setContent("");
 
-    when(promptRepository.findById(UUID.fromString(promptId))).thenReturn(Optional.of(existingPrompt));
+    when(promptRepository.findByIdAndUserId(UUID.fromString(promptId), userIdUuid)).thenReturn(Optional.of(existingPrompt));
     when(promptRepository.save(any(CustomPrompt.class))).thenReturn(existingPrompt);
 
-    customPromptService.update(promptId, updateDto);
+    customPromptService.update(promptId, updateDto, userIdUuid);
 
     assertEquals("New Name", existingPrompt.getName());
     assertEquals("Old Content", existingPrompt.getContent());
@@ -316,6 +362,7 @@ public class CustomPromptServiceTest {
         .id(UUID.fromString(promptId))
         .name("Old Name")
         .content("Old Content")
+        .user(testUser)
         .createdAt(new Date())
         .build();
 
@@ -323,10 +370,10 @@ public class CustomPromptServiceTest {
     updateDto.setName("");
     updateDto.setContent("New Content");
 
-    when(promptRepository.findById(UUID.fromString(promptId))).thenReturn(Optional.of(existingPrompt));
+    when(promptRepository.findByIdAndUserId(UUID.fromString(promptId), userIdUuid)).thenReturn(Optional.of(existingPrompt));
     when(promptRepository.save(any(CustomPrompt.class))).thenReturn(existingPrompt);
 
-    customPromptService.update(promptId, updateDto);
+    customPromptService.update(promptId, updateDto, userIdUuid);
 
     assertEquals("Old Name", existingPrompt.getName());
     assertEquals("New Content", existingPrompt.getContent());
@@ -341,9 +388,9 @@ public class CustomPromptServiceTest {
     updateDto.setName("Any Name");
     updateDto.setContent("Any Content");
 
-    when(promptRepository.findById(UUID.fromString(promptId))).thenReturn(Optional.empty());
+    when(promptRepository.findByIdAndUserId(UUID.fromString(promptId), userIdUuid)).thenReturn(Optional.empty());
 
-    assertThrows(AppNotFoundException.class, () -> customPromptService.update(promptId, updateDto));
+    assertThrows(AppNotFoundException.class, () -> customPromptService.update(promptId, updateDto, userIdUuid));
     verify(promptRepository, never()).save(any());
   }
 
@@ -355,6 +402,7 @@ public class CustomPromptServiceTest {
         .id(UUID.fromString(promptId))
         .name("Old Name")
         .content("Old Content")
+        .user(testUser)
         .createdAt(new Date())
         .build();
 
@@ -362,10 +410,10 @@ public class CustomPromptServiceTest {
     updateDto.setName("New Name");
     updateDto.setContent("New Content");
 
-    when(promptRepository.findById(UUID.fromString(promptId))).thenReturn(Optional.of(existingPrompt));
+    when(promptRepository.findByIdAndUserId(UUID.fromString(promptId), userIdUuid)).thenReturn(Optional.of(existingPrompt));
     when(promptRepository.save(any(CustomPrompt.class))).thenReturn(existingPrompt);
 
-    customPromptService.update(promptId, updateDto);
+    customPromptService.update(promptId, updateDto, userIdUuid);
 
     verify(promptMessageService).addPromptMessagesIfExistsToExistingPrompt(updateDto, existingPrompt);
     verify(promptParamService).addPromptParamsIfExistsToExistingPrompt(updateDto, existingPrompt);
@@ -382,6 +430,7 @@ public class CustomPromptServiceTest {
         .id(UUID.fromString(promptId))
         .name("Old Name")
         .content("Old Content")
+        .user(testUser)
         .createdAt(new Date())
         .build();
 
@@ -389,9 +438,9 @@ public class CustomPromptServiceTest {
     updateDto.setName("");
     updateDto.setContent("");
 
-    when(promptRepository.findById(UUID.fromString(promptId))).thenReturn(Optional.of(existingPrompt));
+    when(promptRepository.findByIdAndUserId(UUID.fromString(promptId), userIdUuid)).thenReturn(Optional.of(existingPrompt));
 
-    customPromptService.update(promptId, updateDto);
+    customPromptService.update(promptId, updateDto, userIdUuid);
 
     assertEquals("Old Name", existingPrompt.getName());
     assertEquals("Old Content", existingPrompt.getContent());
@@ -412,14 +461,15 @@ public class CustomPromptServiceTest {
 
     CustomPrompt customPrompt = CustomPrompt.builder()
         .id(UUID.fromString(promptId))
+        .user(testUser)
         .params(new ArrayList<>(List.of(param)))
         .build();
 
-    when(promptRepository.findById(UUID.fromString(promptId))).thenReturn(Optional.of(customPrompt));
+    when(promptRepository.findByIdAndUserId(UUID.fromString(promptId), userIdUuid)).thenReturn(Optional.of(customPrompt));
     when(promptRepository.save(any(CustomPrompt.class))).thenReturn(customPrompt);
 
     // Act
-    customPromptService.deleteParam(promptId, paramId);
+    customPromptService.deleteParam(promptId, paramId, userIdUuid);
 
     // Assert
     assertTrue(customPrompt.getParams().isEmpty());
@@ -434,10 +484,10 @@ public class CustomPromptServiceTest {
     String promptId = UUID.randomUUID().toString();
     String paramId = UUID.randomUUID().toString();
 
-    when(promptRepository.findById(UUID.fromString(promptId))).thenReturn(Optional.empty());
+    when(promptRepository.findByIdAndUserId(UUID.fromString(promptId), userIdUuid)).thenReturn(Optional.empty());
 
     // Act & Assert
-    assertThrows(AppNotFoundException.class, () -> customPromptService.deleteParam(promptId, paramId));
+    assertThrows(AppNotFoundException.class, () -> customPromptService.deleteParam(promptId, paramId, userIdUuid));
     verify(promptParamService, never()).deleteByIdAndPromptId(anyString(), anyString());
     verify(promptRepository, never()).save(any());
   }
@@ -451,13 +501,14 @@ public class CustomPromptServiceTest {
 
     CustomPrompt customPrompt = CustomPrompt.builder()
         .id(UUID.fromString(promptId))
+        .user(testUser)
         .params(new java.util.ArrayList<>()) // No params
         .build();
 
-    when(promptRepository.findById(UUID.fromString(promptId))).thenReturn(Optional.of(customPrompt));
+    when(promptRepository.findByIdAndUserId(UUID.fromString(promptId), userIdUuid)).thenReturn(Optional.of(customPrompt));
 
     // Act & Assert
-    assertThrows(AppNotFoundException.class, () -> customPromptService.deleteParam(promptId, paramId));
+    assertThrows(AppNotFoundException.class, () -> customPromptService.deleteParam(promptId, paramId, userIdUuid));
     verify(promptParamService, never()).deleteByIdAndPromptId(anyString(), anyString());
     verify(promptRepository, never()).save(any());
   }
@@ -477,14 +528,15 @@ public class CustomPromptServiceTest {
 
     CustomPrompt customPrompt = CustomPrompt.builder()
         .id(UUID.fromString(promptId))
+        .user(testUser)
         .params(new java.util.ArrayList<>(List.of(param)))
         .build();
 
-    when(promptRepository.findById(UUID.fromString(promptId))).thenReturn(Optional.of(customPrompt));
+    when(promptRepository.findByIdAndUserId(UUID.fromString(promptId), userIdUuid)).thenReturn(Optional.of(customPrompt));
     doThrow(new RuntimeException("Delete failed")).when(promptParamService).deleteByIdAndPromptId(paramId, promptId);
 
     // Act & Assert
-    assertThrows(RuntimeException.class, () -> customPromptService.deleteParam(promptId, paramId));
+    assertThrows(RuntimeException.class, () -> customPromptService.deleteParam(promptId, paramId, userIdUuid));
     // The param should have been removed from the prompt's params list before the exception
     assertTrue(customPrompt.getParams().isEmpty());
     verify(promptParamService).deleteByIdAndPromptId(paramId, promptId);
@@ -507,14 +559,15 @@ public class CustomPromptServiceTest {
 
     CustomPrompt customPrompt = CustomPrompt.builder()
         .id(UUID.fromString(promptId))
+        .user(testUser)
         .messages(new ArrayList<>(List.of(message)))
         .build();
 
-    when(promptRepository.findById(UUID.fromString(promptId))).thenReturn(Optional.of(customPrompt));
+    when(promptRepository.findByIdAndUserId(UUID.fromString(promptId), userIdUuid)).thenReturn(Optional.of(customPrompt));
     when(promptRepository.save(any(CustomPrompt.class))).thenReturn(customPrompt);
 
     // Act
-    customPromptService.deleteMessage(promptId, messageId);
+    customPromptService.deleteMessage(promptId, messageId, userIdUuid);
 
     // Assert
     assertTrue(customPrompt.getMessages().isEmpty());
@@ -529,10 +582,10 @@ public class CustomPromptServiceTest {
     String promptId = UUID.randomUUID().toString();
     String messageId = UUID.randomUUID().toString();
 
-    when(promptRepository.findById(UUID.fromString(promptId))).thenReturn(Optional.empty());
+    when(promptRepository.findByIdAndUserId(UUID.fromString(promptId), userIdUuid)).thenReturn(Optional.empty());
 
     // Act & Assert
-    assertThrows(AppNotFoundException.class, () -> customPromptService.deleteMessage(promptId, messageId));
+    assertThrows(AppNotFoundException.class, () -> customPromptService.deleteMessage(promptId, messageId, userIdUuid));
     verify(promptMessageService, never()).deleteByIdAndPromptId(anyString(), anyString());
     verify(promptRepository, never()).save(any());
   }
@@ -546,13 +599,14 @@ public class CustomPromptServiceTest {
 
     CustomPrompt customPrompt = CustomPrompt.builder()
         .id(UUID.fromString(promptId))
+        .user(testUser)
         .messages(new ArrayList<>()) // No messages
         .build();
 
-    when(promptRepository.findById(UUID.fromString(promptId))).thenReturn(Optional.of(customPrompt));
+    when(promptRepository.findByIdAndUserId(UUID.fromString(promptId), userIdUuid)).thenReturn(Optional.of(customPrompt));
 
     // Act & Assert
-    assertThrows(AppNotFoundException.class, () -> customPromptService.deleteMessage(promptId, messageId));
+    assertThrows(AppNotFoundException.class, () -> customPromptService.deleteMessage(promptId, messageId, userIdUuid));
     verify(promptMessageService, never()).deleteByIdAndPromptId(anyString(), anyString());
     verify(promptRepository, never()).save(any());
   }
@@ -572,14 +626,15 @@ public class CustomPromptServiceTest {
 
     CustomPrompt customPrompt = CustomPrompt.builder()
         .id(UUID.fromString(promptId))
+        .user(testUser)
         .messages(new ArrayList<>(List.of(message)))
         .build();
 
-    when(promptRepository.findById(UUID.fromString(promptId))).thenReturn(Optional.of(customPrompt));
+    when(promptRepository.findByIdAndUserId(UUID.fromString(promptId), userIdUuid)).thenReturn(Optional.of(customPrompt));
     doThrow(new RuntimeException("Delete failed")).when(promptMessageService).deleteByIdAndPromptId(messageId, promptId);
 
     // Act & Assert
-    assertThrows(RuntimeException.class, () -> customPromptService.deleteMessage(promptId, messageId));
+    assertThrows(RuntimeException.class, () -> customPromptService.deleteMessage(promptId, messageId, userIdUuid));
     // The message should have been removed from the prompt's messages list before the exception
     assertTrue(customPrompt.getMessages().isEmpty());
     verify(promptMessageService).deleteByIdAndPromptId(messageId, promptId);
@@ -596,15 +651,18 @@ public class CustomPromptServiceTest {
         .id(UUID.fromString(promptId))
         .name("Prompt to delete")
         .content("Some content")
+        .user(testUser)
         .build();
 
-    when(promptRepository.findById(UUID.fromString(promptId))).thenReturn(Optional.of(customPrompt));
+    when(promptRepository.findByIdAndUserId(UUID.fromString(promptId), userIdUuid)).thenReturn(Optional.of(customPrompt));
+    when(promptRepository.hasAssociatedChats(UUID.fromString(promptId))).thenReturn(false);
 
     // Act
-    customPromptService.delete(promptId);
+    customPromptService.delete(promptId, userIdUuid);
 
     // Assert
-    verify(promptRepository).findById(UUID.fromString(promptId));
+    verify(promptRepository).findByIdAndUserId(UUID.fromString(promptId), userIdUuid);
+    verify(promptRepository).hasAssociatedChats(UUID.fromString(promptId));
     verify(promptRepository).delete(customPrompt);
   }
 
@@ -613,11 +671,34 @@ public class CustomPromptServiceTest {
   void testDeletePromptNotFound() {
     // Arrange
     String promptId = UUID.randomUUID().toString();
-    when(promptRepository.findById(UUID.fromString(promptId))).thenReturn(Optional.empty());
+    when(promptRepository.findByIdAndUserId(UUID.fromString(promptId), userIdUuid)).thenReturn(Optional.empty());
 
     // Act & Assert
-    assertThrows(AppNotFoundException.class, () -> customPromptService.delete(promptId));
-    verify(promptRepository).findById(UUID.fromString(promptId));
+    assertThrows(AppNotFoundException.class, () -> customPromptService.delete(promptId, userIdUuid));
+    verify(promptRepository).findByIdAndUserId(UUID.fromString(promptId), userIdUuid);
+    verify(promptRepository, never()).delete(any());
+    verify(promptRepository, never()).hasAssociatedChats(any());
+  }
+
+  @Test
+  @DisplayName("Should throw ResourceInUseException if prompt has associated chats")
+  void testDeletePromptInUse() {
+    // Arrange
+    String promptId = UUID.randomUUID().toString();
+    CustomPrompt customPrompt = CustomPrompt.builder()
+        .id(UUID.fromString(promptId))
+        .name("Prompt to delete")
+        .content("Some content")
+        .user(testUser)
+        .build();
+
+    when(promptRepository.findByIdAndUserId(UUID.fromString(promptId), userIdUuid)).thenReturn(Optional.of(customPrompt));
+    when(promptRepository.hasAssociatedChats(UUID.fromString(promptId))).thenReturn(true);
+
+    // Act & Assert
+    assertThrows(ResourceInUseException.class, () -> customPromptService.delete(promptId, userIdUuid));
+    verify(promptRepository).findByIdAndUserId(UUID.fromString(promptId), userIdUuid);
+    verify(promptRepository).hasAssociatedChats(UUID.fromString(promptId));
     verify(promptRepository, never()).delete(any());
   }
 
@@ -630,14 +711,17 @@ public class CustomPromptServiceTest {
         .id(UUID.fromString(promptId))
         .name("Prompt to delete")
         .content("Some content")
+        .user(testUser)
         .build();
 
-    when(promptRepository.findById(UUID.fromString(promptId))).thenReturn(Optional.of(customPrompt));
+    when(promptRepository.findByIdAndUserId(UUID.fromString(promptId), userIdUuid)).thenReturn(Optional.of(customPrompt));
+    when(promptRepository.hasAssociatedChats(UUID.fromString(promptId))).thenReturn(false);
     doThrow(new RuntimeException("Delete failed")).when(promptRepository).delete(customPrompt);
 
     // Act & Assert
-    assertThrows(RuntimeException.class, () -> customPromptService.delete(promptId));
-    verify(promptRepository).findById(UUID.fromString(promptId));
+    assertThrows(RuntimeException.class, () -> customPromptService.delete(promptId, userIdUuid));
+    verify(promptRepository).findByIdAndUserId(UUID.fromString(promptId), userIdUuid);
+    verify(promptRepository).hasAssociatedChats(UUID.fromString(promptId));
     verify(promptRepository).delete(customPrompt);
   }
 
