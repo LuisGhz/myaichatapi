@@ -25,7 +25,21 @@ public class OAuth2AuthenticationFailureHandler implements AuthenticationFailure
                                       AuthenticationException exception) throws IOException {
         
         log.error("OAuth2 authentication failure for request: {}", request.getRequestURL());
-        log.error("Request parameters: {}", request.getParameterMap());
+        log.error("Request scheme: {}", request.getScheme());
+        log.error("Request server name: {}", request.getServerName());
+        log.error("Request server port: {}", request.getServerPort());
+        log.error("Request URI: {}", request.getRequestURI());
+        log.error("Request query string: {}", request.getQueryString());
+        log.error("X-Forwarded-Proto header: {}", request.getHeader("X-Forwarded-Proto"));
+        log.error("X-Forwarded-Host header: {}", request.getHeader("X-Forwarded-Host"));
+        log.error("X-Forwarded-For header: {}", request.getHeader("X-Forwarded-For"));
+        
+        // Log all parameters individually
+        log.error("Request parameters count: {}", request.getParameterMap().size());
+        request.getParameterMap().forEach((key, values) -> {
+            log.error("Parameter '{}': {}", key, String.join(", ", values));
+        });
+        
         log.error("Exception type: {}", exception.getClass().getSimpleName());
         log.error("Exception message: {}", exception.getMessage());
         log.error("OAuth2 authentication failure", exception);
