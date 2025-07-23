@@ -8,9 +8,12 @@ import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import dev.luisghtz.myaichat.ai.services.AIService;
+import dev.luisghtz.myaichat.auth.dtos.UserJwtDataDto;
 import dev.luisghtz.myaichat.chat.dtos.AssistantMessageResponseDto;
 import dev.luisghtz.myaichat.chat.dtos.HistoryChatDto;
 import dev.luisghtz.myaichat.chat.dtos.NewMessageRequestDto;
@@ -37,8 +40,10 @@ public class MessagesService {
   @Value("${cdn}")
   private String cdn;
 
-  public HistoryChatDto getPreviousMessages(UUID id, Pageable pageable) {
+  public HistoryChatDto getPreviousMessages(UUID id, Pageable pageable, UserJwtDataDto user) {
     var chat = chatService.findChatById(id);
+    if (!chat.getUser().getId().equals(UUID.fromString(user.getId())))
+      throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You don't have access to this chat");
     var tokens = getSumOfPromptAndCompletionTokensByChatId(id);
     var historyMessages = getChatPreviousMessages(chat, pageable);
     var appMessageHistory = HistoryChatDto.builder()
