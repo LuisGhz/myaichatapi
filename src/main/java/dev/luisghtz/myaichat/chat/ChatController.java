@@ -50,8 +50,8 @@ public class ChatController {
 
   @GetMapping("{id}/messages")
   public ResponseEntity<HistoryChatDto> getChatHistory(@PathVariable UUID id,
-      @PageableDefault(size = 10) Pageable pageable) {
-    return ResponseEntity.ok(messagesService.getPreviousMessages(id, pageable));
+      @PageableDefault(size = 10) Pageable pageable, @UserJwtData UserJwtDataDto user) {
+    return ResponseEntity.ok(messagesService.getPreviousMessages(id, pageable, user));
   }
 
   @PostMapping("send-message")
