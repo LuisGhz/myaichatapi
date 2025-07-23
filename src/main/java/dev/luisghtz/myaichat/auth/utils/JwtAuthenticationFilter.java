@@ -44,10 +44,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
       String token = authHeader.substring(7);
 
       if (jwtService.validateToken(token) && SecurityContextHolder.getContext().getAuthentication() == null) {
-        UUID userId = jwtService.getUserIdFromToken(token);
+        String userId = jwtService.getUserIdFromToken(token);
 
         if (userId != null) {
-          User user = userService.findById(userId.toString()).orElse(null);
+          User user = userService.findById(userId).orElse(null);
 
           if (user != null && !user.getLocked() && !user.getDisabled()) {
             List<SimpleGrantedAuthority> authorities = List.of(
