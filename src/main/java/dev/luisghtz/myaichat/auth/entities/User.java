@@ -12,6 +12,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import dev.luisghtz.myaichat.chat.entities.Chat;
 import dev.luisghtz.myaichat.prompts.entities.CustomPrompt;
 
@@ -21,8 +22,8 @@ import dev.luisghtz.myaichat.prompts.entities.CustomPrompt;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@ToString(exclude = { "chats" })
-@EqualsAndHashCode(exclude = { "chats" })
+@ToString(exclude = { "chats", "customPrompts" })
+@EqualsAndHashCode(exclude = { "chats", "customPrompts" })
 public class User {
 
   @Id
@@ -61,9 +62,11 @@ public class User {
   private LocalDateTime updatedAt;
 
   @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
+  @JsonIgnore
   private List<Chat> chats;
 
   @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
+  @JsonIgnore
   private List<CustomPrompt> customPrompts;
 
   @PrePersist
