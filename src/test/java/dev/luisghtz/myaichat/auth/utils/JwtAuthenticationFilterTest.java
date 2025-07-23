@@ -86,7 +86,7 @@ class JwtAuthenticationFilterTest {
             // Arrange
             when(request.getHeader("Authorization")).thenReturn("Bearer " + validToken);
             when(jwtService.validateToken(validToken)).thenReturn(true);
-            when(jwtService.getUserIdFromToken(validToken)).thenReturn(testUser.getId());
+            when(jwtService.getUserIdFromToken(validToken)).thenReturn(testUser.getId().toString());
             when(userService.findById(testUser.getId().toString())).thenReturn(Optional.of(testUser));
 
             // Act
@@ -184,7 +184,7 @@ class JwtAuthenticationFilterTest {
             // Arrange
             when(request.getHeader("Authorization")).thenReturn("Bearer " + validToken);
             when(jwtService.validateToken(validToken)).thenReturn(true);
-            when(jwtService.getUserIdFromToken(validToken)).thenReturn(testUser.getId());
+            when(jwtService.getUserIdFromToken(validToken)).thenReturn(testUser.getId().toString());
             when(userService.findById(testUser.getId().toString())).thenReturn(Optional.empty());
 
             // Act
@@ -207,7 +207,7 @@ class JwtAuthenticationFilterTest {
             testUser.setLocked(true);
             when(request.getHeader("Authorization")).thenReturn("Bearer " + validToken);
             when(jwtService.validateToken(validToken)).thenReturn(true);
-            when(jwtService.getUserIdFromToken(validToken)).thenReturn(testUser.getId());
+            when(jwtService.getUserIdFromToken(validToken)).thenReturn(testUser.getId().toString());
             when(userService.findById(testUser.getId().toString())).thenReturn(Optional.of(testUser));
 
             // Act
@@ -227,7 +227,7 @@ class JwtAuthenticationFilterTest {
             testUser.setDisabled(true);
             when(request.getHeader("Authorization")).thenReturn("Bearer " + validToken);
             when(jwtService.validateToken(validToken)).thenReturn(true);
-            when(jwtService.getUserIdFromToken(validToken)).thenReturn(testUser.getId());
+            when(jwtService.getUserIdFromToken(validToken)).thenReturn(testUser.getId().toString());
             when(userService.findById(testUser.getId().toString())).thenReturn(Optional.of(testUser));
 
             // Act
@@ -256,7 +256,7 @@ class JwtAuthenticationFilterTest {
 
             when(request.getHeader("Authorization")).thenReturn("Bearer " + validToken);
             when(jwtService.validateToken(validToken)).thenReturn(true);
-            when(jwtService.getUserIdFromToken(validToken)).thenReturn(testUser.getId());
+            when(jwtService.getUserIdFromToken(validToken)).thenReturn(testUser.getId().toString());
             when(userService.findById(testUser.getId().toString())).thenReturn(Optional.of(testUser));
 
             // Act
@@ -277,7 +277,7 @@ class JwtAuthenticationFilterTest {
             // Arrange
             when(request.getHeader("Authorization")).thenReturn("Bearer " + validToken);
             when(jwtService.validateToken(validToken)).thenReturn(true);
-            when(jwtService.getUserIdFromToken(validToken)).thenReturn(testUser.getId());
+            when(jwtService.getUserIdFromToken(validToken)).thenReturn(testUser.getId().toString());
             when(userService.findById(testUser.getId().toString())).thenReturn(Optional.of(testUser));
 
             // Act
@@ -366,7 +366,7 @@ class JwtAuthenticationFilterTest {
             // Arrange
             when(request.getHeader("Authorization")).thenReturn("Bearer " + validToken);
             when(jwtService.validateToken(validToken)).thenReturn(true);
-            when(jwtService.getUserIdFromToken(validToken)).thenReturn(testUser.getId());
+            when(jwtService.getUserIdFromToken(validToken)).thenReturn(testUser.getId().toString());
             when(userService.findById(anyString())).thenThrow(new RuntimeException("Database error"));
 
             // Act

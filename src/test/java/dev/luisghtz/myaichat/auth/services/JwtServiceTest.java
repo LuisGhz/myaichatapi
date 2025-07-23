@@ -65,11 +65,11 @@ class JwtServiceTest {
         void testGenerateToken_ShouldGenerateTokenWithCorrectUserId() {
             // Act
             String token = jwtService.generateToken(testUser);
-            UUID extractedUserId = jwtService.getUserIdFromToken(token);
+            String extractedUserId = jwtService.getUserIdFromToken(token);
 
             // Assert
             assertNotNull(extractedUserId);
-            assertEquals(testUser.getId(), extractedUserId);
+            assertEquals(testUser.getId().toString(), extractedUserId);
         }
 
         @Test
@@ -119,7 +119,7 @@ class JwtServiceTest {
             // Assert
             assertNotNull(token);
             assertTrue(jwtService.validateToken(token));
-            assertEquals(testUser.getId(), jwtService.getUserIdFromToken(token));
+            assertEquals(testUser.getId().toString(), jwtService.getUserIdFromToken(token));
         }
 
         @Test
@@ -256,11 +256,11 @@ class JwtServiceTest {
             String token = jwtService.generateToken(testUser);
 
             // Act
-            UUID extractedUserId = jwtService.getUserIdFromToken(token);
+            String extractedUserId = jwtService.getUserIdFromToken(token);
 
             // Assert
             assertNotNull(extractedUserId);
-            assertEquals(testUser.getId(), extractedUserId);
+            assertEquals(testUser.getId().toString(), extractedUserId);
         }
 
         @Test
@@ -270,7 +270,7 @@ class JwtServiceTest {
             String invalidToken = "invalid.jwt.token";
 
             // Act
-            UUID extractedUserId = jwtService.getUserIdFromToken(invalidToken);
+            String extractedUserId = jwtService.getUserIdFromToken(invalidToken);
 
             // Assert
             assertNull(extractedUserId);
@@ -280,7 +280,7 @@ class JwtServiceTest {
         @DisplayName("getUserIdFromToken - Should return null for null token")
         void testGetUserIdFromToken_ShouldReturnNullForNullToken() {
             // Act
-            UUID extractedUserId = jwtService.getUserIdFromToken(null);
+            String extractedUserId = jwtService.getUserIdFromToken(null);
 
             // Assert
             assertNull(extractedUserId);
@@ -290,7 +290,7 @@ class JwtServiceTest {
         @DisplayName("getUserIdFromToken - Should return null for empty token")
         void testGetUserIdFromToken_ShouldReturnNullForEmptyToken() {
             // Act
-            UUID extractedUserId = jwtService.getUserIdFromToken("");
+            String extractedUserId = jwtService.getUserIdFromToken("");
 
             // Assert
             assertNull(extractedUserId);
@@ -303,7 +303,7 @@ class JwtServiceTest {
             String malformedToken = "not.a.valid.jwt.token.structure";
 
             // Act
-            UUID extractedUserId = jwtService.getUserIdFromToken(malformedToken);
+            String extractedUserId = jwtService.getUserIdFromToken(malformedToken);
 
             // Assert
             assertNull(extractedUserId);
@@ -427,7 +427,7 @@ class JwtServiceTest {
             ReflectionTestUtils.setField(differentSecretService, "jwtExpiration", testExpiration);
 
             // Act
-            UUID extractedUserId = differentSecretService.getUserIdFromToken(token);
+            String extractedUserId = differentSecretService.getUserIdFromToken(token);
             String extractedUsername = differentSecretService.getUsernameFromToken(token);
 
             // Assert

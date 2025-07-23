@@ -103,7 +103,7 @@ class AuthControllerTest {
                     .andExpect(status().isOk())
                     .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                     .andExpect(jsonPath("$.message").value("Please initiate OAuth2 login"))
-                    .andExpect(jsonPath("$.githubLoginUrl").value("/oauth2/authorization/github"));
+                    .andExpect(jsonPath("$.githubLoginUrl").value("oauth2/authorization/github"));
         }
     }
 

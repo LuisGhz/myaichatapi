@@ -25,6 +25,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import dev.luisghtz.myaichat.configurationMock.AIModelsControllerTestConfiguration;
+import dev.luisghtz.myaichat.configurationMock.jwt.JwtPermitAllTestConfiguration;
 import dev.luisghtz.myaichat.exceptions.AppNotFoundException;
 import dev.luisghtz.myaichat.prompts.dtos.CreateCustomPromptDtoReq;
 import dev.luisghtz.myaichat.prompts.dtos.CreateCustomPromptParamsDto;
@@ -44,7 +45,10 @@ import dev.luisghtz.myaichat.prompts.dtos.update.UpdateCustomPromptParamsDto;
 import dev.luisghtz.myaichat.prompts.dtos.update.UpdatedCustomPromptDtoRes;
 
 @WebMvcTest(PromptsController.class)
-@Import(AIModelsControllerTestConfiguration.class)
+@Import({
+  AIModelsControllerTestConfiguration.class,
+  JwtPermitAllTestConfiguration.class,
+})
 @ActiveProfiles("test")
 public class PromptsControllerTest {
 

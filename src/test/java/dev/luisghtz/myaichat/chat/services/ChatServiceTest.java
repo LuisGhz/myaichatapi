@@ -67,12 +67,10 @@ class ChatServiceTest {
   @Test
   void getAllChats_ShouldReturnChatsListResponseDto() {
     // Given
-    var authkey = "Bearer test-auth-key";
     List<Chat> chats = Arrays.asList(testChat);
-    when(jwtService.getUserIdFromToken(authkey)).thenReturn(UUID.randomUUID());
     when(chatRepository.findAllByUserIdOrderByCreatedAtAsc(any(UUID.class))).thenReturn(chats);
     // When
-    ChatsListResponseDto result = chatService.getAllChats(authkey);
+    ChatsListResponseDto result = chatService.getAllChats(UUID.randomUUID().toString());
 
     // Then
     assertNotNull(result);
