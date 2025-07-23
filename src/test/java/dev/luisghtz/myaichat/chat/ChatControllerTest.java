@@ -197,8 +197,9 @@ public class ChatControllerTest {
       AssistantMessageResponseDto expectedResponse = AssistantMessageResponseDto.builder()
           .content("AI response")
           .build();
-
-      when(messagesService.sendNewMessage(any(NewMessageRequestDto.class), isNull())).thenReturn(expectedResponse);
+      var user = createTestUserJwtData();
+      when(messagesService.sendNewMessage(any(NewMessageRequestDto.class), isNull(), eq(user)))
+          .thenReturn(expectedResponse);
 
       mockMvc.perform(multipart("/api/chat/send-message")
           .param("prompt", requestDto.getPrompt())
@@ -209,7 +210,8 @@ public class ChatControllerTest {
           .andExpect(jsonPath("$.content").value("AI response"));
 
       verify(fileService, never()).uploadFile(any());
-      verify(messagesService, times(1)).sendNewMessage(any(NewMessageRequestDto.class), isNull());
+      verify(messagesService, times(1)).sendNewMessage(any(NewMessageRequestDto.class), isNull(),
+          eq(user));
     }
 
     @Test
@@ -233,7 +235,7 @@ public class ChatControllerTest {
           .content("AI response to file")
           .build();
 
-      when(messagesService.sendNewMessage(any(NewMessageRequestDto.class), eq(fileName)))
+      when(messagesService.sendNewMessage(any(NewMessageRequestDto.class), eq(fileName), any(UserJwtDataDto.class)))
           .thenReturn(expectedResponse);
 
       // Act & Assert
@@ -247,7 +249,8 @@ public class ChatControllerTest {
           .andExpect(jsonPath("$.content").value("AI response to file"));
 
       verify(fileService, times(1)).uploadFile(any());
-      verify(messagesService, times(1)).sendNewMessage(any(NewMessageRequestDto.class), eq(fileName));
+      verify(messagesService, times(1)).sendNewMessage(any(NewMessageRequestDto.class), eq(fileName),
+          any(UserJwtDataDto.class));
     }
 
     @Test
