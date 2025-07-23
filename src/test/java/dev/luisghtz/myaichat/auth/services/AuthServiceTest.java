@@ -228,7 +228,7 @@ class AuthServiceTest {
         @DisplayName("getUserFromToken - Should return user when token is valid and user exists")
         void testGetUserFromToken_ShouldReturnUserWhenTokenValidAndUserExists() {
             // Arrange
-            when(jwtService.getUserIdFromToken(testToken)).thenReturn(testUser.getId());
+            when(jwtService.getUserIdFromToken(testToken)).thenReturn(testUser.getId().toString());
             when(userService.findById(testUser.getId().toString())).thenReturn(Optional.of(testUser));
 
             // Act
@@ -255,14 +255,14 @@ class AuthServiceTest {
             assertNull(result);
             
             verify(jwtService).getUserIdFromToken(testToken);
-            verify(userService).findById("null");
+            verify(userService).findById(null);
         }
 
         @Test
         @DisplayName("getUserFromToken - Should return null when user not found")
         void testGetUserFromToken_ShouldReturnNullWhenUserNotFound() {
             // Arrange
-            when(jwtService.getUserIdFromToken(testToken)).thenReturn(testUser.getId());
+            when(jwtService.getUserIdFromToken(testToken)).thenReturn(testUser.getId().toString());
             when(userService.findById(testUser.getId().toString())).thenReturn(Optional.empty());
 
             // Act
@@ -292,7 +292,7 @@ class AuthServiceTest {
         @DisplayName("getUserFromToken - Should handle user service exception")
         void testGetUserFromToken_ShouldHandleUserServiceException() {
             // Arrange
-            when(jwtService.getUserIdFromToken(testToken)).thenReturn(testUser.getId());
+            when(jwtService.getUserIdFromToken(testToken)).thenReturn(testUser.getId().toString());
             when(userService.findById(anyString())).thenThrow(new RuntimeException("Database error"));
 
             // Act & Assert
@@ -315,7 +315,7 @@ class AuthServiceTest {
             assertNull(result);
             
             verify(jwtService).getUserIdFromToken(null);
-            verify(userService).findById("null");
+            verify(userService).findById(null);
         }
     }
 }
