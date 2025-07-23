@@ -45,7 +45,9 @@ CREATE TABLE custom_prompt (
     name VARCHAR(255) NOT NULL UNIQUE,
     content TEXT NOT NULL,
     created_at TIMESTAMP,
-    updated_at TIMESTAMP
+    updated_at TIMESTAMP,
+    user_id UUID NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id)
 );
 
 CREATE TABLE prompt_messages (
@@ -87,5 +89,7 @@ CREATE TABLE users (
 -- Optional: Add indexes
 CREATE INDEX idx_app_message_chat ON app_message(chat_id);
 CREATE INDEX idx_chat_custom_prompt ON chat(custom_prompt_id);
+CREATE INDEX idx_chat_user ON chat(user_id);
 CREATE INDEX idx_prompt_messages_prompt ON prompt_messages(custom_prompt_id);
 CREATE INDEX idx_prompt_params_prompt ON prompt_params(custom_prompt_id);
+CREATE INDEX idx_custom_prompt_user ON custom_prompt(user_id);
