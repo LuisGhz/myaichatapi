@@ -52,7 +52,7 @@ public class SecurityConfig {
 
     DefaultOAuth2AuthorizationRequestResolver authorizationRequestResolver = new DefaultOAuth2AuthorizationRequestResolver(
         clientRegistrationRepository, authorizationRequestBaseUri);
-        
+
     // Create a custom resolver that ensures HTTPS redirect URIs
     return new OAuth2AuthorizationRequestResolver() {
       @Override
@@ -64,25 +64,25 @@ public class SecurityConfig {
       public OAuth2AuthorizationRequest resolve(HttpServletRequest request, String clientRegistrationId) {
         return resolveWithHttps(authorizationRequestResolver.resolve(request, clientRegistrationId));
       }
-      
+
       private OAuth2AuthorizationRequest resolveWithHttps(OAuth2AuthorizationRequest authorizationRequest) {
         if (authorizationRequest == null) {
           return null;
         }
-        
+
         String redirectUri = authorizationRequest.getRedirectUri();
         log.info("Original OAuth2 redirect URI: {}", redirectUri);
-        
+
         if (redirectUri != null && redirectUri.startsWith("http://") && redirectUri.contains("apis.luisghtz.dev")) {
           String httpsRedirectUri = redirectUri.replace("http://", "https://");
           log.info("Converting HTTP to HTTPS redirect URI: {} -> {}", redirectUri, httpsRedirectUri);
-          
+
           return OAuth2AuthorizationRequest
               .from(authorizationRequest)
               .redirectUri(httpsRedirectUri)
               .build();
         }
-        
+
         return authorizationRequest;
       }
     };
