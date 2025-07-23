@@ -42,6 +42,7 @@ public class CustomPrompt {
   private Date updatedAt;
   @ManyToOne(optional = false)
   @JoinColumn(name = "user_id", nullable = false, updatable = false)
+  @JsonIgnore
   private User user;
   @OneToMany(mappedBy = "prompt", cascade = CascadeType.ALL, orphanRemoval = true)
   private List<PromptMessage> messages;
