@@ -56,9 +56,12 @@ public class MessagesService {
   }
 
   @Transactional
-  public AssistantMessageResponseDto sendNewMessage(NewMessageRequestDto newMessageRequestDto, String fileUrl) {
+  public AssistantMessageResponseDto sendNewMessage(NewMessageRequestDto newMessageRequestDto, String fileUrl,
+      UserJwtDataDto user) {
     Chat chat = chatService.getChat(newMessageRequestDto);
     boolean isNewChat = isChatNew(chat);
+    if (!isNewChat)
+      returnBadRequestIfChatNotCorrespondToUser(chat, user);
     AppMessage userMessage = MessagesUtils.processUserMessage(newMessageRequestDto, chat, fileUrl);
     AppMessage assistantMessage = getAssistantResponse(chat, userMessage);
     AssistantMessageResponseDto responseDto = createAssistantMessageDto(assistantMessage, chat.getId(), isNewChat);
