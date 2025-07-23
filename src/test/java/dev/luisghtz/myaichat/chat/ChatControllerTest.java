@@ -39,10 +39,16 @@ import dev.luisghtz.myaichat.chat.models.ChatSummary;
 import dev.luisghtz.myaichat.chat.services.ChatService;
 import dev.luisghtz.myaichat.chat.services.MessagesService;
 import dev.luisghtz.myaichat.configurationMock.AIModelsControllerTestConfiguration;
+import dev.luisghtz.myaichat.configurationMock.UserJwtDataTestConfiguration;
+import dev.luisghtz.myaichat.configurationMock.jwt.JwtPermitAllTestConfiguration;
 import dev.luisghtz.myaichat.file.FileService;
 
 @WebMvcTest(ChatController.class)
-@Import(AIModelsControllerTestConfiguration.class)
+@Import({
+    AIModelsControllerTestConfiguration.class,
+    JwtPermitAllTestConfiguration.class,
+    UserJwtDataTestConfiguration.class
+})
 @ActiveProfiles("test")
 public class ChatControllerTest {
 
@@ -77,7 +83,6 @@ public class ChatControllerTest {
     public void testGetChatsList() throws Exception {
       // Arrange
       String userId = "test-user-id";
-      String authHeader = "Bearer " + userId;
       List<ChatSummary> chatsList = new ArrayList<>();
       chatsList.add(ChatSummary.builder().id(UUID.randomUUID()).title("Chat 1").build());
       chatsList.add(ChatSummary.builder().id(UUID.randomUUID()).title("Chat 2").build());
@@ -86,23 +91,12 @@ public class ChatControllerTest {
       when(chatService.getAllChats(userId)).thenReturn(expectedResponse);
 
       // Act & Assert
-      mockMvc.perform(get("/api/chat/all")
-          .header("Authorization", authHeader))
+      mockMvc.perform(get("/api/chat/all"))
           .andExpect(status().isOk())
           .andExpect(jsonPath("$.chats").isArray())
           .andExpect(jsonPath("$.chats.length()").value(2));
 
       verify(chatService, times(1)).getAllChats(userId);
-    }
-
-    @Test
-    @DisplayName("GET /api/chat/all - Returns BAD_REQUEST when Authorization header is missing")
-    public void testGetChatsListWithoutAuthHeader() throws Exception {
-      // Act & Assert
-      mockMvc.perform(get("/api/chat/all"))
-          .andExpect(status().isBadRequest());
-
-      verify(chatService, never()).getAllChats(any());
     }
 
     @Test
