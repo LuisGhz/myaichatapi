@@ -42,7 +42,7 @@ public class MessagesService {
 
   public HistoryChatDto getPreviousMessages(UUID id, Pageable pageable, UserJwtDataDto user) {
     var chat = chatService.findChatById(id);
-    returnBadRequestIfChatNotCorrespondToUser(chat, user);
+    validateIfChatBelongsToUser(chat, user);
     var tokens = getSumOfPromptAndCompletionTokensByChatId(id);
     var historyMessages = getChatPreviousMessages(chat, pageable);
     var appMessageHistory = HistoryChatDto.builder()
@@ -58,10 +58,10 @@ public class MessagesService {
   @Transactional
   public AssistantMessageResponseDto sendNewMessage(NewMessageRequestDto newMessageRequestDto, String fileUrl,
       UserJwtDataDto user) {
-    Chat chat = chatService.getChat(newMessageRequestDto);
+    Chat chat = chatService.getChat(newMessageRequestDto, user.getId());
     boolean isNewChat = isChatNew(chat);
     if (!isNewChat)
-      returnBadRequestIfChatNotCorrespondToUser(chat, user);
+      validateIfChatBelongsToUser(chat, user);
     AppMessage userMessage = MessagesUtils.processUserMessage(newMessageRequestDto, chat, fileUrl);
     AppMessage assistantMessage = getAssistantResponse(chat, userMessage);
     AssistantMessageResponseDto responseDto = createAssistantMessageDto(assistantMessage, chat.getId(), isNewChat);
@@ -132,7 +132,9 @@ public class MessagesService {
   }
 
   @Transactional
-  public void deleteAllByChat(UUID id) {
+  public void deleteAllByChat(UUID id, UserJwtDataDto user) {
+    var chat = chatService.findChatById(id);
+    validateIfChatBelongsToUser(chat, user);
     log.info("Deleting messages for chat with ID: '{}'", id);
     var messages = messageRepository.findAllByChatId(id);
     var files = messages.stream()
@@ -161,7 +163,7 @@ public class MessagesService {
     awsS3Service.deleteFile(cleanUrl);
   }
 
-  private void returnBadRequestIfChatNotCorrespondToUser(Chat chat, UserJwtDataDto user) {
+  private void validateIfChatBelongsToUser(Chat chat, UserJwtDataDto user) {
     if (!chat.getUser().getId().equals(UUID.fromString(user.getId())))
       throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You don't have access to this chat");
   }
