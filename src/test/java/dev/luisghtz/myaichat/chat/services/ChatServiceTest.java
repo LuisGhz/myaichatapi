@@ -18,6 +18,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 import dev.luisghtz.myaichat.ai.services.AIService;
 import dev.luisghtz.myaichat.auth.services.JwtService;
+import dev.luisghtz.myaichat.auth.services.UserService;
+import dev.luisghtz.myaichat.auth.dtos.UserJwtDataDto;
+import dev.luisghtz.myaichat.auth.entities.User;
 import dev.luisghtz.myaichat.chat.dtos.AssistantMessageResponseDto;
 import dev.luisghtz.myaichat.chat.dtos.ChatsListResponseDto;
 import dev.luisghtz.myaichat.chat.dtos.NewMessageRequestDto;
@@ -36,6 +39,9 @@ class ChatServiceTest {
   private CustomPromptService customPromptService;
 
   @Mock
+  private UserService userService;
+
+  @Mock
   private AIService aiProviderService;
 
   @Mock
@@ -47,16 +53,31 @@ class ChatServiceTest {
   private Chat testChat;
   private UUID testChatId;
   private NewMessageRequestDto testRequest;
+  private UserJwtDataDto testUser;
 
   @BeforeEach
   void setUp() {
     testChatId = UUID.randomUUID();
+
+    // Create test user
+    testUser = new UserJwtDataDto();
+    testUser.setId(UUID.randomUUID().toString());
+    testUser.setEmail("test@example.com");
+    testUser.setUsername("testuser");
+
+    // Create test user entity
+    User userEntity = new User();
+    userEntity.setId(UUID.fromString(testUser.getId()));
+    userEntity.setEmail(testUser.getEmail());
+    userEntity.setUsername(testUser.getUsername());
+
     testChat = Chat.builder()
         .id(testChatId)
         .title("Test Chat")
         .createdAt(new Date())
         .model("gpt-4")
         .fav(false)
+        .user(userEntity)
         .build();
 
     testRequest = new NewMessageRequestDto();
@@ -85,9 +106,8 @@ class ChatServiceTest {
     // Given
     testRequest.setChatId(testChatId);
     when(chatRepository.findById(testChatId)).thenReturn(Optional.of(testChat));
-
     // When
-    Chat result = chatService.getChat(testRequest);
+    Chat result = chatService.getChat(testRequest, testUser.getId());
 
     // Then
     assertEquals(testChat, result);
@@ -99,9 +119,13 @@ class ChatServiceTest {
     // Given
     testRequest.setChatId(null);
     when(chatRepository.save(any(Chat.class))).thenReturn(testChat);
-
+    User userEntity = new User();
+    userEntity.setId(UUID.fromString(testUser.getId()));
+    userEntity.setEmail(testUser.getEmail());
+    userEntity.setUsername(testUser.getUsername());
+    when(userService.findById(any())).thenReturn(Optional.of(userEntity));
     // When
-    Chat result = chatService.getChat(testRequest);
+    Chat result = chatService.getChat(testRequest, testUser.getId());
 
     // Then
     assertNotNull(result);
@@ -158,11 +182,15 @@ class ChatServiceTest {
 
   @Test
   void getNewChat_WithoutPromptId_ShouldCreateBasicChat() {
+    User userEntity = new User();
+    userEntity.setId(UUID.fromString(testUser.getId()));
+    userEntity.setEmail(testUser.getEmail());
+    userEntity.setUsername(testUser.getUsername());
+    when(userService.findById(any())).thenReturn(Optional.of(userEntity));
     // Given
     when(chatRepository.save(any(Chat.class))).thenReturn(testChat);
-
     // When
-    Chat result = chatService.getNewChat(testRequest);
+    Chat result = chatService.getNewChat(testRequest, testUser.getId());
 
     // Then
     assertNotNull(result);
@@ -172,19 +200,24 @@ class ChatServiceTest {
 
   @Test
   void getNewChat_WithPromptId_ShouldCreateChatWithCustomPrompt() {
+    User userEntity = new User();
+    userEntity.setId(UUID.fromString(testUser.getId()));
+    userEntity.setEmail(testUser.getEmail());
+    userEntity.setUsername(testUser.getUsername());
     // Given
     var promptId = UUID.randomUUID();
     var promptIdString = promptId.toString();
     testRequest.setPromptId(promptIdString);
-
+    
     CustomPrompt customPrompt = new CustomPrompt();
     customPrompt.setId(promptId);
-
+    
+    when(userService.findById(any())).thenReturn(Optional.of(userEntity));
     when(customPromptService.findById(promptIdString)).thenReturn(Optional.of(customPrompt));
     when(chatRepository.save(any(Chat.class))).thenReturn(testChat);
 
     // When
-    Chat result = chatService.getNewChat(testRequest);
+    Chat result = chatService.getNewChat(testRequest, testUser.getId());
 
     // Then
     assertNotNull(result);
@@ -194,15 +227,20 @@ class ChatServiceTest {
 
   @Test
   void getNewChat_WithInvalidPromptId_ShouldThrowException() {
+    User userEntity = new User();
+    userEntity.setId(UUID.fromString(testUser.getId()));
+    userEntity.setEmail(testUser.getEmail());
+    userEntity.setUsername(testUser.getUsername());
     // Given
     String promptId = "invalid-prompt";
     testRequest.setPromptId(promptId);
-
+    
+    when(userService.findById(any())).thenReturn(Optional.of(userEntity));
     when(customPromptService.findById(promptId)).thenReturn(Optional.empty());
 
     // When & Then
     ResponseStatusException exception = assertThrows(ResponseStatusException.class,
-        () -> chatService.getNewChat(testRequest));
+        () -> chatService.getNewChat(testRequest, testUser.getId()));
 
     assertEquals(HttpStatus.NOT_FOUND, exception.getStatusCode());
     assertTrue(exception.getReason().contains("Prompt not found with ID: " + promptId));
@@ -212,12 +250,17 @@ class ChatServiceTest {
 
   @Test
   void getNewChat_WithEmptyPromptId_ShouldCreateBasicChat() {
+    User userEntity = new User();
+    userEntity.setId(UUID.fromString(testUser.getId()));
+    userEntity.setEmail(testUser.getEmail());
+    userEntity.setUsername(testUser.getUsername());
     // Given
     testRequest.setPromptId("");
+    when(userService.findById(any())).thenReturn(Optional.of(userEntity));
     when(chatRepository.save(any(Chat.class))).thenReturn(testChat);
 
     // When
-    Chat result = chatService.getNewChat(testRequest);
+    Chat result = chatService.getNewChat(testRequest, testUser.getId());
 
     // Then
     assertNotNull(result);
@@ -231,7 +274,7 @@ class ChatServiceTest {
     when(chatRepository.findById(testChatId)).thenReturn(Optional.of(testChat));
 
     // When
-    chatService.deleteChat(testChatId);
+    chatService.deleteChat(testChatId, testUser);
 
     // Then
     verify(chatRepository).findById(testChatId);
@@ -245,7 +288,7 @@ class ChatServiceTest {
 
     // When & Then
     ResponseStatusException exception = assertThrows(ResponseStatusException.class,
-        () -> chatService.deleteChat(testChatId));
+        () -> chatService.deleteChat(testChatId, testUser));
 
     assertEquals(HttpStatus.NOT_FOUND, exception.getStatusCode());
     verify(chatRepository).findById(testChatId);
@@ -260,7 +303,7 @@ class ChatServiceTest {
     when(chatRepository.renameChatTitleById(testChatId, newTitle)).thenReturn(1);
 
     // When
-    int result = chatService.renameChatTitleById(testChatId, newTitle);
+    int result = chatService.renameChatTitleById(testChatId, newTitle, testUser);
 
     // Then
     assertEquals(1, result);
@@ -276,7 +319,7 @@ class ChatServiceTest {
 
     // When & Then
     ResponseStatusException exception = assertThrows(ResponseStatusException.class,
-        () -> chatService.renameChatTitleById(testChatId, newTitle));
+        () -> chatService.renameChatTitleById(testChatId, newTitle, testUser));
 
     assertEquals(HttpStatus.NOT_FOUND, exception.getStatusCode());
     assertTrue(exception.getReason().contains("Chat not found with ID: " + testChatId));
@@ -291,12 +334,126 @@ class ChatServiceTest {
     boolean initialFavStatus = testChat.getFav();
 
     // When
-    chatService.toggleChatFav(testChatId);
+    chatService.toggleChatFav(testChatId, testUser);
     boolean updatedFavStatus = testChat.getFav();
     verify(chatRepository).findById(testChatId);
 
     // Then
     assertNotEquals(initialFavStatus, updatedFavStatus);
     verify(chatRepository).setChatFav(testChatId, !initialFavStatus);
+  }
+
+  @Test
+  void changeMaxOutputTokens_WithExistingId_ShouldChangeMaxOutputTokens() {
+    // Given
+    Short newMaxTokens = (short) 2000;
+    when(chatRepository.findById(testChatId)).thenReturn(Optional.of(testChat));
+    when(chatRepository.changeMaxTokens(testChatId, newMaxTokens)).thenReturn(1);
+
+    // When
+    int result = chatService.changeMaxOutputTokens(testChatId, newMaxTokens, testUser);
+
+    // Then
+    assertEquals(1, result);
+    verify(chatRepository).findById(testChatId);
+    verify(chatRepository).changeMaxTokens(testChatId, newMaxTokens);
+  }
+
+  @Test
+  void changeMaxOutputTokens_WithNonExistentId_ShouldThrowException() {
+    // Given
+    Short newMaxTokens = (short) 2000;
+    when(chatRepository.findById(testChatId)).thenReturn(Optional.empty());
+
+    // When & Then
+    ResponseStatusException exception = assertThrows(ResponseStatusException.class,
+        () -> chatService.changeMaxOutputTokens(testChatId, newMaxTokens, testUser));
+
+    assertEquals(HttpStatus.NOT_FOUND, exception.getStatusCode());
+    assertTrue(exception.getReason().contains("Chat not found with ID: " + testChatId));
+    verify(chatRepository).findById(testChatId);
+    verify(chatRepository, never()).changeMaxTokens(any(), any());
+  }
+
+  @Test
+  void deleteChat_WithUnauthorizedUser_ShouldThrowForbiddenException() {
+    // Given
+    UserJwtDataDto unauthorizedUser = new UserJwtDataDto();
+    unauthorizedUser.setId(UUID.randomUUID().toString());
+    unauthorizedUser.setEmail("unauthorized@example.com");
+    unauthorizedUser.setUsername("unauthorized");
+
+    when(chatRepository.findById(testChatId)).thenReturn(Optional.of(testChat));
+
+    // When & Then
+    ResponseStatusException exception = assertThrows(ResponseStatusException.class,
+        () -> chatService.deleteChat(testChatId, unauthorizedUser));
+
+    assertEquals(HttpStatus.FORBIDDEN, exception.getStatusCode());
+    assertEquals("You don't have access to this chat", exception.getReason());
+    verify(chatRepository).findById(testChatId);
+    verify(chatRepository, never()).delete(any());
+  }
+
+  @Test
+  void renameChatTitleById_WithUnauthorizedUser_ShouldThrowForbiddenException() {
+    // Given
+    String newTitle = "New Chat Title";
+    UserJwtDataDto unauthorizedUser = new UserJwtDataDto();
+    unauthorizedUser.setId(UUID.randomUUID().toString());
+    unauthorizedUser.setEmail("unauthorized@example.com");
+    unauthorizedUser.setUsername("unauthorized");
+
+    when(chatRepository.findById(testChatId)).thenReturn(Optional.of(testChat));
+
+    // When & Then
+    ResponseStatusException exception = assertThrows(ResponseStatusException.class,
+        () -> chatService.renameChatTitleById(testChatId, newTitle, unauthorizedUser));
+
+    assertEquals(HttpStatus.FORBIDDEN, exception.getStatusCode());
+    assertEquals("You don't have access to this chat", exception.getReason());
+    verify(chatRepository).findById(testChatId);
+    verify(chatRepository, never()).renameChatTitleById(any(), any());
+  }
+
+  @Test
+  void changeMaxOutputTokens_WithUnauthorizedUser_ShouldThrowForbiddenException() {
+    // Given
+    Short newMaxTokens = (short) 2000;
+    UserJwtDataDto unauthorizedUser = new UserJwtDataDto();
+    unauthorizedUser.setId(UUID.randomUUID().toString());
+    unauthorizedUser.setEmail("unauthorized@example.com");
+    unauthorizedUser.setUsername("unauthorized");
+
+    when(chatRepository.findById(testChatId)).thenReturn(Optional.of(testChat));
+
+    // When & Then
+    ResponseStatusException exception = assertThrows(ResponseStatusException.class,
+        () -> chatService.changeMaxOutputTokens(testChatId, newMaxTokens, unauthorizedUser));
+
+    assertEquals(HttpStatus.FORBIDDEN, exception.getStatusCode());
+    assertEquals("You don't have access to this chat", exception.getReason());
+    verify(chatRepository).findById(testChatId);
+    verify(chatRepository, never()).changeMaxTokens(any(), any());
+  }
+
+  @Test
+  void toggleChatFav_WithUnauthorizedUser_ShouldThrowForbiddenException() {
+    // Given
+    UserJwtDataDto unauthorizedUser = new UserJwtDataDto();
+    unauthorizedUser.setId(UUID.randomUUID().toString());
+    unauthorizedUser.setEmail("unauthorized@example.com");
+    unauthorizedUser.setUsername("unauthorized");
+
+    when(chatRepository.findById(testChatId)).thenReturn(Optional.of(testChat));
+
+    // When & Then
+    ResponseStatusException exception = assertThrows(ResponseStatusException.class,
+        () -> chatService.toggleChatFav(testChatId, unauthorizedUser));
+
+    assertEquals(HttpStatus.FORBIDDEN, exception.getStatusCode());
+    assertEquals("You don't have access to this chat", exception.getReason());
+    verify(chatRepository).findById(testChatId);
+    verify(chatRepository, never()).setChatFav(any(), any());
   }
 }
