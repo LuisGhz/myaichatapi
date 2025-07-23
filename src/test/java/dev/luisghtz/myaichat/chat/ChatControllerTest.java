@@ -100,7 +100,8 @@ public class ChatControllerTest {
       when(chatService.getAllChats(userId)).thenReturn(expectedResponse);
 
       // Act & Assert
-      mockMvc.perform(get("/api/chat/all"))
+      mockMvc.perform(get("/api/chat/all")
+          .header("Authorization", "Bearer test-user-id"))
           .andExpect(status().isOk())
           .andExpect(jsonPath("$.chats").isArray())
           .andExpect(jsonPath("$.chats.length()").value(2));
@@ -124,7 +125,8 @@ public class ChatControllerTest {
           .thenReturn(expectedResponse);
 
       // Act & Assert
-      mockMvc.perform(get("/api/chat/{id}/messages", testChatId))
+      mockMvc.perform(get("/api/chat/{id}/messages", testChatId)
+          .header("Authorization", "Bearer test-user-id"))
           .andExpect(status().isOk())
           .andExpect(jsonPath("$.historyMessages").isArray());
 
@@ -144,7 +146,8 @@ public class ChatControllerTest {
           .thenThrow(exception);
 
       // Act & Assert
-      mockMvc.perform(get("/api/chat/{id}/messages", invalidId))
+      mockMvc.perform(get("/api/chat/{id}/messages", invalidId)
+          .header("Authorization", "Bearer test-user-id"))
           .andExpect(status().isNotFound())
           .andExpect(jsonPath("$.statusCode").value("NOT_FOUND"))
           .andExpect(jsonPath("$.message").value(exception.getMessage()));
@@ -169,7 +172,8 @@ public class ChatControllerTest {
       // Act & Assert
       mockMvc.perform(get("/api/chat/{id}/messages", testChatId)
           .param("page", "2")
-          .param("size", "5"))
+          .param("size", "5")
+          .header("Authorization", "Bearer test-user-id"))
           .andExpect(status().isOk())
           .andExpect(jsonPath("$.historyMessages[0].content").value("Paged message"));
 
@@ -205,7 +209,8 @@ public class ChatControllerTest {
           .param("prompt", requestDto.getPrompt())
           .param("chatId", requestDto.getChatId().toString())
           .param("maxOutputTokens", requestDto.getMaxOutputTokens().toString())
-          .param("model", requestDto.getModel()))
+          .param("model", requestDto.getModel())
+          .header("Authorization", "Bearer test-user-id"))
           .andExpect(status().isOk())
           .andExpect(jsonPath("$.content").value("AI response"));
 

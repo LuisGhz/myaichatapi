@@ -1,6 +1,8 @@
 package dev.luisghtz.myaichat.prompts;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -10,6 +12,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -26,6 +29,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import dev.luisghtz.myaichat.configurationMock.AIModelsControllerTestConfiguration;
 import dev.luisghtz.myaichat.configurationMock.jwt.JwtPermitAllTestConfiguration;
+import dev.luisghtz.myaichat.configurationMock.UserJwtDataTestConfiguration;
+import dev.luisghtz.myaichat.auth.dtos.UserJwtDataDto;
 import dev.luisghtz.myaichat.exceptions.AppNotFoundException;
 import dev.luisghtz.myaichat.prompts.dtos.CreateCustomPromptDtoReq;
 import dev.luisghtz.myaichat.prompts.dtos.CreateCustomPromptParamsDto;
@@ -36,7 +41,6 @@ import dev.luisghtz.myaichat.prompts.entities.CustomPrompt;
 import dev.luisghtz.myaichat.prompts.entities.PromptMessage;
 import dev.luisghtz.myaichat.prompts.entities.PromptParam;
 import dev.luisghtz.myaichat.prompts.services.CustomPromptService;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import dev.luisghtz.myaichat.prompts.dtos.update.UpdateCustomPromptDtoReq;
@@ -48,6 +52,7 @@ import dev.luisghtz.myaichat.prompts.dtos.update.UpdatedCustomPromptDtoRes;
 @Import({
   AIModelsControllerTestConfiguration.class,
   JwtPermitAllTestConfiguration.class,
+  UserJwtDataTestConfiguration.class,
 })
 @ActiveProfiles("test")
 public class PromptsControllerTest {
@@ -65,11 +70,13 @@ public class PromptsControllerTest {
   private CustomPrompt customPrompt;
   private UUID promptId;
   private UUID existingParamId; // Add ID for existing param
+  private UUID userId; // Add user ID for tests
 
   @BeforeEach
   void setUp() {
     promptId = UUID.randomUUID();
     existingParamId = UUID.randomUUID(); // Initialize existing param ID
+    userId = UUID.randomUUID(); // Initialize user ID
 
     // Setup request DTO
     createRequest = new CreateCustomPromptDtoReq();
@@ -97,6 +104,14 @@ public class PromptsControllerTest {
     createRequest.setMessages(Arrays.asList(messages));
   }
 
+  private UserJwtDataDto createTestUserJwtData() {
+    UserJwtDataDto user = new UserJwtDataDto();
+    user.setId("550e8400-e29b-41d4-a716-446655440000");
+    user.setEmail("testuser@example.com");
+    user.setUsername("testuser");
+    return user;
+  }
+
   @Nested
   @DisplayName("GET Endpoints")
   class GetEndpoints {
@@ -118,7 +133,7 @@ public class PromptsControllerTest {
       response.setPrompts(prompts);
 
       // Setup mock service
-      when(customPromptService.findAll()).thenReturn(response);
+      when(customPromptService.findAllByUserId(any(UUID.class))).thenReturn(response);
 
       // Execute and verify
       mockMvc.perform(get("/api/custom-prompts/all")
@@ -139,7 +154,7 @@ public class PromptsControllerTest {
       emptyResponse.setPrompts(Collections.emptyList());
 
       // Setup mock service
-      when(customPromptService.findAll()).thenReturn(emptyResponse);
+      when(customPromptService.findAllByUserId(any(UUID.class))).thenReturn(emptyResponse);
 
       // Execute and verify
       mockMvc.perform(get("/api/custom-prompts/all")
@@ -148,6 +163,36 @@ public class PromptsControllerTest {
           .andExpect(content().contentType(MediaType.APPLICATION_JSON))
           .andExpect(jsonPath("$.prompts").isArray())
           .andExpect(jsonPath("$.prompts.length()").value(0));
+    }
+
+    @Test
+    @DisplayName("GET /api/custom-prompts/{promptId} - Should return prompt by id")
+    void testGetPromptById() throws Exception {
+      // Setup mock service
+      when(customPromptService.findByIdAndUserId(anyString(), any(UUID.class)))
+          .thenReturn(Optional.of(customPrompt));
+
+      // Execute and verify
+      mockMvc.perform(get("/api/custom-prompts/{promptId}", promptId.toString())
+          .contentType(MediaType.APPLICATION_JSON))
+          .andExpect(status().isOk())
+          .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+          .andExpect(jsonPath("$.id").value(promptId.toString()))
+          .andExpect(jsonPath("$.name").value("Test Prompt"))
+          .andExpect(jsonPath("$.content").value("You are a helpful assistant"));
+    }
+
+    @Test
+    @DisplayName("GET /api/custom-prompts/{promptId} - Should return 404 when prompt not found")
+    void testGetPromptByIdNotFound() throws Exception {
+      // Setup mock service
+      when(customPromptService.findByIdAndUserId(anyString(), any(UUID.class)))
+          .thenReturn(Optional.empty());
+
+      // Execute and verify
+      mockMvc.perform(get("/api/custom-prompts/{promptId}", promptId.toString())
+          .contentType(MediaType.APPLICATION_JSON))
+          .andExpect(status().isNotFound());
     }
   }
 
@@ -159,7 +204,7 @@ public class PromptsControllerTest {
     @DisplayName("POST /api/custom-prompts - Should create a new custom prompt")
     void testCreateCustomPrompt() throws Exception {
       // Setup mock service
-      when(customPromptService.create(any(CreateCustomPromptDtoReq.class))).thenReturn(customPrompt);
+      when(customPromptService.create(any(CreateCustomPromptDtoReq.class), anyString())).thenReturn(customPrompt);
 
       // Execute and verify
       mockMvc.perform(post("/api/custom-prompts")
@@ -200,7 +245,7 @@ public class PromptsControllerTest {
       customPrompt.setContent("You are a helpful assistant in English.");
 
       // Setup mock service
-      when(customPromptService.create(any(CreateCustomPromptDtoReq.class))).thenReturn(customPrompt);
+      when(customPromptService.create(any(CreateCustomPromptDtoReq.class), anyString())).thenReturn(customPrompt);
       try {
         // Execute and verify
         mockMvc.perform(post("/api/custom-prompts")
@@ -239,7 +284,7 @@ public class PromptsControllerTest {
     @DisplayName("POST /api/custom-prompts - Invalid Role message")
     void testInvalidRoleMessage() throws Exception {
       // Setup mock service
-      when(customPromptService.create(any(CreateCustomPromptDtoReq.class))).thenReturn(customPrompt);
+      when(customPromptService.create(any(CreateCustomPromptDtoReq.class), anyString())).thenReturn(customPrompt);
       addDefaultMessages();
       createRequest.getMessages().get(0).setRole("InvalidRole");
       mockMvc.perform(post("/api/custom-prompts")
@@ -252,7 +297,7 @@ public class PromptsControllerTest {
     @DisplayName("POST /api/custom-prompts - Invalid Role message empty")
     void testInvalidRoleMessageEmpty() throws Exception {
       // Setup mock service
-      when(customPromptService.create(any(CreateCustomPromptDtoReq.class))).thenReturn(customPrompt);
+      when(customPromptService.create(any(CreateCustomPromptDtoReq.class), anyString())).thenReturn(customPrompt);
       addDefaultMessages();
       createRequest.getMessages().get(0).setRole("");
       mockMvc.perform(post("/api/custom-prompts")
@@ -265,7 +310,7 @@ public class PromptsControllerTest {
     @DisplayName("POST /api/custom-prompts - Invalid Role message empty trim")
     void testInvalidRoleMessageEmptyTrim() throws Exception {
       // Setup mock service
-      when(customPromptService.create(any(CreateCustomPromptDtoReq.class))).thenReturn(customPrompt);
+      when(customPromptService.create(any(CreateCustomPromptDtoReq.class), anyString())).thenReturn(customPrompt);
       addDefaultMessages();
       createRequest.getMessages().get(0).setRole("   ");
       mockMvc.perform(post("/api/custom-prompts")
@@ -278,7 +323,7 @@ public class PromptsControllerTest {
     @DisplayName("POST /api/custom-prompts - Invalid content message")
     void testInvalidContentMessage() throws Exception {
       // Setup mock service
-      when(customPromptService.create(any(CreateCustomPromptDtoReq.class))).thenReturn(customPrompt);
+      when(customPromptService.create(any(CreateCustomPromptDtoReq.class), anyString())).thenReturn(customPrompt);
       addDefaultMessages();
       createRequest.getMessages().get(0).setContent("");
       mockMvc.perform(post("/api/custom-prompts")
@@ -291,7 +336,7 @@ public class PromptsControllerTest {
     @DisplayName("POST /api/custom-prompts - Invalid content message trim")
     void testInvalidContentMessageTrim() throws Exception {
       // Setup mock service
-      when(customPromptService.create(any(CreateCustomPromptDtoReq.class))).thenReturn(customPrompt);
+      when(customPromptService.create(any(CreateCustomPromptDtoReq.class), anyString())).thenReturn(customPrompt);
       addDefaultMessages();
       createRequest.getMessages().get(0).setContent("   ");
       mockMvc.perform(post("/api/custom-prompts")
@@ -304,7 +349,7 @@ public class PromptsControllerTest {
     @DisplayName("POST /api/custom-prompts - Invalid content message (max length)")
     void testInvalidContentMessageMaxLength() throws Exception {
       // Setup mock service
-      when(customPromptService.create(any(CreateCustomPromptDtoReq.class))).thenReturn(customPrompt);
+      when(customPromptService.create(any(CreateCustomPromptDtoReq.class), anyString())).thenReturn(customPrompt);
       addDefaultMessages();
       createRequest.getMessages().get(0).setContent("a".repeat(10_001)); // Exceeds max length
       mockMvc.perform(post("/api/custom-prompts")
@@ -317,7 +362,7 @@ public class PromptsControllerTest {
     @DisplayName("POST /api/custom-prompts - Invalid param name empty")
     void testInvalidParamNameEmpty() throws Exception {
       // Setup mock service
-      when(customPromptService.create(any(CreateCustomPromptDtoReq.class))).thenReturn(customPrompt);
+      when(customPromptService.create(any(CreateCustomPromptDtoReq.class), anyString())).thenReturn(customPrompt);
       addDefaultParams();
       createRequest.getParams().get(0).setName("");
       mockMvc.perform(post("/api/custom-prompts")
@@ -330,7 +375,7 @@ public class PromptsControllerTest {
     @DisplayName("POST /api/custom-prompts - Invalid param name empty trim")
     void testInvalidParamNameEmptyTrim() throws Exception {
       // Setup mock service
-      when(customPromptService.create(any(CreateCustomPromptDtoReq.class))).thenReturn(customPrompt);
+      when(customPromptService.create(any(CreateCustomPromptDtoReq.class), anyString())).thenReturn(customPrompt);
       addDefaultParams();
       createRequest.getParams().get(0).setName("   ");
       mockMvc.perform(post("/api/custom-prompts")
@@ -343,7 +388,7 @@ public class PromptsControllerTest {
     @DisplayName("POST /api/custom-prompts - Invalid param name (max length)")
     void testInvalidParamNameMaxLength() throws Exception {
       // Setup mock service
-      when(customPromptService.create(any(CreateCustomPromptDtoReq.class))).thenReturn(customPrompt);
+      when(customPromptService.create(any(CreateCustomPromptDtoReq.class), anyString())).thenReturn(customPrompt);
       addDefaultParams();
       createRequest.getParams().get(0).setName("a".repeat(16)); // Exceeds max length
       mockMvc.perform(post("/api/custom-prompts")
@@ -356,7 +401,7 @@ public class PromptsControllerTest {
     @DisplayName("POST /api/custom-prompts - Invalid param value")
     void testInvalidParamValue() throws Exception {
       // Setup mock service
-      when(customPromptService.create(any(CreateCustomPromptDtoReq.class))).thenReturn(customPrompt);
+      when(customPromptService.create(any(CreateCustomPromptDtoReq.class), anyString())).thenReturn(customPrompt);
       addDefaultParams();
       createRequest.getParams().get(0).setValue("  ");
       mockMvc.perform(post("/api/custom-prompts")
@@ -369,7 +414,7 @@ public class PromptsControllerTest {
     @DisplayName("POST /api/custom-prompts - Invalid param value (max length)")
     void testInvalidParamValueMaxLength() throws Exception {
       // Setup mock service
-      when(customPromptService.create(any(CreateCustomPromptDtoReq.class))).thenReturn(customPrompt);
+      when(customPromptService.create(any(CreateCustomPromptDtoReq.class), anyString())).thenReturn(customPrompt);
       addDefaultParams();
       createRequest.getParams().get(0).setValue("a".repeat(101)); // Exceeds max length
       mockMvc.perform(post("/api/custom-prompts")
@@ -382,7 +427,7 @@ public class PromptsControllerTest {
     @DisplayName("POST /api/custom-prompts - Invalid prompt name (max length)")
     void testInvalidPromptNameMaxLength() throws Exception {
       // Setup mock service
-      when(customPromptService.create(any(CreateCustomPromptDtoReq.class))).thenReturn(customPrompt);
+      when(customPromptService.create(any(CreateCustomPromptDtoReq.class), anyString())).thenReturn(customPrompt);
       createRequest.setName("a".repeat(31)); // Exceeds max length
       mockMvc.perform(post("/api/custom-prompts")
           .contentType(MediaType.APPLICATION_JSON)
@@ -394,7 +439,7 @@ public class PromptsControllerTest {
     @DisplayName("POST /api/custom-prompts - Invalid prompt content (max length)")
     void testInvalidPromptContentMaxLength() throws Exception {
       // Setup mock service
-      when(customPromptService.create(any(CreateCustomPromptDtoReq.class))).thenReturn(customPrompt);
+      when(customPromptService.create(any(CreateCustomPromptDtoReq.class), anyString())).thenReturn(customPrompt);
       createRequest.setContent("a".repeat(10_001)); // Exceeds max length
       mockMvc.perform(post("/api/custom-prompts")
           .contentType(MediaType.APPLICATION_JSON)
@@ -406,7 +451,7 @@ public class PromptsControllerTest {
     @DisplayName("POST /api/custom-prompts - Should handle service exceptions")
     void testCreateCustomPromptWithServiceException() throws Exception {
       // Setup mock service to throw exception
-      when(customPromptService.create(any(CreateCustomPromptDtoReq.class)))
+      when(customPromptService.create(any(CreateCustomPromptDtoReq.class), anyString()))
           .thenThrow(new RuntimeException("Service error"));
 
       // Execute and verify
@@ -441,7 +486,7 @@ public class PromptsControllerTest {
       updateRequest.setMessages(Arrays.asList(updatedMessage));
 
       // Mock service call
-      doNothing().when(customPromptService).update(anyString(), any(UpdateCustomPromptDtoReq.class));
+      doNothing().when(customPromptService).update(anyString(), any(UpdateCustomPromptDtoReq.class), any(UUID.class));
 
       // Expected response
       UpdatedCustomPromptDtoRes expectedResponse = new UpdatedCustomPromptDtoRes("Prompt updated successfully");
@@ -455,7 +500,7 @@ public class PromptsControllerTest {
           .andExpect(content().json(objectMapper.writeValueAsString(expectedResponse)));
 
       // Verify service interaction
-      verify(customPromptService, times(1)).update(promptIdString, updateRequest);
+      verify(customPromptService, times(1)).update(eq(promptIdString), eq(updateRequest), any(UUID.class));
     }
 
     @Test
@@ -469,7 +514,7 @@ public class PromptsControllerTest {
 
       // Mock service call to throw exception
       doThrow(new AppNotFoundException("Prompt not found"))
-          .when(customPromptService).update(anyString(), any(UpdateCustomPromptDtoReq.class));
+          .when(customPromptService).update(anyString(), any(UpdateCustomPromptDtoReq.class), any(UUID.class));
 
       // Act & Assert
       mockMvc.perform(patch("/api/custom-prompts/{promptId}/update", promptIdString)
@@ -478,7 +523,7 @@ public class PromptsControllerTest {
           .andExpect(status().isNotFound());
 
       // Verify service interaction
-      verify(customPromptService, times(1)).update(promptIdString, updateRequest);
+      verify(customPromptService, times(1)).update(eq(promptIdString), eq(updateRequest), any(UUID.class));
     }
 
     @Test
@@ -497,7 +542,7 @@ public class PromptsControllerTest {
           .andExpect(status().isBadRequest());
 
       // Verify service interaction (should not be called)
-      verify(customPromptService, never()).update(anyString(), any(UpdateCustomPromptDtoReq.class));
+      verify(customPromptService, never()).update(anyString(), any(UpdateCustomPromptDtoReq.class), any(UUID.class));
     }
 
     @Test
@@ -516,7 +561,7 @@ public class PromptsControllerTest {
           .andExpect(status().isBadRequest());
 
       // Verify service interaction (should not be called)
-      verify(customPromptService, never()).update(anyString(), any(UpdateCustomPromptDtoReq.class));
+      verify(customPromptService, never()).update(anyString(), any(UpdateCustomPromptDtoReq.class), any(UUID.class));
     }
 
     @Test
@@ -535,7 +580,7 @@ public class PromptsControllerTest {
           .andExpect(status().isBadRequest());
 
       // Verify service interaction (should not be called)
-      verify(customPromptService, never()).update(anyString(), any(UpdateCustomPromptDtoReq.class));
+      verify(customPromptService, never()).update(anyString(), any(UpdateCustomPromptDtoReq.class), any(UUID.class));
     }
 
     @Test
@@ -559,7 +604,7 @@ public class PromptsControllerTest {
           .andExpect(status().isBadRequest());
 
       // Verify service interaction (should not be called)
-      verify(customPromptService, never()).update(anyString(), any(UpdateCustomPromptDtoReq.class));
+      verify(customPromptService, never()).update(anyString(), any(UpdateCustomPromptDtoReq.class), any(UUID.class));
     }
 
     @Test
@@ -583,7 +628,7 @@ public class PromptsControllerTest {
           .andExpect(status().isBadRequest());
 
       // Verify service interaction (should not be called)
-      verify(customPromptService, never()).update(anyString(), any(UpdateCustomPromptDtoReq.class));
+      verify(customPromptService, never()).update(anyString(), any(UpdateCustomPromptDtoReq.class), any(UUID.class));
     }
 
     @Test
@@ -607,7 +652,7 @@ public class PromptsControllerTest {
           .andExpect(status().isBadRequest());
 
       // Verify service interaction (should not be called)
-      verify(customPromptService, never()).update(anyString(), any(UpdateCustomPromptDtoReq.class));
+      verify(customPromptService, never()).update(anyString(), any(UpdateCustomPromptDtoReq.class), any(UUID.class));
     }
 
     @Test
@@ -631,7 +676,7 @@ public class PromptsControllerTest {
           .andExpect(status().isBadRequest());
 
       // Verify service interaction (should not be called)
-      verify(customPromptService, never()).update(anyString(), any(UpdateCustomPromptDtoReq.class));
+      verify(customPromptService, never()).update(anyString(), any(UpdateCustomPromptDtoReq.class), any(UUID.class));
     }
 
     @Test
@@ -655,7 +700,7 @@ public class PromptsControllerTest {
           .andExpect(status().isBadRequest());
 
       // Verify service interaction (should not be called)
-      verify(customPromptService, never()).update(anyString(), any(UpdateCustomPromptDtoReq.class));
+      verify(customPromptService, never()).update(anyString(), any(UpdateCustomPromptDtoReq.class), any(UUID.class));
     }
 
     @Test
@@ -673,7 +718,7 @@ public class PromptsControllerTest {
 
       // Mock service call to throw exception
       doThrow(new RuntimeException("Service error"))
-          .when(customPromptService).update(anyString(), any(UpdateCustomPromptDtoReq.class));
+          .when(customPromptService).update(anyString(), any(UpdateCustomPromptDtoReq.class), any(UUID.class));
 
       // Act & Assert
       mockMvc.perform(patch("/api/custom-prompts/{promptId}/update", promptIdString)
@@ -682,7 +727,7 @@ public class PromptsControllerTest {
           .andExpect(status().isInternalServerError());
 
       // Verify service interaction
-      verify(customPromptService, times(1)).update(promptIdString, updateRequest);
+      verify(customPromptService, times(1)).update(eq(promptIdString), eq(updateRequest), any(UUID.class));
     }
   }
 
@@ -695,7 +740,7 @@ public class PromptsControllerTest {
     void testDeleteParamSuccess() throws Exception {
       String promptIdString = promptId.toString();
       String paramId = promptIdString;
-      doNothing().when(customPromptService).deleteParam(promptIdString, paramId);
+      doNothing().when(customPromptService).deleteParam(eq(promptIdString), eq(paramId), any(UUID.class));
 
       mockMvc.perform(
           org.springframework.test.web.servlet.request.MockMvcRequestBuilders
@@ -704,7 +749,7 @@ public class PromptsControllerTest {
           .andExpect(status().isOk())
           .andExpect(content().string(""));
 
-      verify(customPromptService, times(1)).deleteParam(promptIdString, paramId);
+      verify(customPromptService, times(1)).deleteParam(eq(promptIdString), eq(paramId), any(UUID.class));
     }
 
     @Test
@@ -713,7 +758,7 @@ public class PromptsControllerTest {
       String promptIdString = promptId.toString();
       String paramId = promptIdString;
       doThrow(new RuntimeException("Service error"))
-          .when(customPromptService).deleteParam(promptIdString, paramId);
+          .when(customPromptService).deleteParam(eq(promptIdString), eq(paramId), any(UUID.class));
 
       mockMvc.perform(
           org.springframework.test.web.servlet.request.MockMvcRequestBuilders
@@ -721,7 +766,7 @@ public class PromptsControllerTest {
               .contentType(MediaType.APPLICATION_JSON))
           .andExpect(status().isInternalServerError());
 
-      verify(customPromptService, times(1)).deleteParam(promptIdString, paramId);
+      verify(customPromptService, times(1)).deleteParam(eq(promptIdString), eq(paramId), any(UUID.class));
     }
 
     @Test
@@ -736,7 +781,7 @@ public class PromptsControllerTest {
               .contentType(MediaType.APPLICATION_JSON))
           .andExpect(status().isBadRequest());
 
-      verify(customPromptService, never()).deleteParam(anyString(), anyString());
+      verify(customPromptService, never()).deleteParam(anyString(), anyString(), any(UUID.class));
     }
 
     @Test
@@ -751,7 +796,7 @@ public class PromptsControllerTest {
               .contentType(MediaType.APPLICATION_JSON))
           .andExpect(status().isBadRequest());
 
-      verify(customPromptService, never()).deleteParam(anyString(), anyString());
+      verify(customPromptService, never()).deleteParam(anyString(), anyString(), any(UUID.class));
     }
 
     @Test
@@ -759,7 +804,7 @@ public class PromptsControllerTest {
     void testDeleteMessageSuccess() throws Exception {
       String promptIdString = promptId.toString();
       String messageId = UUID.randomUUID().toString();
-      doNothing().when(customPromptService).deleteMessage(promptIdString, messageId);
+      doNothing().when(customPromptService).deleteMessage(eq(promptIdString), eq(messageId), any(UUID.class));
 
       mockMvc.perform(
           org.springframework.test.web.servlet.request.MockMvcRequestBuilders
@@ -768,7 +813,7 @@ public class PromptsControllerTest {
           .andExpect(status().isOk())
           .andExpect(content().string(""));
 
-      verify(customPromptService, times(1)).deleteMessage(promptIdString, messageId);
+      verify(customPromptService, times(1)).deleteMessage(eq(promptIdString), eq(messageId), any(UUID.class));
     }
 
     @Test
@@ -777,7 +822,7 @@ public class PromptsControllerTest {
       String promptIdString = promptId.toString();
       String messageId = UUID.randomUUID().toString();
       doThrow(new RuntimeException("Service error"))
-          .when(customPromptService).deleteMessage(promptIdString, messageId);
+          .when(customPromptService).deleteMessage(eq(promptIdString), eq(messageId), any(UUID.class));
 
       mockMvc.perform(
           org.springframework.test.web.servlet.request.MockMvcRequestBuilders
@@ -785,7 +830,7 @@ public class PromptsControllerTest {
               .contentType(MediaType.APPLICATION_JSON))
           .andExpect(status().isInternalServerError());
 
-      verify(customPromptService, times(1)).deleteMessage(promptIdString, messageId);
+      verify(customPromptService, times(1)).deleteMessage(eq(promptIdString), eq(messageId), any(UUID.class));
     }
 
     @Test
@@ -800,7 +845,7 @@ public class PromptsControllerTest {
               .contentType(MediaType.APPLICATION_JSON))
           .andExpect(status().isBadRequest());
 
-      verify(customPromptService, never()).deleteMessage(anyString(), anyString());
+      verify(customPromptService, never()).deleteMessage(anyString(), anyString(), any(UUID.class));
     }
 
     @Test
@@ -815,14 +860,14 @@ public class PromptsControllerTest {
               .contentType(MediaType.APPLICATION_JSON))
           .andExpect(status().isBadRequest());
 
-      verify(customPromptService, never()).deleteMessage(anyString(), anyString());
+      verify(customPromptService, never()).deleteMessage(anyString(), anyString(), any(UUID.class));
     }
 
     @Test
     @DisplayName("DELETE /api/custom-prompts/{promptId}/delete - Should delete prompt successfully")
     void testDeletePromptSuccess() throws Exception {
       String promptIdString = promptId.toString();
-      doNothing().when(customPromptService).delete(promptIdString);
+      doNothing().when(customPromptService).delete(eq(promptIdString), any(UUID.class));
 
       mockMvc.perform(
           org.springframework.test.web.servlet.request.MockMvcRequestBuilders
@@ -831,7 +876,7 @@ public class PromptsControllerTest {
           .andExpect(status().isOk())
           .andExpect(content().string(""));
 
-      verify(customPromptService, times(1)).delete(promptIdString);
+      verify(customPromptService, times(1)).delete(eq(promptIdString), any(UUID.class));
     }
 
     @Test
@@ -839,7 +884,7 @@ public class PromptsControllerTest {
     void testDeletePromptServiceException() throws Exception {
       String promptIdString = promptId.toString();
       doThrow(new RuntimeException("Service error"))
-          .when(customPromptService).delete(promptIdString);
+          .when(customPromptService).delete(eq(promptIdString), any(UUID.class));
 
       mockMvc.perform(
           org.springframework.test.web.servlet.request.MockMvcRequestBuilders
@@ -847,7 +892,7 @@ public class PromptsControllerTest {
               .contentType(MediaType.APPLICATION_JSON))
           .andExpect(status().isInternalServerError());
 
-      verify(customPromptService, times(1)).delete(promptIdString);
+      verify(customPromptService, times(1)).delete(eq(promptIdString), any(UUID.class));
     }
 
     @Test
@@ -861,7 +906,7 @@ public class PromptsControllerTest {
               .contentType(MediaType.APPLICATION_JSON))
           .andExpect(status().isBadRequest());
 
-      verify(customPromptService, never()).delete(anyString());
+      verify(customPromptService, never()).delete(anyString(), any(UUID.class));
     }
   }
 }
