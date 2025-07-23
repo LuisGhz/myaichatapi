@@ -30,9 +30,9 @@ public class ChatService {
   private final AIService aiProviderService;
   private final JwtService jwtService;
 
-  public ChatsListResponseDto getAllChats(String authHeader) {
-    UUID userId = jwtService.getUserIdFromToken(authHeader);
-    var chats = chatRepository.findAllByUserIdOrderByCreatedAtAsc(userId);
+  public ChatsListResponseDto getAllChats(String userId) {
+    UUID userUUID = UUID.fromString(userId);
+    var chats = chatRepository.findAllByUserIdOrderByCreatedAtAsc(userUUID);
     ChatsListResponseDto chatsListResponseDto = new ChatsListResponseDto();
     chatsListResponseDto.setChats(chats.stream()
         .map(chat -> new ChatSummary(chat.getId(), chat.getTitle(), chat.getFav()))
