@@ -20,14 +20,14 @@ public class AIService implements AIStrategyService {
 
   @Override
   public ChatResponse sendNewMessage(List<AppMessage> messages, Chat chat) {
-    if (chat.getModel().startsWith("gpt-")) {
+    if (chat.getModel().startsWith("gpt-") || chat.getModel().startsWith("o4")) {
       log.info("Sending message to OpenAI");
       return openAIService.sendNewMessage(messages, chat);
     } else if (chat.getModel().startsWith("gemini-")) {
       log.info("Sending message to Vertex Gemini");
       return vertexGeminiService.sendNewMessage(messages, chat);
     } else {
-      throw new UnsupportedOperationException("Unsupported model: " + chat.getModel());
+      throw new UnsupportedOperationException("Unsupported model for messages: " + chat.getModel());
     }
   }
 
@@ -37,7 +37,7 @@ public class AIService implements AIStrategyService {
     } else if (chat.getModel().startsWith("gemini-")) {
       return vertexGeminiService.generateTitle(userMessage, assistantMessage);
     } else {
-      throw new UnsupportedOperationException("Unsupported model: " + chat.getModel());
+      throw new UnsupportedOperationException("Unsupported model for title generation: " + chat.getModel());
     }
   }
 
