@@ -20,7 +20,7 @@ public class AIService implements AIStrategyService {
 
   @Override
   public ChatResponse sendNewMessage(List<AppMessage> messages, Chat chat) {
-    if (chat.getModel().startsWith("gpt-") || chat.getModel().startsWith("o4")) {
+    if (chat.getModel().startsWith("gpt-") || chat.getModel().matches("^o\\d.*")) {
       log.info("Sending message to OpenAI");
       return openAIService.sendNewMessage(messages, chat);
     } else if (chat.getModel().startsWith("gemini-")) {
@@ -32,7 +32,7 @@ public class AIService implements AIStrategyService {
   }
 
   public String generateTitle(Chat chat, String userMessage, String assistantMessage) {
-    if (chat.getModel().startsWith("gpt-")) {
+    if (chat.getModel().startsWith("gpt-") || chat.getModel().matches("^o\\d.*")) {
       return openAIService.generateTitle(userMessage, assistantMessage);
     } else if (chat.getModel().startsWith("gemini-")) {
       return vertexGeminiService.generateTitle(userMessage, assistantMessage);
