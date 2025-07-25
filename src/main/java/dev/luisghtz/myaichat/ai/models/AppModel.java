@@ -8,4 +8,5 @@ import lombok.Data;
 public class AppModel {
   private String key;
   private int maxTokens;
+  private double temperature = 0;
 }
