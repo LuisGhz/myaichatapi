@@ -1,8 +1,7 @@
 package dev.luisghtz.myaichat.ai.services;
 
 import java.util.List;
-import java.net.MalformedURLException;
-import java.net.URL;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.stream.Collectors;
 
@@ -10,9 +9,9 @@ import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.ai.chat.messages.UserMessage;
+import org.springframework.ai.content.Media;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.model.ChatResponse;
-import org.springframework.ai.model.Media;
 import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.ai.openai.api.OpenAiApi;
 import org.springframework.stereotype.Service;
@@ -88,9 +87,11 @@ public class OpenAIService implements AIProviderService {
         message.getId() == null) {
       try {
         MimeType mimeType = getMimeType(message.getFileUrl());
-        return new UserMessage(message.getContent(),
-            new Media(mimeType, new URL(message.getFileUrl())));
-      } catch (MalformedURLException e) {
+        return UserMessage.builder()
+            .text(message.getContent())
+            .media(new Media(mimeType, new URI(message.getFileUrl())))
+            .build();
+      } catch (Exception e) {
         e.printStackTrace();
       }
     }

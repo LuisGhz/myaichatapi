@@ -1,7 +1,7 @@
 package dev.luisghtz.myaichat.ai.services;
 
-import java.net.MalformedURLException;
-import java.net.URL;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -11,7 +11,7 @@ import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.model.ChatResponse;
-import org.springframework.ai.model.Media;
+import org.springframework.ai.content.Media;
 import org.springframework.ai.vertexai.gemini.VertexAiGeminiChatOptions;
 import org.springframework.stereotype.Service;
 import org.springframework.util.MimeType;
@@ -88,9 +88,11 @@ public class VertexGeminiService implements AIProviderService {
         message.getId() == null) {
       try {
         MimeType mimeType = getMimeType(message.getFileUrl());
-        return new UserMessage(message.getContent(),
-            new Media(mimeType, new URL(message.getFileUrl())));
-      } catch (MalformedURLException e) {
+        return UserMessage.builder()
+            .text(message.getContent())
+            .media(new Media(mimeType, new URI(message.getFileUrl())))
+            .build();
+      } catch (URISyntaxException e) {
         e.printStackTrace();
       }
     }
