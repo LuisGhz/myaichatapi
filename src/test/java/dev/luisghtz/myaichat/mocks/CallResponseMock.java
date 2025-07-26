@@ -1,6 +1,7 @@
 package dev.luisghtz.myaichat.mocks;
 
 import org.springframework.ai.chat.client.ChatClient.CallResponseSpec;
+import org.springframework.ai.chat.client.ChatClientResponse;
 import org.springframework.ai.chat.client.ResponseEntity;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.converter.StructuredOutputConverter;
@@ -53,6 +54,11 @@ public class CallResponseMock implements CallResponseSpec {
 
   @Override
   public <T> ResponseEntity<ChatResponse, T> responseEntity(StructuredOutputConverter<T> structuredOutputConverter) {
+    return null;
+  }
+
+  @Override
+  public ChatClientResponse chatClientResponse() {
     return null;
   }
   

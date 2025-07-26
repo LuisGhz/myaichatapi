@@ -16,11 +16,11 @@ import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.model.Generation;
-import org.springframework.ai.model.Media;
+import org.springframework.ai.content.Media;
 import static org.springframework.util.MimeTypeUtils.*;
 
 import java.net.MalformedURLException;
-import java.net.URL;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -46,7 +46,6 @@ class OpenAIServiceTest {
     chat.setMaxOutputTokens((short) 2000);
     return chat;
   }
-
 
   @Test
   void sendNewMessage_success() {
@@ -96,7 +95,7 @@ class OpenAIServiceTest {
       // Assert
       assertNotNull(response);
       assertEquals("Hello", response.getResult().getOutput().getText());
-      mediaMockedConstruction.verify(() -> new Media(IMAGE_PNG, new URL("https://example.com/image.png")));
+      mediaMockedConstruction.verify(() -> new Media(IMAGE_PNG, new URI("https://example.com/image.png")));
     }
   }
 
@@ -125,7 +124,7 @@ class OpenAIServiceTest {
       // Assert
       assertNotNull(response);
       assertEquals("Hello", response.getResult().getOutput().getText());
-      mediaMockedConstruction.verify(() -> new Media(IMAGE_JPEG, new URL("https://example.com/image.jpg")));
+      mediaMockedConstruction.verify(() -> new Media(IMAGE_JPEG, new URI("https://example.com/image.jpg")));
     }
   }
 
@@ -154,7 +153,7 @@ class OpenAIServiceTest {
       // Assert
       assertNotNull(response);
       assertEquals("Hello", response.getResult().getOutput().getText());
-      mediaMockedConstruction.verify(() -> new Media(IMAGE_JPEG, new URL("https://example.com/image.jpeg")));
+      mediaMockedConstruction.verify(() -> new Media(IMAGE_JPEG, new URI("https://example.com/image.jpeg")));
     }
   }
 
@@ -183,7 +182,7 @@ class OpenAIServiceTest {
       // Assert
       assertNotNull(response);
       assertEquals("Hello", response.getResult().getOutput().getText());
-      mediaMockedConstruction.verify(() -> new Media(IMAGE_GIF, new URL("https://example.com/image.gif")));
+      mediaMockedConstruction.verify(() -> new Media(IMAGE_GIF, new URI("https://example.com/image.gif")));
     }
   }
 

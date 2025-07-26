@@ -15,7 +15,7 @@ import org.springframework.ai.chat.client.ChatClient.StreamResponseSpec;
 import org.springframework.ai.chat.client.advisor.api.Advisor;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.prompt.ChatOptions;
-import org.springframework.ai.model.function.FunctionCallback;
+import org.springframework.ai.template.TemplateRenderer;
 import org.springframework.ai.tool.ToolCallback;
 import org.springframework.ai.tool.ToolCallbackProvider;
 import org.springframework.core.io.Resource;
@@ -62,37 +62,7 @@ public class ChatClientRequestMock implements ChatClientRequestSpec {
   }
 
   @Override
-  public ChatClientRequestSpec tools(String... toolNames) {
-    return null;
-  }
-
-  @Override
-  public ChatClientRequestSpec tools(@SuppressWarnings("deprecation") FunctionCallback... toolCallbacks) {
-    return null;
-  }
-
-  @Override
-  public ChatClientRequestSpec tools(List<ToolCallback> toolCallbacks) {
-    return null;
-  }
-
-  @Override
   public ChatClientRequestSpec tools(Object... toolObjects) {
-    return null;
-  }
-
-  @Override
-  public ChatClientRequestSpec tools(ToolCallbackProvider... toolCallbackProviders) {
-    return null;
-  }
-
-  @Override
-  public <I, O> ChatClientRequestSpec functions(@SuppressWarnings("deprecation") FunctionCallback... functionCallbacks) {
-    return null;
-  }
-
-  @Override
-  public ChatClientRequestSpec functions(String... functionBeanNames) {
     return null;
   }
 
@@ -150,5 +120,35 @@ public class ChatClientRequestMock implements ChatClientRequestSpec {
   public StreamResponseSpec stream() {
     return null;
   }
-  
+
+  @Override
+  public ChatClientRequestSpec toolNames(String... toolNames) {
+    // TODO Auto-generated method stub
+    throw new UnsupportedOperationException("Unimplemented method 'toolNames'");
+  }
+
+  @Override
+  public ChatClientRequestSpec toolCallbacks(ToolCallback... toolCallbacks) {
+    // TODO Auto-generated method stub
+    throw new UnsupportedOperationException("Unimplemented method 'toolCallbacks'");
+  }
+
+  @Override
+  public ChatClientRequestSpec toolCallbacks(List<ToolCallback> toolCallbacks) {
+    // TODO Auto-generated method stub
+    throw new UnsupportedOperationException("Unimplemented method 'toolCallbacks'");
+  }
+
+  @Override
+  public ChatClientRequestSpec toolCallbacks(ToolCallbackProvider... toolCallbackProviders) {
+    // TODO Auto-generated method stub
+    throw new UnsupportedOperationException("Unimplemented method 'toolCallbacks'");
+  }
+
+  @Override
+  public ChatClientRequestSpec templateRenderer(TemplateRenderer templateRenderer) {
+    // TODO Auto-generated method stub
+    throw new UnsupportedOperationException("Unimplemented method 'templateRenderer'");
+  }
+
 }
