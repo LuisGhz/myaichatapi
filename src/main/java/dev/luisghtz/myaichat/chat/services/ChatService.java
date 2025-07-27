@@ -50,6 +50,7 @@ public class ChatService {
     if (chat == null) {
       chat = getNewChat(newMessageRequestDto, userId);
     }
+    updateIsWebSearchModeIfApply(chat, newMessageRequestDto);
     return chat;
   }
 
@@ -126,6 +127,14 @@ public class ChatService {
   private void validateChatBelongsToUser(Chat chat, UserJwtDataDto user) {
     if (!chat.getUser().getId().equals(UUID.fromString(user.getId()))) {
       throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You don't have access to this chat");
+    }
+  }
+
+  private void updateIsWebSearchModeIfApply(Chat chat, NewMessageRequestDto newMessageRequestDto) {
+    if (newMessageRequestDto.getIsWebSearchMode() != null
+        && !newMessageRequestDto.getIsWebSearchMode().equals(chat.getIsWebSearchMode())) {
+      chat.setIsWebSearchMode(newMessageRequestDto.getIsWebSearchMode());
+      chatRepository.save(chat);
     }
   }
 }
