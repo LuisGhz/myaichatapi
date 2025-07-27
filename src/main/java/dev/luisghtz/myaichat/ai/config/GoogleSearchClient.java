@@ -40,7 +40,8 @@ public class GoogleSearchClient {
     params.put("key", apiKey);
     params.put("cx", customSearchEngineId);
     params.put("query", query);
-    String url = "https://www.googleapis.com/customsearch/v1?key={key}&cx={cx}&q={query}";
+    params.put("num", "5"); // Number of results to return
+    String url = "https://www.googleapis.com/customsearch/v1?key={key}&cx={cx}&q={query}&num={num}";
     GoogleSearchResponse response = restTemplate.getForObject(
         url, GoogleSearchResponse.class,
         params);
