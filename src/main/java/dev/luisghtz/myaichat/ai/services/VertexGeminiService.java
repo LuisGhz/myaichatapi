@@ -93,6 +93,9 @@ public class VertexGeminiService implements AIProviderService {
             .text(message.getContent())
             .media(new Media(mimeType, new URI(message.getFileUrl())))
             .build();
+      } catch (FileNotValidException e) {
+        // Rethrow the FileNotValidException to maintain proper error handling
+        throw e;
       } catch (URISyntaxException e) {
         e.printStackTrace();
       }
