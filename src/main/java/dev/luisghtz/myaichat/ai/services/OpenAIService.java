@@ -11,6 +11,7 @@ import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.content.Media;
 import org.springframework.ai.chat.client.ChatClient;
+import dev.luisghtz.myaichat.ai.config.GoogleSearchClient;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.ai.openai.api.OpenAiApi;
@@ -20,6 +21,7 @@ import org.springframework.util.MimeTypeUtils;
 
 import dev.luisghtz.myaichat.ai.models.AIProviderService;
 import dev.luisghtz.myaichat.ai.models.AppModels;
+import dev.luisghtz.myaichat.ai.utils.ChatClientToolsUtil;
 import dev.luisghtz.myaichat.ai.utils.MessagesUtil;
 import dev.luisghtz.myaichat.chat.entities.AppMessage;
 import dev.luisghtz.myaichat.chat.entities.Chat;
@@ -35,6 +37,7 @@ public class OpenAIService implements AIProviderService {
   private final String TITLE_PROMPT = "Generate a concise title of no more than 5 words that summarizes this conversation, "
       + "avoid to use markdown styles, title should be only text. "
       + "The title should be in the same language as the conversation.";
+  private final ChatClientToolsUtil chatClientUtil;
 
   public ChatResponse sendNewMessage(List<AppMessage> messages, Chat chat) {
     List<Message> modelMessages = new ArrayList<>();
@@ -47,17 +50,16 @@ public class OpenAIService implements AIProviderService {
         return new AssistantMessage(message.getContent());
       return generateUserMessage(message);
     }).collect(Collectors.toList());
-
     modelMessages.addAll(convertedMessages);
-    // Always create the chat response
     var temperature = AppModels.getTemperature(chat.getModel());
+
     OpenAiChatOptions options = OpenAiChatOptions.builder()
         .model(chat.getModel())
         .maxCompletionTokens(chat.getMaxOutputTokens().intValue())
         .temperature(temperature)
         .build();
-    ChatResponse chatResponse = openAIChatClient.prompt()
-        .messages(modelMessages).options(options).call().chatResponse();
+    var chatRequest = chatClientUtil.getChatClientRequestSpec(openAIChatClient, chat);
+    var chatResponse = chatRequest.messages(modelMessages).options(options).call().chatResponse();
 
     return chatResponse;
   }

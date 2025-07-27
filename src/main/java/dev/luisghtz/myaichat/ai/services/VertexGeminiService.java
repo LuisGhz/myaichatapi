@@ -19,6 +19,7 @@ import org.springframework.util.MimeTypeUtils;
 
 import dev.luisghtz.myaichat.ai.models.AIProviderService;
 import dev.luisghtz.myaichat.ai.models.AppModels;
+import dev.luisghtz.myaichat.ai.utils.ChatClientToolsUtil;
 import dev.luisghtz.myaichat.ai.utils.MessagesUtil;
 import dev.luisghtz.myaichat.chat.entities.AppMessage;
 import dev.luisghtz.myaichat.chat.entities.Chat;
@@ -34,6 +35,7 @@ public class VertexGeminiService implements AIProviderService {
   private final String TITLE_PROMPT = "Generate a concise title of no more than 5 words that summarizes this conversation, "
       + "avoid to use markdown styles, title should be only text. "
       + "The title should be in the same language as the conversation.";
+  private final ChatClientToolsUtil chatClientUtil;
 
   @Override
   public ChatResponse sendNewMessage(List<AppMessage> messages, Chat chat) {
@@ -49,14 +51,13 @@ public class VertexGeminiService implements AIProviderService {
     }).collect(Collectors.toList());
 
     modelMessages.addAll(convertedMessages);
-    // Always create the chat response
-    VertexAiGeminiChatOptions options = VertexAiGeminiChatOptions.builder()
+
+    var options = VertexAiGeminiChatOptions.builder()
         .model(chat.getModel())
         .maxOutputTokens(chat.getMaxOutputTokens().intValue())
-        .googleSearchRetrieval(chat.getIsWebSearchMode())
         .build();
-    ChatResponse chatResponse = vertextAIChatClient.prompt()
-        .messages(modelMessages).options(options).call().chatResponse();
+    var chatRequest = chatClientUtil.getChatClientRequestSpec(vertextAIChatClient, chat);
+    var chatResponse = chatRequest.messages(modelMessages).options(options).call().chatResponse();
 
     return chatResponse;
   }
