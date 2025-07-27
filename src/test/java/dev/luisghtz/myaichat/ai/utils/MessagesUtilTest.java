@@ -16,6 +16,7 @@ import org.springframework.ai.chat.messages.UserMessage;
 import java.util.ArrayList;
 import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 class MessagesUtilTest {
 
@@ -69,8 +70,7 @@ class MessagesUtilTest {
       CustomPrompt customPrompt = new CustomPrompt();
       customPrompt.setMessages(List.of(
           PromptMessage.builder().role("User").content("Hello!").build(),
-          PromptMessage.builder().role("Assistant").content("Hi there!").build()
-      ));
+          PromptMessage.builder().role("Assistant").content("Hi there!").build()));
       chat.setCustomPrompt(customPrompt);
 
       MessagesUtil.addInitialMessagesIfApply(chat, messages);
@@ -90,6 +90,65 @@ class MessagesUtilTest {
       MessagesUtil.addInitialMessagesIfApply(chat, messages);
 
       assertTrue(messages.isEmpty());
+    }
+  }
+
+  @Nested
+  @DisplayName("addSystemMessage Web Search Functionality")
+  class AddSystemMessageWebSearch {
+
+    @Test
+    @DisplayName("Should append web search instructions to default system message when web search mode is enabled")
+    void addSystemMessage_webSearchMode_defaultPrompt() {
+      Chat chatMock = mock(Chat.class);
+      List<Message> messages = new ArrayList<>();
+      when(chatMock.getCustomPrompt()).thenReturn(null);
+      when(chatMock.getIsWebSearchMode()).thenReturn(true);
+
+      MessagesUtil.addSystemMessage(chatMock, messages);
+
+      assertEquals(1, messages.size());
+      assertTrue(messages.get(0) instanceof SystemMessage);
+      String text = messages.get(0).getText();
+      assertTrue(text.startsWith("You are a helpful assistant."));
+      assertTrue(text.contains("--- WEB SEARCH INSTRUCTIONS ---"));
+      assertTrue(text.contains("web_search"));
+    }
+
+    @Test
+    @DisplayName("Should append web search instructions to custom system message when web search mode is enabled")
+    void addSystemMessage_webSearchMode_customPrompt() {
+      Chat chatMock = mock(Chat.class);
+      List<Message> messages = new ArrayList<>();
+      CustomPrompt customPrompt = new CustomPrompt();
+      customPrompt.setContent("Custom system prompt.");
+      when(chatMock.getCustomPrompt()).thenReturn(customPrompt);
+      when(chatMock.getIsWebSearchMode()).thenReturn(true);
+
+      MessagesUtil.addSystemMessage(chatMock, messages);
+
+      assertEquals(1, messages.size());
+      assertTrue(messages.get(0) instanceof SystemMessage);
+      String text = messages.get(0).getText();
+      assertTrue(text.startsWith("Custom system prompt."));
+      assertTrue(text.contains("--- WEB SEARCH INSTRUCTIONS ---"));
+      assertTrue(text.contains("web_search"));
+    }
+
+    @Test
+    @DisplayName("Should NOT append web search instructions when web search mode is disabled")
+    void addSystemMessage_noWebSearchMode() {
+      Chat chatMock = mock(Chat.class);
+      List<Message> messages = new ArrayList<>();
+      when(chatMock.getCustomPrompt()).thenReturn(null);
+      when(chatMock.getIsWebSearchMode()).thenReturn(false);
+
+      MessagesUtil.addSystemMessage(chatMock, messages);
+
+      assertEquals(1, messages.size());
+      assertTrue(messages.get(0) instanceof SystemMessage);
+      String text = messages.get(0).getText();
+      assertEquals("You are a helpful assistant.", text);
     }
   }
 }
