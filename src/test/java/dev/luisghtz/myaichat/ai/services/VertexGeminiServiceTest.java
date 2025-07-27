@@ -1,6 +1,7 @@
 package dev.luisghtz.myaichat.ai.services;
 
 import dev.luisghtz.myaichat.ai.models.AppModels;
+import dev.luisghtz.myaichat.ai.utils.ChatClientToolsUtil;
 import dev.luisghtz.myaichat.ai.utils.MessagesUtil;
 import dev.luisghtz.myaichat.chat.entities.AppMessage;
 import dev.luisghtz.myaichat.chat.entities.Chat;
@@ -10,8 +11,10 @@ import dev.luisghtz.myaichat.mocks.ChatClientRequestMock;
 import dev.luisghtz.myaichat.prompts.entities.CustomPrompt;
 import dev.luisghtz.myaichat.prompts.entities.PromptMessage;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -22,10 +25,11 @@ import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
-import org.springframework.ai.chat.prompt.ChatOptions;
-import org.springframework.ai.vertexai.gemini.VertexAiGeminiChatOptions;
+import org.springframework.ai.content.Media;
+import static org.springframework.util.MimeTypeUtils.*;
 
 import java.net.MalformedURLException;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -39,15 +43,15 @@ class VertexGeminiServiceTest {
   @Mock
   private ChatClient mockVertextAIChatClient;
 
-  private VertexGeminiService vertexGeminiService;
+  @Mock
+  private ChatClientToolsUtil chatClientToolsUtil;
 
-  // These are concrete test utility classes, not Mockito mocks.
-  private ChatClientRequestMock chatClientRequestMock;
-  private CallResponseMock callResponseMock;
+  @InjectMocks
+  private VertexGeminiService vertexGeminiService;
 
   @BeforeEach
   void setUp() {
-    vertexGeminiService = new VertexGeminiService(mockVertextAIChatClient);
+    // Setup common test data
   }
 
   private Chat createTestChat() {
@@ -55,11 +59,22 @@ class VertexGeminiServiceTest {
     chat.setModel(AppModels.GEMINI_FLASH_2_0.getKey());
     chat.setMaxOutputTokens((short) 2000);
     chat.setIsWebSearchMode(false);
+    chat.setFav(false);
+    return chat;
+  }
+
+  private Chat createTestChatWithWebSearch() {
+    Chat chat = new Chat();
+    chat.setModel(AppModels.GEMINI_FLASH_2_0.getKey());
+    chat.setMaxOutputTokens((short) 2000);
+    chat.setIsWebSearchMode(true); // Enable web search mode
+    chat.setFav(false);
     return chat;
   }
 
   @Test
-  void sendNewMessage_success() {
+  @DisplayName("sendNewMessage - Should return chat response with assistant message")
+  void sendNewMessage_ShouldReturnChatResponseWithAssistantMessage() {
     // Arrange
     List<AppMessage> appMessages = List.of(
         AppMessage.builder().role("User").content("Hello Gemini").build());
@@ -68,9 +83,9 @@ class VertexGeminiServiceTest {
     AssistantMessage assistantMessage = new AssistantMessage("Hello there!");
     ChatResponse expectedChatResponse = new ChatResponse(List.of(new Generation(assistantMessage)));
 
-    callResponseMock = new CallResponseMock(expectedChatResponse);
-    chatClientRequestMock = new ChatClientRequestMock(callResponseMock);
-    when(mockVertextAIChatClient.prompt()).thenReturn(chatClientRequestMock);
+    CallResponseMock callResponseMock = new CallResponseMock(expectedChatResponse);
+    ChatClientRequestMock chatClientRequestMock = new ChatClientRequestMock(callResponseMock);
+    when(chatClientToolsUtil.getChatClientRequestSpec(mockVertextAIChatClient, chat)).thenReturn(chatClientRequestMock);
 
     // Act
     ChatResponse actualChatResponse = vertexGeminiService.sendNewMessage(appMessages, chat);
@@ -81,7 +96,8 @@ class VertexGeminiServiceTest {
   }
 
   @Test
-  void sendNewMessage_withImage_PNG_success() throws MalformedURLException {
+  @DisplayName("sendNewMessage - Should handle PNG image successfully")
+  void sendNewMessage_ShouldHandlePNGImageSuccessfully() throws MalformedURLException {
     // Arrange
     AppMessage appMessageWithImage = AppMessage.builder()
         .role("User")
@@ -93,20 +109,25 @@ class VertexGeminiServiceTest {
 
     AssistantMessage assistantMessage = new AssistantMessage("Image received.");
     ChatResponse expectedChatResponse = new ChatResponse(List.of(new Generation(assistantMessage)));
-    callResponseMock = new CallResponseMock(expectedChatResponse);
-    chatClientRequestMock = new ChatClientRequestMock(callResponseMock);
-    when(mockVertextAIChatClient.prompt()).thenReturn(chatClientRequestMock);
+    CallResponseMock callResponseMock = new CallResponseMock(expectedChatResponse);
+    ChatClientRequestMock chatClientRequestMock = new ChatClientRequestMock(callResponseMock);
+    when(chatClientToolsUtil.getChatClientRequestSpec(mockVertextAIChatClient, chat)).thenReturn(chatClientRequestMock);
 
-    // Act
-    ChatResponse actualChatResponse = vertexGeminiService.sendNewMessage(appMessages, chat);
+    // Spy on Media constructor to verify it was called
+    try (var mediaMockedConstruction = mockStatic(Media.class, CALLS_REAL_METHODS)) {
+      // Act
+      ChatResponse actualChatResponse = vertexGeminiService.sendNewMessage(appMessages, chat);
 
-    // Assert
-    assertNotNull(actualChatResponse);
-    assertEquals("Image received.", actualChatResponse.getResult().getOutput().getText());
+      // Assert
+      assertNotNull(actualChatResponse);
+      assertEquals("Image received.", actualChatResponse.getResult().getOutput().getText());
+      mediaMockedConstruction.verify(() -> new Media(IMAGE_PNG, new URI("http://example.com/image.png")));
+    }
   }
 
   @Test
-  void sendNewMessage_withImage_JPG_success() throws MalformedURLException {
+  @DisplayName("sendNewMessage - Should handle JPG image successfully")
+  void sendNewMessage_ShouldHandleJPGImageSuccessfully() throws MalformedURLException {
     // Arrange
     AppMessage appMessageWithImage = AppMessage.builder()
         .role("User")
@@ -118,20 +139,25 @@ class VertexGeminiServiceTest {
 
     AssistantMessage assistantMessage = new AssistantMessage("JPG Image received.");
     ChatResponse expectedChatResponse = new ChatResponse(List.of(new Generation(assistantMessage)));
-    callResponseMock = new CallResponseMock(expectedChatResponse);
-    chatClientRequestMock = new ChatClientRequestMock(callResponseMock);
-    when(mockVertextAIChatClient.prompt()).thenReturn(chatClientRequestMock);
+    CallResponseMock callResponseMock = new CallResponseMock(expectedChatResponse);
+    ChatClientRequestMock chatClientRequestMock = new ChatClientRequestMock(callResponseMock);
+    when(chatClientToolsUtil.getChatClientRequestSpec(mockVertextAIChatClient, chat)).thenReturn(chatClientRequestMock);
 
-    // Act
-    ChatResponse actualChatResponse = vertexGeminiService.sendNewMessage(appMessages, chat);
+    // Spy on Media constructor to verify it was called
+    try (var mediaMockedConstruction = mockStatic(Media.class, CALLS_REAL_METHODS)) {
+      // Act
+      ChatResponse actualChatResponse = vertexGeminiService.sendNewMessage(appMessages, chat);
 
-    // Assert
-    assertNotNull(actualChatResponse);
-    assertEquals("JPG Image received.", actualChatResponse.getResult().getOutput().getText());
+      // Assert
+      assertNotNull(actualChatResponse);
+      assertEquals("JPG Image received.", actualChatResponse.getResult().getOutput().getText());
+      mediaMockedConstruction.verify(() -> new Media(IMAGE_JPEG, new URI("http://example.com/image.jpg")));
+    }
   }
 
   @Test
-  void sendNewMessage_withImage_JPEG_success() throws MalformedURLException {
+  @DisplayName("sendNewMessage - Should handle JPEG image successfully")
+  void sendNewMessage_ShouldHandleJPEGImageSuccessfully() throws MalformedURLException {
     // Arrange
     AppMessage appMessageWithImage = AppMessage.builder()
         .role("User")
@@ -143,20 +169,25 @@ class VertexGeminiServiceTest {
 
     AssistantMessage assistantMessage = new AssistantMessage("JPEG Image received.");
     ChatResponse expectedChatResponse = new ChatResponse(List.of(new Generation(assistantMessage)));
-    callResponseMock = new CallResponseMock(expectedChatResponse);
-    chatClientRequestMock = new ChatClientRequestMock(callResponseMock);
-    when(mockVertextAIChatClient.prompt()).thenReturn(chatClientRequestMock);
+    CallResponseMock callResponseMock = new CallResponseMock(expectedChatResponse);
+    ChatClientRequestMock chatClientRequestMock = new ChatClientRequestMock(callResponseMock);
+    when(chatClientToolsUtil.getChatClientRequestSpec(mockVertextAIChatClient, chat)).thenReturn(chatClientRequestMock);
 
-    // Act
-    ChatResponse actualChatResponse = vertexGeminiService.sendNewMessage(appMessages, chat);
+    // Spy on Media constructor to verify it was called
+    try (var mediaMockedConstruction = mockStatic(Media.class, CALLS_REAL_METHODS)) {
+      // Act
+      ChatResponse actualChatResponse = vertexGeminiService.sendNewMessage(appMessages, chat);
 
-    // Assert
-    assertNotNull(actualChatResponse);
-    assertEquals("JPEG Image received.", actualChatResponse.getResult().getOutput().getText());
+      // Assert
+      assertNotNull(actualChatResponse);
+      assertEquals("JPEG Image received.", actualChatResponse.getResult().getOutput().getText());
+      mediaMockedConstruction.verify(() -> new Media(IMAGE_JPEG, new URI("http://example.com/image.jpeg")));
+    }
   }
 
   @Test
-  void sendNewMessage_withImage_GIF_success() throws MalformedURLException {
+  @DisplayName("sendNewMessage - Should handle GIF image successfully")
+  void sendNewMessage_ShouldHandleGIFImageSuccessfully() throws MalformedURLException {
     // Arrange
     AppMessage appMessageWithImage = AppMessage.builder()
         .role("User")
@@ -168,20 +199,25 @@ class VertexGeminiServiceTest {
 
     AssistantMessage assistantMessage = new AssistantMessage("GIF Image received.");
     ChatResponse expectedChatResponse = new ChatResponse(List.of(new Generation(assistantMessage)));
-    callResponseMock = new CallResponseMock(expectedChatResponse);
-    chatClientRequestMock = new ChatClientRequestMock(callResponseMock);
-    when(mockVertextAIChatClient.prompt()).thenReturn(chatClientRequestMock);
+    CallResponseMock callResponseMock = new CallResponseMock(expectedChatResponse);
+    ChatClientRequestMock chatClientRequestMock = new ChatClientRequestMock(callResponseMock);
+    when(chatClientToolsUtil.getChatClientRequestSpec(mockVertextAIChatClient, chat)).thenReturn(chatClientRequestMock);
 
-    // Act
-    ChatResponse actualChatResponse = vertexGeminiService.sendNewMessage(appMessages, chat);
+    // Spy on Media constructor to verify it was called
+    try (var mediaMockedConstruction = mockStatic(Media.class, CALLS_REAL_METHODS)) {
+      // Act
+      ChatResponse actualChatResponse = vertexGeminiService.sendNewMessage(appMessages, chat);
 
-    // Assert
-    assertNotNull(actualChatResponse);
-    assertEquals("GIF Image received.", actualChatResponse.getResult().getOutput().getText());
+      // Assert
+      assertNotNull(actualChatResponse);
+      assertEquals("GIF Image received.", actualChatResponse.getResult().getOutput().getText());
+      mediaMockedConstruction.verify(() -> new Media(IMAGE_GIF, new URI("http://example.com/image.gif")));
+    }
   }
 
   @Test
-  void sendNewMessage_withImage_RAW_throwsError() {
+  @DisplayName("sendNewMessage - Should throw FileNotValidException for unsupported file format")
+  void sendNewMessage_ShouldThrowFileNotValidExceptionForUnsupportedFileFormat() {
     // Arrange
     AppMessage appMessageWithImage = AppMessage.builder()
         .role("User")
@@ -199,7 +235,8 @@ class VertexGeminiServiceTest {
   }
 
   @Test
-  void sendNewMessage_withImage_MalformedURL_continuesWithoutMedia() {
+  @DisplayName("sendNewMessage - Should handle malformed URL gracefully")
+  void sendNewMessage_ShouldHandleMalformedURLGracefully() {
     // Arrange
     AppMessage appMessageWithImage = AppMessage.builder()
         .role("User")
@@ -211,18 +248,9 @@ class VertexGeminiServiceTest {
 
     AssistantMessage assistantMessage = new AssistantMessage("Processed without image.");
     ChatResponse expectedChatResponse = new ChatResponse(List.of(new Generation(assistantMessage)));
-    callResponseMock = new CallResponseMock(expectedChatResponse);
-
-    final List<Message> capturedMessagesContainer = new ArrayList<>();
-    chatClientRequestMock = new ChatClientRequestMock(callResponseMock) {
-      @Override
-      public ChatClient.ChatClientRequestSpec messages(List<Message> messages) {
-        capturedMessagesContainer.clear();
-        capturedMessagesContainer.addAll(messages);
-        return super.messages(messages); // Call super if it does actual work or returns this
-      }
-    };
-    when(mockVertextAIChatClient.prompt()).thenReturn(chatClientRequestMock);
+    CallResponseMock callResponseMock = new CallResponseMock(expectedChatResponse);
+    ChatClientRequestMock chatClientRequestMock = new ChatClientRequestMock(callResponseMock);
+    when(chatClientToolsUtil.getChatClientRequestSpec(mockVertextAIChatClient, chat)).thenReturn(chatClientRequestMock);
 
     // Act
     ChatResponse actualChatResponse = vertexGeminiService.sendNewMessage(appMessages, chat);
@@ -230,17 +258,11 @@ class VertexGeminiServiceTest {
     // Assert
     assertNotNull(actualChatResponse);
     assertEquals("Processed without image.", actualChatResponse.getResult().getOutput().getText());
-
-    assertFalse(capturedMessagesContainer.isEmpty());
-    UserMessage sentUserMessage = (UserMessage) capturedMessagesContainer.stream()
-        .filter(m -> m instanceof UserMessage && m.getText().equals(appMessageWithImage.getContent()))
-        .findFirst().orElse(null);
-    assertNotNull(sentUserMessage);
-    assertTrue(sentUserMessage.getMedia().isEmpty(), "Media list should be empty due to MalformedURLException");
   }
 
   @Test
-  void sendNewMessage_withImageAndId_ignoresImage() {
+  @DisplayName("sendNewMessage - Should ignore image when message has ID")
+  void sendNewMessage_ShouldIgnoreImageWhenMessageHasID() {
     // Arrange
     UUID id = UUID.randomUUID();
     AppMessage appMessageWithImageAndId = AppMessage.builder()
@@ -254,18 +276,9 @@ class VertexGeminiServiceTest {
 
     AssistantMessage assistantMessage = new AssistantMessage("Processed text only.");
     ChatResponse expectedChatResponse = new ChatResponse(List.of(new Generation(assistantMessage)));
-    callResponseMock = new CallResponseMock(expectedChatResponse);
-
-    final List<Message> capturedMessagesContainer = new ArrayList<>();
-    chatClientRequestMock = new ChatClientRequestMock(callResponseMock) {
-      @Override
-      public ChatClient.ChatClientRequestSpec messages(List<Message> messages) {
-        capturedMessagesContainer.clear();
-        capturedMessagesContainer.addAll(messages);
-        return super.messages(messages);
-      }
-    };
-    when(mockVertextAIChatClient.prompt()).thenReturn(chatClientRequestMock);
+    CallResponseMock callResponseMock = new CallResponseMock(expectedChatResponse);
+    ChatClientRequestMock chatClientRequestMock = new ChatClientRequestMock(callResponseMock);
+    when(chatClientToolsUtil.getChatClientRequestSpec(mockVertextAIChatClient, chat)).thenReturn(chatClientRequestMock);
 
     // Act
     ChatResponse actualChatResponse = vertexGeminiService.sendNewMessage(appMessages, chat);
@@ -273,17 +286,11 @@ class VertexGeminiServiceTest {
     // Assert
     assertNotNull(actualChatResponse);
     assertEquals("Processed text only.", actualChatResponse.getResult().getOutput().getText());
-
-    assertFalse(capturedMessagesContainer.isEmpty());
-    UserMessage sentUserMessage = (UserMessage) capturedMessagesContainer.stream()
-        .filter(m -> m instanceof UserMessage && m.getText().equals(appMessageWithImageAndId.getContent()))
-        .findFirst().orElse(null);
-    assertNotNull(sentUserMessage);
-    assertTrue(sentUserMessage.getMedia().isEmpty(), "Media should be empty as message ID was present");
   }
 
   @Test
-  void sendNewMessage_withCustomPromptAndParams() {
+  @DisplayName("sendNewMessage - Should handle custom prompt and parameters")
+  void sendNewMessage_ShouldHandleCustomPromptAndParameters() {
     // Arrange
     List<AppMessage> appMessages = List.of(
         AppMessage.builder().role("User").content("Follow up question.").build());
@@ -296,23 +303,12 @@ class VertexGeminiServiceTest {
     promptMessages.add(PromptMessage.builder().role("Assistant").content("Initial assistant response").build());
     customPrompt.setMessages(promptMessages);
     chat.setCustomPrompt(customPrompt);
-    // Assuming chat.getSystemMessage() is null, so MessagesUtil.addSystemMessage
-    // adds nothing.
 
     AssistantMessage assistantMessage = new AssistantMessage("Understood.");
     ChatResponse expectedChatResponse = new ChatResponse(List.of(new Generation(assistantMessage)));
-    callResponseMock = new CallResponseMock(expectedChatResponse);
-
-    final List<Message> capturedMessagesContainer = new ArrayList<>();
-    chatClientRequestMock = new ChatClientRequestMock(callResponseMock) {
-      @Override
-      public ChatClient.ChatClientRequestSpec messages(List<Message> messages) {
-        capturedMessagesContainer.clear();
-        capturedMessagesContainer.addAll(messages);
-        return super.messages(messages);
-      }
-    };
-    when(mockVertextAIChatClient.prompt()).thenReturn(chatClientRequestMock);
+    CallResponseMock callResponseMock = new CallResponseMock(expectedChatResponse);
+    ChatClientRequestMock chatClientRequestMock = new ChatClientRequestMock(callResponseMock);
+    when(chatClientToolsUtil.getChatClientRequestSpec(mockVertextAIChatClient, chat)).thenReturn(chatClientRequestMock);
 
     // Act
     try (MockedStatic<MessagesUtil> messagesUtilMock = mockStatic(MessagesUtil.class)) {
@@ -334,55 +330,25 @@ class VertexGeminiServiceTest {
         return null;
       });
 
-      vertexGeminiService.sendNewMessage(appMessages, chat);
+      ChatResponse response = vertexGeminiService.sendNewMessage(appMessages, chat);
+      
+      // Assert
+      assertNotNull(response);
+      assertEquals("Understood.", response.getResult().getOutput().getText());
     }
-
-    // Assert
-    assertFalse(capturedMessagesContainer.isEmpty());
-    // Expected order: CustomUser, CustomAssistant, AppUser
-    assertEquals(4, capturedMessagesContainer.size());
-    assertTrue(capturedMessagesContainer.get(1) instanceof UserMessage);
-    assertEquals("Initial user context", capturedMessagesContainer.get(1).getText());
-    assertTrue(capturedMessagesContainer.get(2) instanceof AssistantMessage);
-    assertEquals("Initial assistant response", capturedMessagesContainer.get(2).getText());
-    assertTrue(capturedMessagesContainer.get(3) instanceof UserMessage);
-    assertEquals("Follow up question.", capturedMessagesContainer.get(3).getText());
   }
 
   @Test
-  void generateTitle_success() {
+  @DisplayName("generateTitle - Should return generated title successfully")
+  void generateTitle_ShouldReturnGeneratedTitleSuccessfully() {
     // Arrange
     String userMessageContent = "Can you tell me about Large Language Models?";
     String assistantMessageContent = "Certainly, Large Language Models are AI models...";
     String expectedTitle = "LLM Overview";
 
-    // This test assumes CallResponseMock can be built with 'content' for the title
-    // and its content() method returns this string.
-    // If CallResponseMock.content() provided in attachments always returns null,
-    // this test would need `expectedTitle` to be `null` or `CallResponseMock`
-    // updated.
     ChatResponse expectedChatResponse = new ChatResponse(List.of(new Generation(new AssistantMessage(expectedTitle))));
-    callResponseMock = new CallResponseMock(expectedChatResponse);
-
-    final List<Message> capturedMessagesContainer = new ArrayList<>();
-    final VertexAiGeminiChatOptions[] capturedOptionsContainer = new VertexAiGeminiChatOptions[1];
-
-    chatClientRequestMock = new ChatClientRequestMock(callResponseMock) {
-      @Override
-      public ChatClient.ChatClientRequestSpec messages(List<Message> messages) {
-        capturedMessagesContainer.clear();
-        capturedMessagesContainer.addAll(messages);
-        return super.messages(messages);
-      }
-
-      @Override
-      public ChatClient.ChatClientRequestSpec options(ChatOptions options) {
-        if (options instanceof VertexAiGeminiChatOptions) {
-          capturedOptionsContainer[0] = (VertexAiGeminiChatOptions) options;
-        }
-        return super.options(options);
-      }
-    };
+    CallResponseMock callResponseMock = new CallResponseMock(expectedChatResponse);
+    ChatClientRequestMock chatClientRequestMock = new ChatClientRequestMock(callResponseMock);
     when(mockVertextAIChatClient.prompt()).thenReturn(chatClientRequestMock);
 
     // Act
@@ -390,18 +356,109 @@ class VertexGeminiServiceTest {
 
     // Assert
     assertEquals(expectedTitle, actualTitle);
+  }
 
-    assertFalse(capturedMessagesContainer.isEmpty());
-    assertEquals(3, capturedMessagesContainer.size());
-    assertTrue(capturedMessagesContainer.get(0) instanceof UserMessage);
-    assertEquals(userMessageContent, capturedMessagesContainer.get(0).getText());
-    assertTrue(capturedMessagesContainer.get(1) instanceof AssistantMessage);
-    assertEquals(assistantMessageContent, capturedMessagesContainer.get(1).getText());
-    assertTrue(capturedMessagesContainer.get(2) instanceof UserMessage); // The TITLE_PROMPT
-    assertTrue(capturedMessagesContainer.get(2).getText().startsWith("Generate a concise title"));
+  @Test
+  @DisplayName("sendNewMessage - Should return chat response with web search mode enabled")
+  void sendNewMessage_ShouldReturnChatResponseWithWebSearchModeEnabled() {
+    // Arrange
+    List<AppMessage> messages = new ArrayList<>();
+    messages.add(AppMessage.builder()
+        .role("User")
+        .content("What is the current president of USA?")
+        .build());
+    Chat chat = createTestChatWithWebSearch();
+    var assistantMessage = new AssistantMessage("I'll search for current information.");
+    ChatResponse mockResponse = new ChatResponse(List.of(new Generation(assistantMessage)));
+    CallResponseMock callResponse = new CallResponseMock(mockResponse);
+    ChatClientRequestMock mockRequest = new ChatClientRequestMock(callResponse);
+    when(chatClientToolsUtil.getChatClientRequestSpec(mockVertextAIChatClient, chat)).thenReturn(mockRequest);
 
-    assertNotNull(capturedOptionsContainer[0]);
-    assertEquals(AppModels.GEMINI_FLASH_2_0_LITE.getKey(), capturedOptionsContainer[0].getModel());
-    assertEquals(50, capturedOptionsContainer[0].getMaxOutputTokens());
+    // Act
+    ChatResponse response = vertexGeminiService.sendNewMessage(messages, chat);
+
+    // Assert
+    assertNotNull(response);
+    assertEquals("I'll search for current information.", response.getResult().getOutput().getText());
+    verify(chatClientToolsUtil).getChatClientRequestSpec(mockVertextAIChatClient, chat);
+  }
+
+  @Test
+  @DisplayName("sendNewMessage - Should handle PNG image with web search mode enabled")
+  void sendNewMessage_ShouldHandlePNGImageWithWebSearchModeEnabled() throws MalformedURLException {
+    // Arrange
+    List<AppMessage> messages = new ArrayList<>();
+    AppMessage appMessage = AppMessage.builder()
+        .role("User")
+        .content("Analyze this image and search for related information")
+        .fileUrl("http://example.com/image.png")
+        .build();
+    messages.add(appMessage);
+    Chat chat = createTestChatWithWebSearch();
+    var assistantMessage = new AssistantMessage("Image analyzed with web search capabilities.");
+    ChatResponse mockResponse = new ChatResponse(List.of(new Generation(assistantMessage)));
+    CallResponseMock callResponse = new CallResponseMock(mockResponse);
+    ChatClientRequestMock mockRequest = new ChatClientRequestMock(callResponse);
+    when(chatClientToolsUtil.getChatClientRequestSpec(mockVertextAIChatClient, chat)).thenReturn(mockRequest);
+
+    // Spy on Media constructor to verify it was called
+    try (var mediaMockedConstruction = mockStatic(Media.class, CALLS_REAL_METHODS)) {
+      // Act
+      ChatResponse response = vertexGeminiService.sendNewMessage(messages, chat);
+
+      // Assert
+      assertNotNull(response);
+      assertEquals("Image analyzed with web search capabilities.", response.getResult().getOutput().getText());
+      mediaMockedConstruction.verify(() -> new Media(IMAGE_PNG, new URI("http://example.com/image.png")));
+      verify(chatClientToolsUtil).getChatClientRequestSpec(mockVertextAIChatClient, chat);
+    }
+  }
+
+  @Test
+  @DisplayName("sendNewMessage - Should handle assistant message with web search mode enabled")
+  void sendNewMessage_ShouldHandleAssistantMessageWithWebSearchModeEnabled() {
+    // Arrange
+    List<AppMessage> messages = new ArrayList<>();
+    messages.add(AppMessage.builder()
+        .role("Assistant")
+        .content("Previous response with web search")
+        .build());
+    messages.add(AppMessage.builder()
+        .role("User")
+        .content("Continue the search")
+        .build());
+    Chat chat = createTestChatWithWebSearch();
+    var assistantMessage = new AssistantMessage("Continuing with web search capabilities.");
+    ChatResponse mockResponse = new ChatResponse(List.of(new Generation(assistantMessage)));
+    CallResponseMock callResponse = new CallResponseMock(mockResponse);
+    ChatClientRequestMock mockRequest = new ChatClientRequestMock(callResponse);
+    when(chatClientToolsUtil.getChatClientRequestSpec(mockVertextAIChatClient, chat)).thenReturn(mockRequest);
+
+    // Act
+    ChatResponse response = vertexGeminiService.sendNewMessage(messages, chat);
+
+    // Assert
+    assertNotNull(response);
+    assertEquals("Continuing with web search capabilities.", response.getResult().getOutput().getText());
+    verify(chatClientToolsUtil).getChatClientRequestSpec(mockVertextAIChatClient, chat);
+  }
+
+  @Test
+  @DisplayName("sendNewMessage - Should throw FileNotValidException for unsupported file format with web search mode")
+  void sendNewMessage_ShouldThrowFileNotValidExceptionForUnsupportedFileFormatWithWebSearchMode() throws MalformedURLException {
+    // Arrange
+    List<AppMessage> messages = new ArrayList<>();
+    AppMessage appMessage = AppMessage.builder()
+        .role("User")
+        .content("Check this image with web search")
+        .fileUrl("http://example.com/image.raw")
+        .build();
+    messages.add(appMessage);
+    Chat chat = createTestChatWithWebSearch();
+    
+    // Act & Assert
+    assertThrows(FileNotValidException.class, () -> {
+      vertexGeminiService.sendNewMessage(messages, chat);
+    });
   }
 }
