@@ -1,32 +1,64 @@
-{"properties": [
-  {
-    "name": "aws.s3",
-    "type": "java.lang.String",
-    "description": "AWS Configurations"
-  },
-  {
-    "name": "aws.s3.secret-key",
-    "type": "java.lang.String",
-    "description": "Secret key for AWS S3"
-  },
-  {
-    "name": "aws.s3.access-key",
-    "type": "java.lang.String",
-    "description": "Access key for AWS S3"
-  },
-  {
-    "name": "files.max-mb-size",
-    "type": "java.lang.String",
-    "description": "A description for 'files.max-size'"
-  },
-  {
-    "name": "cdn",
-    "type": "java.lang.String",
-    "description": "A description for 'cdn'"
-  },
-  {
-    "name": "server.cors.allowed-origins",
-    "type": "java.lang.String",
-    "description": "Allowed origins for CORS"
-  }
-]}
+{
+  "properties": [
+    {
+      "name": "aws.s3",
+      "type": "java.lang.String",
+      "description": "AWS Configurations"
+    },
+    {
+      "name": "aws.s3.secret-key",
+      "type": "java.lang.String",
+      "description": "Secret key for AWS S3"
+    },
+    {
+      "name": "aws.s3.access-key",
+      "type": "java.lang.String",
+      "description": "Access key for AWS S3"
+    },
+    {
+      "name": "files.max-mb-size",
+      "type": "java.lang.String",
+      "description": "A description for 'files.max-size'"
+    },
+    {
+      "name": "cdn",
+      "type": "java.lang.String",
+      "description": "A description for 'cdn'"
+    },
+    {
+      "name": "server.cors.allowed-origins",
+      "type": "java.lang.String",
+      "description": "Allowed origins for CORS"
+    },
+    {
+      "name": "app.base-url",
+      "type": "java.lang.String",
+      "description": "Base url for oauth2 redirect"
+    },
+    {
+      "name": "app.jwt.secret",
+      "type": "java.lang.String",
+      "description": "Secret key for JWT"
+    },
+    {
+      "name": "app.jwt.expiration",
+      "type": "java.lang.String",
+      "description": "Expiration time for JWT"
+    },
+    {
+      "name": "app.oauth2.success-redirect-url",
+      "type": "java.lang.String",
+      "description": "Success redirect URL for OAuth2"
+    },
+    {
+      "name": "google.search.api-key",
+      "type": "java.lang.String",
+      "description": "API key for Google Search"
+    },
+    {
+      "name": "google.search.custom-search-engine-id",
+      "type": "java.lang.String",
+      "description": "Custom search engine ID for Google Search"
+    }
+  ]
+}
