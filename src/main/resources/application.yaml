@@ -62,3 +62,7 @@ app:
     expiration: ${JWT_EXPIRATION:86400000} # 24 hours
   oauth2:
     success-redirect-url: ${OAUTH2_SUCCESS_REDIRECT_URL}
+google:
+  search:
+    api-key: ${GOOGLE_WEB_SEARCH_API_KEY}
+    custom-search-engine-id: ${GOOGLE_CUSTOM_SEARCH_ENGINE_ID}
