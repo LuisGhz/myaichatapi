@@ -414,12 +414,14 @@ public class ChatControllerTest {
       Short newMaxTokens = (short) 2000;
       ChangeMaxOutputTokensReqDto requestDto = new ChangeMaxOutputTokensReqDto();
       requestDto.setMaxOutputTokens(newMaxTokens);
+      doThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "Chat not found"))
+          .when(chatService).changeMaxOutputTokens(eq(testChatId), eq(newMaxTokens), any(UserJwtDataDto.class));
 
       // Act & Assert
       mockMvc.perform(patch("/api/chat/{id}/change-max-output-tokens", testChatId)
           .contentType(MediaType.APPLICATION_JSON)
           .content(objectMapper.writeValueAsString(requestDto)))
-          .andExpect(status().isNoContent());
+          .andExpect(status().isNotFound());
 
       verify(chatService, times(1)).changeMaxOutputTokens(eq(testChatId), eq(newMaxTokens), any(UserJwtDataDto.class));
     }
@@ -448,7 +450,8 @@ public class ChatControllerTest {
           .content(objectMapper.writeValueAsString(requestDto)))
           .andExpect(status().isNoContent());
 
-      verify(chatService, times(1)).changeIsWebSearchMode(eq(testChatId), eq(newWebSearchMode), any(UserJwtDataDto.class));
+      verify(chatService, times(1)).changeIsWebSearchMode(eq(testChatId), eq(newWebSearchMode),
+          any(UserJwtDataDto.class));
     }
 
     @Test
@@ -467,7 +470,8 @@ public class ChatControllerTest {
           .content(objectMapper.writeValueAsString(requestDto)))
           .andExpect(status().isNotFound());
 
-      verify(chatService, times(1)).changeIsWebSearchMode(eq(testChatId), eq(newWebSearchMode), any(UserJwtDataDto.class));
+      verify(chatService, times(1)).changeIsWebSearchMode(eq(testChatId), eq(newWebSearchMode),
+          any(UserJwtDataDto.class));
     }
 
     @Test
