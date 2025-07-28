@@ -24,6 +24,10 @@ public interface ChatRepository extends JpaRepository<Chat, UUID> {
   int changeMaxTokens(@Param("id") UUID id, @Param("maxOutputTokens") Short maxOutputTokens);
 
   @Modifying
+  @Query("UPDATE Chat c SET c.isWebSearchMode = :isWebSearchMode WHERE c.id = :id")
+  int changeWebSearchMode(@Param("id") UUID id, @Param("isWebSearchMode") Boolean isWebSearchMode);
+
+  @Modifying
   @Query("UPDATE Chat c SET c.fav = :fav WHERE c.id = :id")
   int setChatFav(@Param("id") UUID id, @Param("fav") Boolean fav);
 }
