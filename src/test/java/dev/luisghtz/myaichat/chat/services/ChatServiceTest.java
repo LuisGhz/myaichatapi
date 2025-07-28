@@ -376,6 +376,38 @@ class ChatServiceTest {
   }
 
   @Test
+  void changeWebSearchMode_WithExistingId_ShouldChangeWebSearchMode() {
+    // Given
+    boolean newWebSearchMode = true;
+    when(chatRepository.findById(testChatId)).thenReturn(Optional.of(testChat));
+    when(chatRepository.changeWebSearchMode(testChatId, newWebSearchMode)).thenReturn(1);
+
+    // When
+    int result = chatService.changeIsWebSearchMode(testChatId, newWebSearchMode, testUser);
+
+    // Then
+    assertEquals(1, result);
+    verify(chatRepository).findById(testChatId);
+    verify(chatRepository).changeWebSearchMode(testChatId, newWebSearchMode);
+  }
+
+  @Test
+  void changeWebSearchMode_WithNonExistentId_ShouldThrowException() {
+    // Given
+    boolean newWebSearchMode = true;
+    when(chatRepository.findById(testChatId)).thenReturn(Optional.empty());
+
+    // When & Then
+    ResponseStatusException exception = assertThrows(ResponseStatusException.class,
+        () -> chatService.changeIsWebSearchMode(testChatId, newWebSearchMode, testUser));
+
+    assertEquals(HttpStatus.NOT_FOUND, exception.getStatusCode());
+    assertTrue(exception.getReason().contains("Chat not found with ID: " + testChatId));
+    verify(chatRepository).findById(testChatId);
+    verify(chatRepository, never()).changeWebSearchMode(any(), any());
+  }
+
+  @Test
   void deleteChat_WithUnauthorizedUser_ShouldThrowForbiddenException() {
     // Given
     UserJwtDataDto unauthorizedUser = new UserJwtDataDto();
