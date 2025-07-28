@@ -10,5 +10,5 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class ChangeIsWebSearchModeReqDto {
   @NotNull
-  private boolean isWebSearchMode;
+  private Boolean isWebSearchMode;
 }
