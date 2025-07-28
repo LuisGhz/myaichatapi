@@ -45,6 +45,9 @@ public class MessagesUtil {
           """
               --- WEB SEARCH INSTRUCTIONS ---
               When you use "web_search" you can search until %s so avoid to search with your cutoff date, for instance search "President of USA %d" instead of "President of USA 2023" where 2023 is the cutoff year for some models.
+              You can use the "web_search" tool to search for information on the web. The search results will be provided in the response, and you can use them to answer questions or provide information.
+              The "web_search" tool is useful for finding up-to-date information, such as current events, recent news, or any other infsormation that may not be available in your training data.
+              Try to be specific in your search queries to get the most relevant results, avoid to use short queries as much as posible.
               """,
           currentDate, year);
       return prompt += webSearchInstructions;
