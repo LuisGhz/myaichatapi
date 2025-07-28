@@ -52,6 +52,30 @@ if [ -z "$S3_BUCKET_NAME" ]; then
   echo "Error: S3_BUCKET_NAME environment variable is not set"
   exit 1
 fi
+if [ -z "$GITHUB_CLIENT_ID" ]; then
+  echo "Error: GITHUB_CLIENT_ID environment variable is not set"
+  exit 1
+fi
+if [ -z "$GITHUB_CLIENT_SECRET" ]; then
+  echo "Error: GITHUB_CLIENT_SECRET environment variable is not set"
+  exit 1
+fi
+if [ -z "$APP_JWT_SECRET" ]; then
+  echo "Error: APP_JWT_SECRET environment variable is not set"
+  exit 1
+fi
+if [ -z "$JWT_EXPIRATION" ]; then
+  echo "Error: JWT_EXPIRATION environment variable is not set"
+  exit 1
+fi
+if [ -z "$OAUTH2_SUCCESS_REDIRECT_URL" ]; then
+  echo "Error: OAUTH2_SUCCESS_REDIRECT_URL environment variable is not set"
+  exit 1
+fi
+if [ -z "$APP_BASE_URL" ]; then
+  echo "Error: APP_BASE_URL environment variable is not set"
+  exit 1
+fi
 if [ -z "$GOOGLE_WEB_SEARCH_API_KEY" ]; then
   echo "Error: GOOGLE_WEB_SEARCH_API_KEY environment variable is not set"
   exit 1
