@@ -18,4 +18,5 @@ public class HistoryChatDto {
   private Long totalPromptTokens;
   private Long totalCompletionTokens;
   private Short maxOutputTokens;
+  private Boolean isWebSearchMode;
 }
