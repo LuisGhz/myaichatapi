@@ -116,6 +116,14 @@ public class ChatService {
   }
 
   @Transactional
+  public int changeIsWebSearchMode(UUID id, Boolean webSearchMode, UserJwtDataDto user) {
+    var chat = findChatById(id);
+    validateChatBelongsToUser(chat, user);
+    log.info("Changing web search mode for chat with ID: '{}'", id);
+    return chatRepository.changeWebSearchMode(id, webSearchMode);
+  }
+
+  @Transactional
   public void toggleChatFav(UUID id, UserJwtDataDto user) {
     var chat = findChatById(id);
     validateChatBelongsToUser(chat, user);
