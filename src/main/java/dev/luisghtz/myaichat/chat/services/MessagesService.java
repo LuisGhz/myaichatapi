@@ -69,6 +69,11 @@ public class MessagesService {
     if (isNewChat) {
       chatService.generateAndSetTitleForNewChat(chat, newMessageRequestDto, responseDto);
       addNewChatDataToFirstMessage(responseDto, chat);
+      var newChatRes = AssistantMessageResponseDto.builder()
+          .chatId(chat.getId())
+          .chatTitle(chat.getTitle())
+          .build();
+      return newChatRes;
     }
     var tokens = getSumOfPromptAndCompletionTokensByChatId(chat.getId());
     responseDto.setTotalChatPromptTokens(tokens.getPromptTokens());
