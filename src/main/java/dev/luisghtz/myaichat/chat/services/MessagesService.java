@@ -51,6 +51,7 @@ public class MessagesService {
         .totalPromptTokens(tokens.getPromptTokens())
         .totalCompletionTokens(tokens.getCompletionTokens())
         .maxOutputTokens(chat.getMaxOutputTokens())
+        .isWebSearchMode(chat.getIsWebSearchMode())
         .build();
     return appMessageHistory;
   }
