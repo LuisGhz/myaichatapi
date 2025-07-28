@@ -52,6 +52,14 @@ if [ -z "$S3_BUCKET_NAME" ]; then
   echo "Error: S3_BUCKET_NAME environment variable is not set"
   exit 1
 fi
+if [ -z "$GOOGLE_WEB_SEARCH_API_KEY" ]; then
+  echo "Error: GOOGLE_WEB_SEARCH_API_KEY environment variable is not set"
+  exit 1
+fi
+if [ -z "$GOOGLE_CUSTOM_SEARCH_ENGINE_ID" ]; then
+  echo "Error: GOOGLE_CUSTOM_SEARCH_ENGINE_ID environment variable is not set"
+  exit 1
+fi
 
 IMAGE_NAME="luisghtz/personalwebapss:myaichatapi-springboot"
 CONTAINER_NAME="myaichatapi-springboot"
@@ -100,5 +108,7 @@ docker run -d \
   -e JWT_EXPIRATION=${JWT_EXPIRATION} \
   -e OAUTH2_SUCCESS_REDIRECT_URL=${OAUTH2_SUCCESS_REDIRECT_URL} \
   -e APP_BASE_URL=${APP_BASE_URL} \
+  -e GOOGLE_WEB_SEARCH_API_KEY=${GOOGLE_WEB_SEARCH_API_KEY} \
+  -e GOOGLE_CUSTOM_SEARCH_ENGINE_ID=${GOOGLE_CUSTOM_SEARCH_ENGINE_ID} \
   --name ${CONTAINER_NAME} \
   ${IMAGE_NAME}
