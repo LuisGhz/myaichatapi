@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class ChangeIsWebSearchMode {
+public class ChangeIsWebSearchModeReqDto {
   @NotNull
   private boolean isWebSearchMode;
 }
