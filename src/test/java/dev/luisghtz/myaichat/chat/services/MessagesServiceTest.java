@@ -97,6 +97,7 @@ class MessagesServiceTest {
       Short maxOutputTokens = 100;
       when(chat.getMaxOutputTokens()).thenReturn(maxOutputTokens);
       when(chat.getUser()).thenReturn(userChat);
+      when(chat.getIsWebSearchMode()).thenReturn(true);
 
       HistoryChatDto result = messagesService.getPreviousMessages(chatId, pageable, userJwt);
 
@@ -104,6 +105,8 @@ class MessagesServiceTest {
       assertThat(result.getModel()).isEqualTo("gpt-3");
       assertThat(result.getTotalPromptTokens()).isEqualTo(5);
       assertThat(result.getTotalCompletionTokens()).isEqualTo(10);
+      assertThat(result.getMaxOutputTokens()).isEqualTo(maxOutputTokens);
+      assertThat(result.getIsWebSearchMode()).isEqualTo(true);
     }
 
     @Test
