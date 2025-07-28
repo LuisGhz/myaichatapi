@@ -30,6 +30,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import dev.luisghtz.myaichat.auth.dtos.UserJwtDataDto;
 import dev.luisghtz.myaichat.chat.dtos.AssistantMessageResponseDto;
+import dev.luisghtz.myaichat.chat.dtos.ChangeIsWebSearchModeReqDto;
 import dev.luisghtz.myaichat.chat.dtos.ChangeMaxOutputTokensReqDto;
 import dev.luisghtz.myaichat.chat.dtos.ChatsListResponseDto;
 import dev.luisghtz.myaichat.chat.dtos.HistoryChatDto;
@@ -428,6 +429,52 @@ public class ChatControllerTest {
     public void testChangeMaxOutputTokensWithNullValue() throws Exception {
       // Act & Assert - test with null/missing maxOutputTokens
       mockMvc.perform(patch("/api/chat/{id}/change-max-output-tokens", testChatId)
+          .contentType(MediaType.APPLICATION_JSON)
+          .content("{}"))
+          .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("PATCH /api/chat/{id}/change-web-search-mode - Should change web search mode successfully")
+    public void testChangeWebSearchModeSuccess() throws Exception {
+      // Arrange
+      Boolean newWebSearchMode = true;
+      ChangeIsWebSearchModeReqDto requestDto = new ChangeIsWebSearchModeReqDto(false);
+      requestDto.setIsWebSearchMode(newWebSearchMode);
+
+      // Act & Assert
+      mockMvc.perform(patch("/api/chat/{id}/change-web-search-mode", testChatId)
+          .contentType(MediaType.APPLICATION_JSON)
+          .content(objectMapper.writeValueAsString(requestDto)))
+          .andExpect(status().isNoContent());
+
+      verify(chatService, times(1)).changeIsWebSearchMode(eq(testChatId), eq(newWebSearchMode), any(UserJwtDataDto.class));
+    }
+
+    @Test
+    @DisplayName("PATCH /api/chat/{id}/change-max-output-tokens - Should return NOT_FOUND for invalid chat id")
+    public void testChangeWebSearchModeWithInvalidId() throws Exception {
+      // Arrange
+      boolean newWebSearchMode = true;
+      ChangeIsWebSearchModeReqDto requestDto = new ChangeIsWebSearchModeReqDto(false);
+      requestDto.setIsWebSearchMode(newWebSearchMode);
+      doThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "Chat not found"))
+          .when(chatService).changeIsWebSearchMode(eq(testChatId), eq(newWebSearchMode), any(UserJwtDataDto.class));
+
+      // Act & Assert
+      mockMvc.perform(patch("/api/chat/{id}/change-web-search-mode", testChatId)
+          .contentType(MediaType.APPLICATION_JSON)
+          .content(objectMapper.writeValueAsString(requestDto)))
+          .andExpect(status().isNotFound());
+
+      verify(chatService, times(1)).changeIsWebSearchMode(eq(testChatId), eq(newWebSearchMode), any(UserJwtDataDto.class));
+    }
+
+    @Test
+    @DisplayName("PATCH /api/chat/{id}/change-max-output-tokens - Should handle null max tokens")
+    public void testChangeWebSearchModeWithNullValue() throws Exception {
+      // Act & Assert - test with null/missing webSearchMode
+      mockMvc.perform(patch("/api/chat/{id}/change-web-search-mode", testChatId)
           .contentType(MediaType.APPLICATION_JSON)
           .content("{}"))
           .andExpect(status().isBadRequest());
