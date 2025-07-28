@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.RestController;
 import dev.luisghtz.myaichat.auth.annotation.UserJwtData;
 import dev.luisghtz.myaichat.auth.dtos.UserJwtDataDto;
 import dev.luisghtz.myaichat.chat.dtos.AssistantMessageResponseDto;
+import dev.luisghtz.myaichat.chat.dtos.ChangeIsWebSearchModeReqDto;
 import dev.luisghtz.myaichat.chat.dtos.ChangeMaxOutputTokensReqDto;
 import dev.luisghtz.myaichat.chat.dtos.ChatsListResponseDto;
 import dev.luisghtz.myaichat.chat.dtos.HistoryChatDto;
@@ -85,6 +86,13 @@ public class ChatController {
       @Validated @RequestBody ChangeMaxOutputTokensReqDto changeMaxOutputTokensReqDto,
       @UserJwtData UserJwtDataDto user) {
     chatService.changeMaxOutputTokens(id, changeMaxOutputTokensReqDto.getMaxOutputTokens(), user);
+    return ResponseEntity.noContent().build();
+  }
+
+  @PatchMapping("{id}/change-web-search-mode")
+  public ResponseEntity<Void> changeIsWebSearchMode(@PathVariable UUID id,
+      @Validated @RequestBody ChangeIsWebSearchModeReqDto changeIsWebSearchMode, @UserJwtData UserJwtDataDto user) {
+    chatService.changeIsWebSearchMode(id, changeIsWebSearchMode.getIsWebSearchMode(), user);
     return ResponseEntity.noContent().build();
   }
 
