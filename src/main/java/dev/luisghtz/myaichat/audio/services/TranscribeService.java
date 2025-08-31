@@ -49,6 +49,7 @@ public class TranscribeService {
       return new TranscriptionResDto(transcribedText);
 
     } catch (Exception e) {
+      log.error("Error transcribing audio", e);
       throw new RuntimeException("Error transcribing audio: " + e.getMessage(), e);
     }
   }
