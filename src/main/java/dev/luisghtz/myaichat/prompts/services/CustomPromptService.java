@@ -4,11 +4,12 @@ import java.util.Date;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import dev.luisghtz.myaichat.auth.services.UserService;
-import dev.luisghtz.myaichat.exceptions.AppNotFoundException;
 import dev.luisghtz.myaichat.exceptions.ResourceInUseException;
 import dev.luisghtz.myaichat.prompts.dtos.CreateCustomPromptDtoReq;
 import dev.luisghtz.myaichat.prompts.dtos.PromptsListDtoRes;
@@ -80,7 +81,7 @@ public class CustomPromptService {
     var message = customPrompt.getMessages().stream()
         .filter(m -> m.getId().toString().equals(messageId))
         .findFirst()
-        .orElseThrow(() -> new AppNotFoundException("Prompt message not found"));
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Prompt message not found"));
     customPrompt.getMessages().remove(message);
     promptMessageService.deleteByIdAndPromptId(messageId, promptId);
     promptRepository.save(customPrompt);
@@ -97,6 +98,7 @@ public class CustomPromptService {
 
   private CustomPrompt getCustomPromptByIdAndUserId(String promptId, UUID userId) {
     return findByIdAndUserId(promptId, userId)
-        .orElseThrow(() -> new AppNotFoundException("Prompt not found or you don't have permission to access it"));
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+            "Prompt not found or you don't have permission to access it"));
   }
 }
