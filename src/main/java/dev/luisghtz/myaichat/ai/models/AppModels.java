@@ -3,6 +3,9 @@ package dev.luisghtz.myaichat.ai.models;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
+
 public class AppModels {
   public static final AppModel GPT_4O_MINI = new AppModel("gpt-4o-mini", 5_000, 0.5);
   public static final AppModel GPT_4O = new AppModel("gpt-4o", 10_000, 1);
@@ -55,7 +58,7 @@ public class AppModels {
   public static int getMaxTokens(String model) {
     Integer maxTokens = MODEL_MAX_TOKENS.get(model);
     if (maxTokens == null)
-      throw new IllegalArgumentException("Invalid model: " + model);
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid model: " + model);
     return maxTokens;
   }
 
