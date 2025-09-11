@@ -12,7 +12,6 @@ import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import dev.luisghtz.myaichat.chat.dtos.ChatErrorResponseDto;
 import dev.luisghtz.myaichat.exceptions.AppMethodArgumentNotValidException;
-import dev.luisghtz.myaichat.exceptions.AppNotFoundException;
 import dev.luisghtz.myaichat.exceptions.ResourceInUseException;
 import java.lang.reflect.Method;
 import java.sql.SQLException;
@@ -137,22 +136,6 @@ public class GlobalControllerAdviceTest {
     ChatErrorResponseDto body = response.getBody();
     assertEquals(HttpStatus.BAD_REQUEST, body.getStatusCode());
     assertEquals("Validation error: Custom validation error", body.getMessage());
-  }
-
-
-  @Test
-  void testHandleAppNotFoundException() {
-    // Arrange
-    AppNotFoundException ex = new AppNotFoundException("Resource not found");
-    
-    // Act
-    var response = globalControllerAdvice.handleNotFoundException(ex);
-    
-    // Assert
-    assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
-    ChatErrorResponseDto body = (ChatErrorResponseDto) response.getBody();
-    assertEquals(HttpStatus.NOT_FOUND, body.getStatusCode());
-    assertEquals("Resource not found", body.getMessage());
   }
 
   @Test
