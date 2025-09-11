@@ -20,16 +20,18 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import dev.luisghtz.myaichat.configurationMock.AIModelsControllerTestConfiguration;
 import dev.luisghtz.myaichat.configurationMock.jwt.JwtPermitAllTestConfiguration;
 import dev.luisghtz.myaichat.configurationMock.UserJwtDataTestConfiguration;
-import dev.luisghtz.myaichat.exceptions.AppNotFoundException;
 import dev.luisghtz.myaichat.prompts.dtos.CreateCustomPromptDtoReq;
 import dev.luisghtz.myaichat.prompts.dtos.PromptSummaryResDto;
 import dev.luisghtz.myaichat.prompts.dtos.CreateCustomPromptMessagesDto;
@@ -40,9 +42,9 @@ import dev.luisghtz.myaichat.prompts.services.CustomPromptService;
 
 @WebMvcTest(PromptsController.class)
 @Import({
-  AIModelsControllerTestConfiguration.class,
-  JwtPermitAllTestConfiguration.class,
-  UserJwtDataTestConfiguration.class,
+    AIModelsControllerTestConfiguration.class,
+    JwtPermitAllTestConfiguration.class,
+    UserJwtDataTestConfiguration.class,
 })
 @ActiveProfiles("test")
 public class PromptsControllerTest {
@@ -50,7 +52,7 @@ public class PromptsControllerTest {
   @Autowired
   private MockMvc mockMvc;
 
-  @MockBean
+  @MockitoBean
   private CustomPromptService customPromptService;
 
   @Autowired
@@ -272,7 +274,7 @@ public class PromptsControllerTest {
     void testDeletePromptServiceException() throws Exception {
       // Arrange
       String promptIdString = promptId.toString();
-      doThrow(new AppNotFoundException("Prompt not found"))
+      doThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "Prompt not found"))
           .when(customPromptService).delete(eq(promptIdString), any(UUID.class));
 
       // Act & Assert
