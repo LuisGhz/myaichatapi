@@ -1,6 +1,8 @@
 package dev.luisghtz.myaichat.ai.models;
 
 import org.junit.jupiter.api.Test;
+import org.springframework.web.server.ResponseStatusException;
+
 import static org.junit.jupiter.api.Assertions.*;
 import java.util.List;
 
@@ -34,7 +36,7 @@ public class AppModelsTest {
 
   @Test
   void testGetMaxTokensThrowsOnInvalidModel() {
-    Exception exception = assertThrows(IllegalArgumentException.class, () -> {
+    Exception exception = assertThrows(ResponseStatusException.class, () -> {
       AppModels.getMaxTokens("invalid-model");
     });
     assertTrue(exception.getMessage().contains("Invalid model"));
