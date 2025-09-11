@@ -6,8 +6,10 @@ import org.springframework.ai.model.Model;
 import org.springframework.ai.openai.OpenAiAudioTranscriptionOptions;
 import org.springframework.ai.openai.api.OpenAiAudioApi;
 import org.springframework.core.io.ByteArrayResource;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
 
 import dev.luisghtz.myaichat.audio.dto.TranscriptionResDto;
 import lombok.RequiredArgsConstructor;
@@ -50,7 +52,8 @@ public class TranscribeService {
 
     } catch (Exception e) {
       log.error("Error transcribing audio", e);
-      throw new RuntimeException("Error transcribing audio: " + e.getMessage(), e);
+      throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error transcribing audio: " + e.getMessage(),
+          e);
     }
   }
 
