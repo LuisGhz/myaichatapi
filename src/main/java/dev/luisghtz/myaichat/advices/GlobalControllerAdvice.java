@@ -88,8 +88,9 @@ public class GlobalControllerAdvice {
   }
 
   @ExceptionHandler(RuntimeException.class)
-  public ResponseEntity<Object> handleRuntimeException() {
-    return ResponseEntity.internalServerError().body("Server error. Try later");
+  public ResponseEntity<Object> handleRuntimeException(RuntimeException ex) {
+    var message = ex.getMessage();
+    return ResponseEntity.internalServerError().body("Server error: " + message);
   }
 
   @ExceptionHandler(DataIntegrityViolationException.class)
