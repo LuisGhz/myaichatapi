@@ -6,31 +6,18 @@
 
 MyAIChat es una API REST moderna desarrollada con **Spring Boot** y **Spring AI** que permite a los usuarios interactuar con los modelos de inteligencia artificial más avanzados disponibles. La aplicación está diseñada para ofrecer una experiencia de chat intuitiva y potente, con funcionalidades avanzadas como procesamiento de imágenes, transcripción de audio y búsqueda web integrada.
 
-### 🎯 Para Usuarios No Técnicos
-
-**MyAIChat te permite:**
-
-- **Chatear con IA de forma natural**: Conversa como lo harías con un humano experto
-- **Enviar imágenes**: Sube fotos y recibe análisis detallados, descripciones o respuestas relacionadas
-- **Convertir voz a texto**: Graba audio y obtén transcripciones precisas al instante
-- **Búsqueda web inteligente**: Los modelos pueden buscar información actual en internet
-- **Prompts personalizados**: Crea y guarda plantillas de conversación para tareas específicas
-- **Historial organizado**: Gestiona múltiples conversaciones con títulos automáticos
-- **Favoritos**: Marca conversaciones importantes para acceso rápido
-
-### 🛠️ Para Desarrolladores y Técnicos
-
-**Características técnicas destacadas:**
-
-- **Arquitectura de microservicios** con Spring Boot 3.x
-- **Integración multi-proveedor** de IA (OpenAI y Google Vertex AI)
-- **Autenticación OAuth2** con GitHub
-- **Almacenamiento en la nube** con AWS S3
-- **Base de datos PostgreSQL** con JPA/Hibernate
-- **API RESTful** completamente documentada
-- **Gestión inteligente de tokens** y costos
-- **Validación robusta** de archivos y entrada de usuario
-- **Manejo de errores** centralizado y logging detallado
+- Conversación natural con IA para tareas cotidianas y profesionales.
+- Soporte multimodal: texto, imágenes (JPEG/PNG/GIF) y audio (MP3/WAV/M4A).
+- Transcripción de voz a texto y análisis contextual de audio e imágenes.
+- Prompts personalizables y plantillas reutilizables para flujos de trabajo.
+- Historial persistente con títulos automáticos y gestión de favoritos.
+- Integración multi-proveedor (OpenAI, Google Vertex AI) con estrategia de fallbacks.
+- Autenticación segura (OAuth2 con GitHub) y gestión de sesiones con JWT.
+- Almacenamiento en la nube (AWS S3) y CDN para archivos multimedia.
+- Base de datos PostgreSQL con JPA/Hibernate y optimización de rendimiento.
+- Gestión de tokens, control de costes y límites configurables por conversación.
+- API RESTful documentada, manejo centralizado de errores y logging detallado.
+- Herramientas para desarrolladores: testing automatizado, migraciones y patrones de diseño.
 
 ## 🤖 Modelos de IA Compatibles
 
