@@ -193,7 +193,7 @@ public class ChatControllerTest {
     public void testNewMessageWithoutFile() throws Exception {
       // Arrange
       NewMessageRequestDto requestDto = new NewMessageRequestDto();
-      requestDto.setPrompt("Hello AI");
+  requestDto.setContent("Hello AI");
       requestDto.setChatId(testChatId);
       requestDto.setMaxOutputTokens((short) 1500);
       requestDto.setFile(null);
@@ -206,8 +206,8 @@ public class ChatControllerTest {
       when(messagesService.sendNewMessage(any(NewMessageRequestDto.class), isNull(), eq(user)))
           .thenReturn(expectedResponse);
 
-      mockMvc.perform(multipart("/api/chat/send-message")
-          .param("prompt", requestDto.getPrompt())
+    mockMvc.perform(multipart("/api/chat/send-message")
+      .param("content", requestDto.getContent())
           .param("chatId", requestDto.getChatId().toString())
           .param("maxOutputTokens", requestDto.getMaxOutputTokens().toString())
           .param("model", requestDto.getModel())
@@ -225,7 +225,7 @@ public class ChatControllerTest {
     public void testNewMessageWithFile() throws Exception {
       // Arrange
       NewMessageRequestDto requestDto = new NewMessageRequestDto();
-      requestDto.setPrompt("Check this file");
+  requestDto.setContent("Check this file");
       requestDto.setChatId(testChatId);
       requestDto.setMaxOutputTokens((short) 2000);
       requestDto.setModel("gpt-4o");
@@ -245,9 +245,9 @@ public class ChatControllerTest {
           .thenReturn(expectedResponse);
 
       // Act & Assert
-      mockMvc.perform(multipart("/api/chat/send-message")
+    mockMvc.perform(multipart("/api/chat/send-message")
           .file(uploadedFile)
-          .param("prompt", requestDto.getPrompt())
+      .param("content", requestDto.getContent())
           .param("chatId", requestDto.getChatId().toString())
           .param("maxOutputTokens", requestDto.getMaxOutputTokens().toString())
           .param("model", requestDto.getModel()))
@@ -267,9 +267,9 @@ public class ChatControllerTest {
           "file", "invalid.txt", "text/plain", "This is not a supported file".getBytes());
 
       // Act & Assert
-      mockMvc.perform(multipart("/api/chat/send-message")
+    mockMvc.perform(multipart("/api/chat/send-message")
           .file(invalidFile)
-          .param("prompt", "Invalid file test")
+      .param("content", "Invalid file test")
           .param("chatId", testChatId.toString())
           .param("maxOutputTokens", "2000")
           .param("model", "gpt-4o"))
@@ -281,14 +281,14 @@ public class ChatControllerTest {
     public void sendNewMessageWithInvalidModel() throws Exception {
       // Arrange - invalid model
       NewMessageRequestDto requestDto = new NewMessageRequestDto();
-      requestDto.setPrompt("Test with invalid model");
+  requestDto.setContent("Test with invalid model");
       requestDto.setChatId(testChatId);
       requestDto.setMaxOutputTokens((short) 2000);
       requestDto.setModel("invalid-model");
 
       // Act & Assert
-      mockMvc.perform(multipart("/api/chat/send-message")
-          .param("prompt", requestDto.getPrompt())
+    mockMvc.perform(multipart("/api/chat/send-message")
+      .param("content", requestDto.getContent())
           .param("chatId", requestDto.getChatId().toString())
           .param("maxOutputTokens", requestDto.getMaxOutputTokens().toString())
           .param("model", requestDto.getModel()))
@@ -300,12 +300,12 @@ public class ChatControllerTest {
     public void sendNewMessageWithMissingFields() throws Exception {
       // Arrange - missing required fields
       NewMessageRequestDto requestDto = new NewMessageRequestDto();
-      requestDto.setPrompt(""); // Empty prompt
+  requestDto.setContent(""); // Empty content
       requestDto.setChatId(null); // No chat ID
 
       // Act & Assert
-      mockMvc.perform(multipart("/api/chat/send-message")
-          .param("prompt", "")
+    mockMvc.perform(multipart("/api/chat/send-message")
+      .param("content", "")
           .param("model", "gpt-4o"))
           .andExpect(status().isBadRequest());
     }

@@ -12,7 +12,7 @@ public class MessagesUtils {
   public static AppMessage processUserMessage(NewMessageRequestDto newMessageRequestDto, Chat chat, String fileUrl) {
     var newMessage = AppMessage.builder()
         .role("User")
-        .content(newMessageRequestDto.getPrompt())
+  .content(newMessageRequestDto.getContent())
         .createdAt(new Date())
         .chat(chat)
         .build();

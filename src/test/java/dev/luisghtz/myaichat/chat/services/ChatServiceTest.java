@@ -82,7 +82,7 @@ class ChatServiceTest {
 
     testRequest = new NewMessageRequestDto();
     testRequest.setModel("gpt-4");
-    testRequest.setPrompt("Hello");
+  testRequest.setContent("Hello");
   }
 
   @Test
@@ -166,7 +166,7 @@ class ChatServiceTest {
     AssistantMessageResponseDto response = new AssistantMessageResponseDto();
     response.setContent("Response content");
 
-    when(aiProviderService.generateTitle(testChat, testRequest.getPrompt(), response.getContent()))
+  when(aiProviderService.generateTitle(testChat, testRequest.getContent(), response.getContent()))
         .thenReturn(generatedTitle);
     when(chatRepository.save(testChat)).thenReturn(testChat);
 
@@ -176,7 +176,7 @@ class ChatServiceTest {
     // Then
     assertEquals(generatedTitle, testChat.getTitle());
     assertEquals(generatedTitle, response.getChatTitle());
-    verify(aiProviderService).generateTitle(testChat, testRequest.getPrompt(), response.getContent());
+  verify(aiProviderService).generateTitle(testChat, testRequest.getContent(), response.getContent());
     verify(chatRepository).save(testChat);
   }
 

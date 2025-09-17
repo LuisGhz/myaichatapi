@@ -62,7 +62,7 @@ public class ChatService {
 
   public void generateAndSetTitleForNewChat(Chat chat, NewMessageRequestDto newMessageRequestDto,
       AssistantMessageResponseDto res) {
-    String generatedTitle = aiProviderService.generateTitle(chat, newMessageRequestDto.getPrompt(),
+  String generatedTitle = aiProviderService.generateTitle(chat, newMessageRequestDto.getContent(),
         res.getContent());
     chat.setTitle(generatedTitle);
     chatRepository.save(chat);
@@ -74,7 +74,6 @@ public class ChatService {
     var user = userService.findById(userId)
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found with ID: " + userId));
     var newChat = Chat.builder()
-        .title("Title")
         .createdAt(new Date())
         .model(newMessageRequestDto.getModel())
         .maxOutputTokens(newMessageRequestDto.getMaxOutputTokens())
@@ -88,7 +87,12 @@ public class ChatService {
               "Prompt not found with ID: " + newMessageRequestDto.getPromptId()));
       newChat.setCustomPrompt(prompt);
     }
-    return chatRepository.save(newChat);
+    return save(newChat);
+  }
+
+  @Transactional
+  public Chat save(Chat chat) {
+    return chatRepository.save(chat);
   }
 
   @Transactional

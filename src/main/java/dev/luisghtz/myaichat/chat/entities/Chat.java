@@ -30,6 +30,7 @@ public class Chat {
   @Id
   @GeneratedValue(strategy = GenerationType.UUID)
   private UUID id;
+  @Column(nullable = true)
   private String title;
   private Date createdAt;
   private String model;

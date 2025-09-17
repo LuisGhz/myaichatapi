@@ -20,7 +20,7 @@ class MessagesutilsTest {
   @Test
   void processUserMessage_shouldCreateAppMessageWithUserRoleAndContent() {
     NewMessageRequestDto dto = Mockito.mock(NewMessageRequestDto.class);
-    Mockito.when(dto.getPrompt()).thenReturn("Hello, AI!");
+  Mockito.when(dto.getContent()).thenReturn("Hello, AI!");
     Chat chat = new Chat();
     String fileUrl = null;
 
@@ -36,7 +36,7 @@ class MessagesutilsTest {
   @Test
   void processUserMessage_shouldSetFileUrlIfProvided() {
     NewMessageRequestDto dto = Mockito.mock(NewMessageRequestDto.class);
-    Mockito.when(dto.getPrompt()).thenReturn("Prompt with image");
+  Mockito.when(dto.getContent()).thenReturn("Prompt with image");
     Chat chat = new Chat();
     String fileUrl = "http://example.com/image.png";
 
@@ -74,7 +74,7 @@ class MessagesutilsTest {
   @Test
   void processUserMessage_shouldNotSetFileUrlIfEmpty() {
     NewMessageRequestDto dto = Mockito.mock(NewMessageRequestDto.class);
-    Mockito.when(dto.getPrompt()).thenReturn("Prompt");
+  Mockito.when(dto.getContent()).thenReturn("Prompt");
     Chat chat = new Chat();
     String fileUrl = "";
 
