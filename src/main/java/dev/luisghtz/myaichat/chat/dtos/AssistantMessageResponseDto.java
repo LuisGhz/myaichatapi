@@ -12,9 +12,12 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Builder
 public class AssistantMessageResponseDto {
+  private String content;
+  private Boolean isLastChunk;
+  
+  // Properties only present in the last chunk
   private UUID chatId;
   private String chatTitle;
-  private String content;
   private Integer promptTokens;
   private Integer completionTokens;
   private Integer totalTokens;
