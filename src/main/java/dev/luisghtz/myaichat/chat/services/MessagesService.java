@@ -15,6 +15,7 @@ import org.springframework.web.server.ResponseStatusException;
 import dev.luisghtz.myaichat.ai.services.AIService;
 import dev.luisghtz.myaichat.auth.dtos.UserJwtDataDto;
 import dev.luisghtz.myaichat.chat.dtos.AssistantMessageResponseDto;
+import dev.luisghtz.myaichat.chat.dtos.UserMessageResDto;
 import dev.luisghtz.myaichat.chat.dtos.HistoryChatDto;
 import dev.luisghtz.myaichat.chat.dtos.NewMessageRequestDto;
 import dev.luisghtz.myaichat.chat.entities.Chat;
@@ -54,6 +55,16 @@ public class MessagesService {
         .isWebSearchMode(chat.getIsWebSearchMode())
         .build();
     return appMessageHistory;
+  }
+
+  @Transactional
+  public UserMessageResDto userMessage(NewMessageRequestDto newMessageRequestDto, UserJwtDataDto user, String fileUrl) {
+    Chat chat = chatService.getNewChat(newMessageRequestDto, user.getId());
+    chatService.save(chat);
+    AppMessage userMessage = MessagesUtils.processUserMessage(newMessageRequestDto, chat, fileUrl);
+    messageRepository.save(userMessage);
+    var res = new UserMessageResDto(chat.getId().toString());
+    return res;
   }
 
   @Transactional
