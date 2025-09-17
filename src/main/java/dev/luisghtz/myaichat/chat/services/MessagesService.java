@@ -59,11 +59,11 @@ public class MessagesService {
 
   @Transactional
   public UserMessageResDto userMessage(NewMessageRequestDto newMessageRequestDto, UserJwtDataDto user, String fileUrl) {
-    Chat chat = chatService.getNewChat(newMessageRequestDto, user.getId());
-    chatService.save(chat);
+    Chat chat = chatService.getChat(newMessageRequestDto, user.getId());
+    boolean isNew = isChatNew(chat);
     AppMessage userMessage = MessagesUtils.processUserMessage(newMessageRequestDto, chat, fileUrl);
     messageRepository.save(userMessage);
-    var res = new UserMessageResDto(chat.getId().toString());
+    var res = new UserMessageResDto(isNew, chat.getId().toString());
     return res;
   }
 
