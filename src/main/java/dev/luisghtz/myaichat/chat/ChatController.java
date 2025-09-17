@@ -5,7 +5,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import dev.luisghtz.myaichat.auth.annotation.UserJwtData;
 import dev.luisghtz.myaichat.auth.dtos.UserJwtDataDto;
-import dev.luisghtz.myaichat.chat.dtos.AssistantMessageResponseDto;
+import dev.luisghtz.myaichat.chat.dtos.AssistantChunkResDto;
 import dev.luisghtz.myaichat.chat.dtos.ChangeIsWebSearchModeReqDto;
 import dev.luisghtz.myaichat.chat.dtos.ChangeMaxOutputTokensReqDto;
 import dev.luisghtz.myaichat.chat.dtos.ChatsListResponseDto;
@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import reactor.core.publisher.Flux;
 
 import java.util.UUID;
 
@@ -68,16 +69,11 @@ public class ChatController {
     return ResponseEntity.ok(response);
   }
 
-  @PostMapping("send-message")
-  public ResponseEntity<AssistantMessageResponseDto> newMessage(
-      @Validated @ModelAttribute NewMessageRequestDto newMessageRequestDto,
+  @GetMapping(value = "assistant-message/{id}")
+  public Flux<AssistantChunkResDto> newMessage(
+      @PathVariable UUID id,
       @UserJwtData UserJwtDataDto user) {
-    String fileName = null;
-    if (newMessageRequestDto.getFile() != null) {
-      fileName = fileService.uploadFile(newMessageRequestDto.getFile());
-    }
-    var response = messagesService.getAssistantMessage(newMessageRequestDto, fileName, user);
-    return ResponseEntity.ok(response);
+    return messagesService.getAssistantMessage(id, user);
   }
 
   @DeleteMapping("{id}/delete")
