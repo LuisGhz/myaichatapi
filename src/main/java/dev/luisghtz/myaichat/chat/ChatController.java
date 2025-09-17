@@ -57,7 +57,8 @@ public class ChatController {
   }
 
   @PostMapping("send-user-message")
-  public ResponseEntity<UserMessageResDto> sendUserMessage(@RequestBody @Validated NewMessageRequestDto firstMessageReqDto,
+  public ResponseEntity<UserMessageResDto> sendUserMessage(
+      @Validated @ModelAttribute NewMessageRequestDto firstMessageReqDto,
       @UserJwtData UserJwtDataDto user) {
     String fileName = null;
     if (firstMessageReqDto.getFile() != null) {
