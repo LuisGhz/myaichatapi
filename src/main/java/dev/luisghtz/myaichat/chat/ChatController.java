@@ -5,7 +5,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import dev.luisghtz.myaichat.auth.annotation.UserJwtData;
 import dev.luisghtz.myaichat.auth.dtos.UserJwtDataDto;
-import dev.luisghtz.myaichat.chat.dtos.AssistantChunkResDto;
+import dev.luisghtz.myaichat.chat.dtos.AssistantResponseDto;
 import dev.luisghtz.myaichat.chat.dtos.ChangeIsWebSearchModeReqDto;
 import dev.luisghtz.myaichat.chat.dtos.ChangeMaxOutputTokensReqDto;
 import dev.luisghtz.myaichat.chat.dtos.ChatsListResponseDto;
@@ -70,7 +70,7 @@ public class ChatController {
   }
 
   @GetMapping(value = "assistant-message/{id}")
-  public Flux<AssistantChunkResDto> newMessage(
+  public Flux<AssistantResponseDto> newMessage(
       @PathVariable UUID id,
       @UserJwtData UserJwtDataDto user) {
     return messagesService.getAssistantMessage(id, user);
