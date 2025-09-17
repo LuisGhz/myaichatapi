@@ -75,100 +75,105 @@ public class MessagesService {
     // Get the chat and validate ownership
     Chat chat = chatService.findChatById(chatId);
     validateIfChatBelongsToUser(chat, user);
-    
+
     // Get all messages from the chat
     List<AppMessage> messages = getMessagesFromChat(chat);
-    
-    // Check if this is a new chat (no messages yet)
-    boolean isNewChat = messages.isEmpty();
-    
-    // Create atomic references to accumulate response data
-    AtomicReference<StringBuilder> contentBuilder = new AtomicReference<>(new StringBuilder());
-    AtomicReference<Integer> promptTokens = new AtomicReference<>();
-    AtomicReference<Integer> completionTokens = new AtomicReference<>();
-    AtomicReference<Integer> totalTokens = new AtomicReference<>();
+
+    // Check if this is a new chat (no title yet)
+    boolean isNewChat = chat.getTitle() == null || chat.getTitle().isEmpty();
+
+    StringBuilder contentBuilder = new StringBuilder();
     AtomicReference<AppMessage> lastUserMessage = new AtomicReference<>();
     AtomicReference<Boolean> isLastChunk = new AtomicReference<>(false);
-    
+
     // Get the last user message to update with tokens later
     if (!messages.isEmpty()) {
       for (int i = messages.size() - 1; i >= 0; i--) {
         if ("User".equals(messages.get(i).getRole())) {
           lastUserMessage.set(messages.get(i));
+          log.info("Found last user message: '{}'", messages.get(i).getContent());
           break;
         }
       }
     }
-    
+
+    if (lastUserMessage.get() == null) {
+      log.warn("No user message found in chat: {}", chatId);
+    }
+
     // Get streaming response from AI service
     return aiProviderService.getAssistantMessage(messages, chat)
         .map(chatResponse -> {
           // Extract content from response
           String content = chatResponse.getResult().getOutput().getText();
-          
+
+          // Accumulate content FIRST (before checking if it's last chunk)
+          contentBuilder.append(content);
+
           // Store usage metadata from the response (only available in last chunk)
           var usage = chatResponse.getMetadata().getUsage();
-          if (usage != null) {
-            promptTokens.set(usage.getPromptTokens());
-            completionTokens.set(usage.getCompletionTokens());
-            totalTokens.set(usage.getTotalTokens());
+          if (usage != null && usage.getTotalTokens() != null && usage.getTotalTokens() > 0)
             isLastChunk.set(true);
-            log.info("Last chunk detected - Prompt tokens: {}, Completion tokens: {}, Total tokens: {}", 
-                promptTokens.get(), completionTokens.get(), totalTokens.get());
-          }
-          
-          // Accumulate content
-          contentBuilder.get().append(content);
-          
+
           // If this is the last chunk, prepare complete response with all data
           if (isLastChunk.get()) {
-            // Async save to database without blocking response
-            Mono.fromRunnable(() -> {
-              try {
-                saveAssistantMessageAndUpdateTokensAsync(
-                    chat, 
-                    contentBuilder.get().toString(), 
-                    promptTokens.get(), 
-                    completionTokens.get(), 
-                    totalTokens.get(),
-                    lastUserMessage.get(),
-                    isNewChat
-                );
-              } catch (Exception e) {
-                log.error("Error saving assistant message: ", e);
-              }
-            }).subscribeOn(Schedulers.boundedElastic()).subscribe();
-            
-            // Generate title if needed (also async)
+            // Generate title synchronously if needed (for new chats)
             String generatedTitle = null;
-            if (isNewChat && chat.getTitle() == null && lastUserMessage.get() != null) {
+
+            if (isNewChat) {
               try {
-                generatedTitle = aiProviderService.generateTitle(chat, lastUserMessage.get().getContent(), contentBuilder.get().toString());
+                generatedTitle = aiProviderService.generateTitle(chat, lastUserMessage.get().getContent(),
+                    contentBuilder.toString());
+                // Update chat title synchronously to ensure it's available in response
+                chat.setTitle(generatedTitle);
                 final String titleToSave = generatedTitle;
                 Mono.fromRunnable(() -> {
                   try {
                     chatService.updateChatTitle(chat.getId(), titleToSave);
+                    log.info("Title saved to database for chat: {}", chat.getId());
                   } catch (Exception e) {
-                    log.error("Error updating chat title: ", e);
+                    log.error("Error updating chat title in database: ", e);
                   }
                 }).subscribeOn(Schedulers.boundedElastic()).subscribe();
               } catch (Exception e) {
                 log.error("Error generating chat title: ", e);
               }
+            } else {
+              log.info("Skipping title generation - conditions not met");
             }
-            
+
+            // Save complete assistant message to database asynchronously (only once)
+            final String completeContent = contentBuilder.toString();
+            log.info("Saving complete assistant message with content length: {} characters", completeContent.length());
+            log.debug("Complete content: '{}'", completeContent);
+
+            Mono.fromRunnable(() -> {
+              try {
+                saveAssistantMessageAndUpdateTokensAsync(
+                    chat,
+                    completeContent,
+                    usage.getPromptTokens(),
+                    usage.getCompletionTokens(),
+                    usage.getTotalTokens(),
+                    lastUserMessage.get(),
+                    isNewChat);
+              } catch (Exception e) {
+                log.error("Error saving assistant message: ", e);
+              }
+            }).subscribeOn(Schedulers.boundedElastic()).subscribe();
+
             // Get total chat tokens
             TokensSum tokens = getSumOfPromptAndCompletionTokensByChatId(chatId);
-            
+
             // Return complete response for last chunk
             return AssistantResponseDto.builder()
                 .content(content)
                 .isLastChunk(true)
                 .chatId(chat.getId())
                 .chatTitle(generatedTitle != null ? generatedTitle : chat.getTitle())
-                .promptTokens(promptTokens.get())
-                .completionTokens(completionTokens.get())
-                .totalTokens(totalTokens.get())
+                .promptTokens(usage.getPromptTokens())
+                .completionTokens(usage.getCompletionTokens())
+                .totalTokens(usage.getTotalTokens())
                 .totalChatPromptTokens(tokens != null ? tokens.getPromptTokens() : 0L)
                 .totalChatCompletionTokens(tokens != null ? tokens.getCompletionTokens() : 0L)
                 .build();
@@ -184,11 +189,13 @@ public class MessagesService {
           log.error("Error during AI response generation: ", error);
         });
   }
-  
-  private void saveAssistantMessageAndUpdateTokensAsync(Chat chat, String content, Integer promptTokens, 
+
+  private void saveAssistantMessageAndUpdateTokensAsync(Chat chat, String content, Integer promptTokens,
       Integer completionTokens, Integer totalTokens, AppMessage lastUserMessage, boolean isNewChat) {
-    
-    // Create and save assistant message
+
+    log.info("Saving assistant message for chat: {} with content length: {}", chat.getId(), content.length());
+
+    // Create and save assistant message (complete content only)
     AppMessage assistantMessage = AppMessage.builder()
         .role("Assistant")
         .content(content)
@@ -197,16 +204,18 @@ public class MessagesService {
         .totalTokens(totalTokens)
         .chat(chat)
         .build();
-    
+
     messageRepository.save(assistantMessage);
-    
+    log.info("Assistant message saved with ID: {}", assistantMessage.getId());
+
     // Update the last user message with prompt tokens
     if (lastUserMessage != null && promptTokens != null) {
       lastUserMessage.setPromptTokens(promptTokens);
       messageRepository.save(lastUserMessage);
+      log.info("Updated user message with prompt tokens: {}", promptTokens);
     }
-    
-    log.info("Assistant message saved successfully for chat: {}", chat.getId());
+
+    log.info("Assistant message and token update completed for chat: {}", chat.getId());
   }
 
   private boolean isChatNew(Chat chat) {
