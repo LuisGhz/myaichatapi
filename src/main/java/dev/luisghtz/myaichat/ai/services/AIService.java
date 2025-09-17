@@ -10,6 +10,7 @@ import dev.luisghtz.myaichat.chat.entities.AppMessage;
 import dev.luisghtz.myaichat.chat.entities.Chat;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import reactor.core.publisher.Flux;
 
 @Service
 @RequiredArgsConstructor
@@ -19,13 +20,13 @@ public class AIService implements AIStrategyService {
   private final VertexGeminiService vertexGeminiService;
 
   @Override
-  public ChatResponse sendNewMessage(List<AppMessage> messages, Chat chat) {
+  public Flux<ChatResponse> getAssistantMessage(List<AppMessage> messages, Chat chat) {
     if (chat.getModel().startsWith("gpt-") || chat.getModel().matches("^o\\d.*")) {
       log.info("Sending message to OpenAI");
-      return openAIService.sendNewMessage(messages, chat);
+      return openAIService.getAssistantMessage(messages, chat);
     } else if (chat.getModel().startsWith("gemini-")) {
       log.info("Sending message to Vertex Gemini");
-      return vertexGeminiService.sendNewMessage(messages, chat);
+      return vertexGeminiService.getAssistantMessage(messages, chat);
     } else {
       throw new UnsupportedOperationException("Unsupported model for messages: " + chat.getModel());
     }

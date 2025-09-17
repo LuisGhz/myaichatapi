@@ -26,6 +26,7 @@ import dev.luisghtz.myaichat.chat.entities.Chat;
 import dev.luisghtz.myaichat.exceptions.FileNotValidException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import reactor.core.publisher.Flux;
 
 @Service("vertexGeminiService")
 @RequiredArgsConstructor
@@ -38,7 +39,7 @@ public class VertexGeminiService implements AIProviderService {
   private final ChatClientToolsUtil chatClientUtil;
 
   @Override
-  public ChatResponse sendNewMessage(List<AppMessage> messages, Chat chat) {
+  public Flux<ChatResponse> getAssistantMessage(List<AppMessage> messages, Chat chat) {
     List<Message> modelMessages = new ArrayList<>();
     MessagesUtil.addSystemMessage(chat, modelMessages);
     MessagesUtil.addInitialMessagesIfApply(chat, modelMessages);
@@ -57,7 +58,7 @@ public class VertexGeminiService implements AIProviderService {
         .maxOutputTokens(chat.getMaxOutputTokens().intValue())
         .build();
     var chatRequest = chatClientUtil.getChatClientRequestSpec(vertextAIChatClient, chat);
-    var chatResponse = chatRequest.messages(modelMessages).options(options).call().chatResponse();
+    var chatResponse = chatRequest.messages(modelMessages).options(options).stream().chatResponse();
 
     return chatResponse;
   }
