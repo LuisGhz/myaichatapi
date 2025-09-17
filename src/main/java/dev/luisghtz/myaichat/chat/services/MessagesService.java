@@ -68,7 +68,7 @@ public class MessagesService {
   }
 
   @Transactional
-  public AssistantMessageResponseDto sendNewMessage(NewMessageRequestDto newMessageRequestDto, String fileUrl,
+  public AssistantMessageResponseDto getAssistantMessage(NewMessageRequestDto newMessageRequestDto, String fileUrl,
       UserJwtDataDto user) {
     Chat chat = chatService.getChat(newMessageRequestDto, user.getId());
     boolean isNewChat = isChatNew(chat);

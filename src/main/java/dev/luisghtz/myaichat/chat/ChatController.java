@@ -76,7 +76,7 @@ public class ChatController {
     if (newMessageRequestDto.getFile() != null) {
       fileName = fileService.uploadFile(newMessageRequestDto.getFile());
     }
-    var response = messagesService.sendNewMessage(newMessageRequestDto, fileName, user);
+    var response = messagesService.getAssistantMessage(newMessageRequestDto, fileName, user);
     return ResponseEntity.ok(response);
   }
 

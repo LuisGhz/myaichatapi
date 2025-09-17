@@ -166,7 +166,7 @@ class MessagesServiceTest {
         when(messageRepository.saveAll(any())).thenReturn(List.of(userMessage, assistantMessage));
         doNothing().when(chatService).generateAndSetTitleForNewChat(eq(chat), eq(requestDto), any());
 
-        AssistantMessageResponseDto result = messagesService.sendNewMessage(requestDto, fileUrl, userJwt);
+        AssistantMessageResponseDto result = messagesService.getAssistantMessage(requestDto, fileUrl, userJwt);
 
         assertThat(result).isNotNull();
         assertThat(result.getTotalChatPromptTokens()).isEqualTo(1);
@@ -200,7 +200,7 @@ class MessagesServiceTest {
 
       when(chatService.getChat(requestDto, userJwt.getId())).thenReturn(chat);
 
-      assertThrows(ResponseStatusException.class, () -> messagesService.sendNewMessage(requestDto, null, userJwt));
+      assertThrows(ResponseStatusException.class, () -> messagesService.getAssistantMessage(requestDto, null, userJwt));
     }
   }
 
