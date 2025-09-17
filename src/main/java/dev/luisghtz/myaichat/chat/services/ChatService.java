@@ -136,6 +136,12 @@ public class ChatService {
     chatRepository.setChatFav(id, chat.getFav());
   }
 
+  @Transactional
+  public void updateChatTitle(UUID chatId, String title) {
+    log.info("Updating chat title for chat with ID: '{}'", chatId);
+    chatRepository.renameChatTitleById(chatId, title);
+  }
+
   private void validateChatBelongsToUser(Chat chat, UserJwtDataDto user) {
     if (!chat.getUser().getId().equals(UUID.fromString(user.getId()))) {
       throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You don't have access to this chat");
