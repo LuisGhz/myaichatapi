@@ -15,7 +15,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import dev.luisghtz.myaichat.ai.services.AIService;
 import dev.luisghtz.myaichat.auth.dtos.UserJwtDataDto;
-import dev.luisghtz.myaichat.chat.dtos.AssistantChunkResDto;
+import dev.luisghtz.myaichat.chat.dtos.AssistantResponseDto;
 import dev.luisghtz.myaichat.chat.dtos.UserMessageResDto;
 import dev.luisghtz.myaichat.chat.dtos.HistoryChatDto;
 import dev.luisghtz.myaichat.chat.dtos.NewMessageRequestDto;
@@ -31,6 +31,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 @Service
 @RequiredArgsConstructor
@@ -70,7 +71,7 @@ public class MessagesService {
     return res;
   }
 
-  public Flux<AssistantChunkResDto> getAssistantMessage(UUID chatId, UserJwtDataDto user) {
+  public Flux<AssistantResponseDto> getAssistantMessage(UUID chatId, UserJwtDataDto user) {
     // Get the chat and validate ownership
     Chat chat = chatService.findChatById(chatId);
     validateIfChatBelongsToUser(chat, user);
@@ -87,6 +88,7 @@ public class MessagesService {
     AtomicReference<Integer> completionTokens = new AtomicReference<>();
     AtomicReference<Integer> totalTokens = new AtomicReference<>();
     AtomicReference<AppMessage> lastUserMessage = new AtomicReference<>();
+    AtomicReference<Boolean> isLastChunk = new AtomicReference<>(false);
     
     // Get the last user message to update with tokens later
     if (!messages.isEmpty()) {
@@ -104,47 +106,86 @@ public class MessagesService {
           // Extract content from response
           String content = chatResponse.getResult().getOutput().getText();
           
-          // Store usage metadata from the response
+          // Store usage metadata from the response (only available in last chunk)
           var usage = chatResponse.getMetadata().getUsage();
           if (usage != null) {
             promptTokens.set(usage.getPromptTokens());
             completionTokens.set(usage.getCompletionTokens());
             totalTokens.set(usage.getTotalTokens());
+            isLastChunk.set(true);
+            log.info("Last chunk detected - Prompt tokens: {}, Completion tokens: {}, Total tokens: {}", 
+                promptTokens.get(), completionTokens.get(), totalTokens.get());
           }
           
           // Accumulate content
           contentBuilder.get().append(content);
           
-          // Return chunk for streaming
-          return AssistantChunkResDto.builder()
-              .content(content)
-              .build();
-        })
-        .doOnComplete(() -> {
-          // Save the complete assistant message to database
-          Mono.fromRunnable(() -> {
-            try {
-              saveAssistantMessageAndUpdateTokens(
-                  chat, 
-                  contentBuilder.get().toString(), 
-                  promptTokens.get(), 
-                  completionTokens.get(), 
-                  totalTokens.get(),
-                  lastUserMessage.get(),
-                  isNewChat
-              );
-            } catch (Exception e) {
-              log.error("Error saving assistant message: ", e);
+          // If this is the last chunk, prepare complete response with all data
+          if (isLastChunk.get()) {
+            // Async save to database without blocking response
+            Mono.fromRunnable(() -> {
+              try {
+                saveAssistantMessageAndUpdateTokensAsync(
+                    chat, 
+                    contentBuilder.get().toString(), 
+                    promptTokens.get(), 
+                    completionTokens.get(), 
+                    totalTokens.get(),
+                    lastUserMessage.get(),
+                    isNewChat
+                );
+              } catch (Exception e) {
+                log.error("Error saving assistant message: ", e);
+              }
+            }).subscribeOn(Schedulers.boundedElastic()).subscribe();
+            
+            // Generate title if needed (also async)
+            String generatedTitle = null;
+            if (isNewChat && chat.getTitle() == null && lastUserMessage.get() != null) {
+              try {
+                generatedTitle = aiProviderService.generateTitle(chat, lastUserMessage.get().getContent(), contentBuilder.get().toString());
+                final String titleToSave = generatedTitle;
+                Mono.fromRunnable(() -> {
+                  try {
+                    chatService.updateChatTitle(chat.getId(), titleToSave);
+                  } catch (Exception e) {
+                    log.error("Error updating chat title: ", e);
+                  }
+                }).subscribeOn(Schedulers.boundedElastic()).subscribe();
+              } catch (Exception e) {
+                log.error("Error generating chat title: ", e);
+              }
             }
-          }).subscribe();
+            
+            // Get total chat tokens
+            TokensSum tokens = getSumOfPromptAndCompletionTokensByChatId(chatId);
+            
+            // Return complete response for last chunk
+            return AssistantResponseDto.builder()
+                .content(content)
+                .isLastChunk(true)
+                .chatId(chat.getId())
+                .chatTitle(generatedTitle != null ? generatedTitle : chat.getTitle())
+                .promptTokens(promptTokens.get())
+                .completionTokens(completionTokens.get())
+                .totalTokens(totalTokens.get())
+                .totalChatPromptTokens(tokens != null ? tokens.getPromptTokens() : 0L)
+                .totalChatCompletionTokens(tokens != null ? tokens.getCompletionTokens() : 0L)
+                .build();
+          } else {
+            // Return chunk response for non-last chunks
+            return AssistantResponseDto.builder()
+                .content(content)
+                .isLastChunk(false)
+                .build();
+          }
         })
         .doOnError(error -> {
           log.error("Error during AI response generation: ", error);
         });
   }
   
-  @Transactional
-  private void saveAssistantMessageAndUpdateTokens(Chat chat, String content, Integer promptTokens, 
+  private void saveAssistantMessageAndUpdateTokensAsync(Chat chat, String content, Integer promptTokens, 
       Integer completionTokens, Integer totalTokens, AppMessage lastUserMessage, boolean isNewChat) {
     
     // Create and save assistant message
@@ -165,15 +206,7 @@ public class MessagesService {
       messageRepository.save(lastUserMessage);
     }
     
-    // Generate title for new chat if needed
-    if (isNewChat && chat.getTitle() == null && lastUserMessage != null) {
-      try {
-        String title = aiProviderService.generateTitle(chat, lastUserMessage.getContent(), content);
-        chatService.updateChatTitle(chat.getId(), title);
-      } catch (Exception e) {
-        log.error("Error generating chat title: ", e);
-      }
-    }
+    log.info("Assistant message saved successfully for chat: {}", chat.getId());
   }
 
   private boolean isChatNew(Chat chat) {
