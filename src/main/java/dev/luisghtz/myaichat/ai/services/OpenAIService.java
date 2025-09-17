@@ -56,6 +56,7 @@ public class OpenAIService implements AIProviderService {
     OpenAiChatOptions options = OpenAiChatOptions.builder()
         .model(chat.getModel())
         .maxCompletionTokens(chat.getMaxOutputTokens().intValue())
+        .streamUsage(true)
         .temperature(temperature)
         .build();
     var chatRequest = chatClientUtil.getChatClientRequestSpec(openAIChatClient, chat);
