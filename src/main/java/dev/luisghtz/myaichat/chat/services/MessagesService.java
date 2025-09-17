@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -14,7 +15,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import dev.luisghtz.myaichat.ai.services.AIService;
 import dev.luisghtz.myaichat.auth.dtos.UserJwtDataDto;
-import dev.luisghtz.myaichat.chat.dtos.AssistantMessageResponseDto;
+import dev.luisghtz.myaichat.chat.dtos.AssistantChunkResDto;
 import dev.luisghtz.myaichat.chat.dtos.UserMessageResDto;
 import dev.luisghtz.myaichat.chat.dtos.HistoryChatDto;
 import dev.luisghtz.myaichat.chat.dtos.NewMessageRequestDto;
@@ -28,6 +29,8 @@ import dev.luisghtz.myaichat.file.providers.AwsS3Service;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 @Service
 @RequiredArgsConstructor
@@ -67,63 +70,114 @@ public class MessagesService {
     return res;
   }
 
-  @Transactional
-  public AssistantMessageResponseDto getAssistantMessage(NewMessageRequestDto newMessageRequestDto, String fileUrl,
-      UserJwtDataDto user) {
-    Chat chat = chatService.getChat(newMessageRequestDto, user.getId());
-    boolean isNewChat = isChatNew(chat);
-    if (!isNewChat)
-      validateIfChatBelongsToUser(chat, user);
-    AppMessage userMessage = MessagesUtils.processUserMessage(newMessageRequestDto, chat, fileUrl);
-    AppMessage assistantMessage = getAssistantResponse(chat, userMessage);
-    AssistantMessageResponseDto responseDto = createAssistantMessageDto(assistantMessage, chat.getId(), isNewChat);
-    saveMessages(userMessage, assistantMessage);
-    if (isNewChat) {
-      chatService.generateAndSetTitleForNewChat(chat, newMessageRequestDto, responseDto);
-      addNewChatDataToFirstMessage(responseDto, chat);
-      var newChatRes = AssistantMessageResponseDto.builder()
-          .chatId(chat.getId())
-          .chatTitle(chat.getTitle())
-          .build();
-      return newChatRes;
+  public Flux<AssistantChunkResDto> getAssistantMessage(UUID chatId, UserJwtDataDto user) {
+    // Get the chat and validate ownership
+    Chat chat = chatService.findChatById(chatId);
+    validateIfChatBelongsToUser(chat, user);
+    
+    // Get all messages from the chat
+    List<AppMessage> messages = getMessagesFromChat(chat);
+    
+    // Check if this is a new chat (no messages yet)
+    boolean isNewChat = messages.isEmpty();
+    
+    // Create atomic references to accumulate response data
+    AtomicReference<StringBuilder> contentBuilder = new AtomicReference<>(new StringBuilder());
+    AtomicReference<Integer> promptTokens = new AtomicReference<>();
+    AtomicReference<Integer> completionTokens = new AtomicReference<>();
+    AtomicReference<Integer> totalTokens = new AtomicReference<>();
+    AtomicReference<AppMessage> lastUserMessage = new AtomicReference<>();
+    
+    // Get the last user message to update with tokens later
+    if (!messages.isEmpty()) {
+      for (int i = messages.size() - 1; i >= 0; i--) {
+        if ("User".equals(messages.get(i).getRole())) {
+          lastUserMessage.set(messages.get(i));
+          break;
+        }
+      }
     }
-    var tokens = getSumOfPromptAndCompletionTokensByChatId(chat.getId());
-    responseDto.setTotalChatPromptTokens(tokens.getPromptTokens());
-    responseDto.setTotalChatCompletionTokens(tokens.getCompletionTokens());
-    return responseDto;
+    
+    // Get streaming response from AI service
+    return aiProviderService.getAssistantMessage(messages, chat)
+        .map(chatResponse -> {
+          // Extract content from response
+          String content = chatResponse.getResult().getOutput().getText();
+          
+          // Store usage metadata from the response
+          var usage = chatResponse.getMetadata().getUsage();
+          if (usage != null) {
+            promptTokens.set(usage.getPromptTokens());
+            completionTokens.set(usage.getCompletionTokens());
+            totalTokens.set(usage.getTotalTokens());
+          }
+          
+          // Accumulate content
+          contentBuilder.get().append(content);
+          
+          // Return chunk for streaming
+          return AssistantChunkResDto.builder()
+              .content(content)
+              .build();
+        })
+        .doOnComplete(() -> {
+          // Save the complete assistant message to database
+          Mono.fromRunnable(() -> {
+            try {
+              saveAssistantMessageAndUpdateTokens(
+                  chat, 
+                  contentBuilder.get().toString(), 
+                  promptTokens.get(), 
+                  completionTokens.get(), 
+                  totalTokens.get(),
+                  lastUserMessage.get(),
+                  isNewChat
+              );
+            } catch (Exception e) {
+              log.error("Error saving assistant message: ", e);
+            }
+          }).subscribe();
+        })
+        .doOnError(error -> {
+          log.error("Error during AI response generation: ", error);
+        });
+  }
+  
+  @Transactional
+  private void saveAssistantMessageAndUpdateTokens(Chat chat, String content, Integer promptTokens, 
+      Integer completionTokens, Integer totalTokens, AppMessage lastUserMessage, boolean isNewChat) {
+    
+    // Create and save assistant message
+    AppMessage assistantMessage = AppMessage.builder()
+        .role("Assistant")
+        .content(content)
+        .createdAt(new java.util.Date())
+        .completionTokens(completionTokens)
+        .totalTokens(totalTokens)
+        .chat(chat)
+        .build();
+    
+    messageRepository.save(assistantMessage);
+    
+    // Update the last user message with prompt tokens
+    if (lastUserMessage != null && promptTokens != null) {
+      lastUserMessage.setPromptTokens(promptTokens);
+      messageRepository.save(lastUserMessage);
+    }
+    
+    // Generate title for new chat if needed
+    if (isNewChat && chat.getTitle() == null && lastUserMessage != null) {
+      try {
+        String title = aiProviderService.generateTitle(chat, lastUserMessage.getContent(), content);
+        chatService.updateChatTitle(chat.getId(), title);
+      } catch (Exception e) {
+        log.error("Error generating chat title: ", e);
+      }
+    }
   }
 
   private boolean isChatNew(Chat chat) {
     return chat.getMessages() == null || chat.getMessages().isEmpty();
-  }
-
-  private AppMessage getAssistantResponse(Chat chat, AppMessage userMessage) {
-    List<AppMessage> messages = getMessagesFromChat(chat);
-    messages.add(userMessage);
-    var chatResponse = aiProviderService.sendNewMessage(messages, chat);
-    return MessagesUtils.createAssistantMessage(chatResponse, chat);
-  }
-
-  private void saveMessages(AppMessage userMessage, AppMessage assistantMessage) {
-    userMessage.setPromptTokens(assistantMessage.getPromptTokens());
-    assistantMessage.setPromptTokens(null);
-    saveAll(List.of(userMessage, assistantMessage));
-  }
-
-  private AssistantMessageResponseDto createAssistantMessageDto(AppMessage assistantMessage, UUID chatId,
-      boolean isNewChat) {
-    var message = AssistantMessageResponseDto.builder()
-        .content(assistantMessage.getContent())
-        .promptTokens(assistantMessage.getPromptTokens())
-        .completionTokens(assistantMessage.getCompletionTokens())
-        .totalTokens(assistantMessage.getTotalTokens())
-        .build();
-    return message;
-  }
-
-  private void addNewChatDataToFirstMessage(AssistantMessageResponseDto responseDto, Chat chat) {
-    responseDto.setChatId(chat.getId());
-    responseDto.setChatTitle(chat.getTitle());
   }
 
   private List<AppMessageHistory> getChatPreviousMessages(Chat chat, Pageable pageable) {
