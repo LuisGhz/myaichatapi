@@ -15,7 +15,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import dev.luisghtz.myaichat.ai.services.AIService;
 import dev.luisghtz.myaichat.auth.dtos.UserJwtDataDto;
-import dev.luisghtz.myaichat.chat.dtos.AssistantResponseDto;
+import dev.luisghtz.myaichat.chat.dtos.AssistantMessageResponseDto;
 import dev.luisghtz.myaichat.chat.dtos.UserMessageResDto;
 import dev.luisghtz.myaichat.chat.dtos.HistoryChatDto;
 import dev.luisghtz.myaichat.chat.dtos.NewMessageRequestDto;
@@ -71,7 +71,7 @@ public class MessagesService {
     return res;
   }
 
-  public Flux<AssistantResponseDto> getAssistantMessage(UUID chatId, UserJwtDataDto user) {
+  public Flux<AssistantMessageResponseDto> getAssistantMessage(UUID chatId, UserJwtDataDto user) {
     // Get the chat and validate ownership
     Chat chat = chatService.findChatById(chatId);
     validateIfChatBelongsToUser(chat, user);
@@ -166,7 +166,7 @@ public class MessagesService {
             TokensSum tokens = getSumOfPromptAndCompletionTokensByChatId(chatId);
 
             // Return complete response for last chunk
-            return AssistantResponseDto.builder()
+            return AssistantMessageResponseDto.builder()
                 .content(content)
                 .isLastChunk(true)
                 .chatId(chat.getId())
@@ -179,7 +179,7 @@ public class MessagesService {
                 .build();
           } else {
             // Return chunk response for non-last chunks
-            return AssistantResponseDto.builder()
+            return AssistantMessageResponseDto.builder()
                 .content(content)
                 .isLastChunk(false)
                 .build();
