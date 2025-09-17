@@ -9,6 +9,7 @@ import dev.luisghtz.myaichat.chat.dtos.AssistantMessageResponseDto;
 import dev.luisghtz.myaichat.chat.dtos.ChangeIsWebSearchModeReqDto;
 import dev.luisghtz.myaichat.chat.dtos.ChangeMaxOutputTokensReqDto;
 import dev.luisghtz.myaichat.chat.dtos.ChatsListResponseDto;
+import dev.luisghtz.myaichat.chat.dtos.UserMessageResDto;
 import dev.luisghtz.myaichat.chat.dtos.HistoryChatDto;
 import dev.luisghtz.myaichat.chat.dtos.NewMessageRequestDto;
 import dev.luisghtz.myaichat.chat.dtos.RenameChatTitleDto;
@@ -53,6 +54,17 @@ public class ChatController {
   public ResponseEntity<HistoryChatDto> getChatHistory(@PathVariable UUID id,
       @PageableDefault(size = 10) Pageable pageable, @UserJwtData UserJwtDataDto user) {
     return ResponseEntity.ok(messagesService.getPreviousMessages(id, pageable, user));
+  }
+
+  @PostMapping("send-user-message")
+  public ResponseEntity<UserMessageResDto> sendUserMessage(@RequestBody @Validated NewMessageRequestDto firstMessageReqDto,
+      @UserJwtData UserJwtDataDto user) {
+    String fileName = null;
+    if (firstMessageReqDto.getFile() != null) {
+      fileName = fileService.uploadFile(firstMessageReqDto.getFile());
+    }
+    var response = messagesService.userMessage(firstMessageReqDto, user, fileName);
+    return ResponseEntity.ok(response);
   }
 
   @PostMapping("send-message")
