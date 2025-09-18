@@ -98,7 +98,7 @@ public class ChatController {
     return ResponseEntity.noContent().build();
   }
 
-  @PatchMapping("{id}/change-web-search-mode")
+  @PatchMapping("{id}/toggle-web-search-mode")
   public ResponseEntity<Void> changeIsWebSearchMode(@PathVariable UUID id,
       @Validated @RequestBody ChangeIsWebSearchModeReqDto changeIsWebSearchMode, @UserJwtData UserJwtDataDto user) {
     chatService.changeIsWebSearchMode(id, changeIsWebSearchMode.getIsWebSearchMode(), user);
