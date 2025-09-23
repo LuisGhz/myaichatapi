@@ -86,7 +86,7 @@ public class ChatController {
   @PatchMapping("{id}/rename")
   public ResponseEntity<Void> renameChat(@PathVariable UUID id,
       @Validated @RequestBody RenameChatTitleDto renameChatTitleDto, @UserJwtData UserJwtDataDto user) {
-    chatService.renameChatTitleById(id, renameChatTitleDto.getTitle(), user);
+    chatService.renameChatTitleById(id, renameChatTitleDto.getName(), user);
     return ResponseEntity.noContent().build();
   }
 
