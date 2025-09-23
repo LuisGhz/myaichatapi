@@ -86,8 +86,7 @@ public class OpenAIService implements AIProviderService {
   }
 
   private Message generateUserMessage(AppMessage message) {
-    if (message.getFileUrl() != null &&
-        message.getId() == null) {
+    if (message.getFileUrl() != null) {
       try {
         MimeType mimeType = getMimeType(message.getFileUrl());
         return UserMessage.builder()
