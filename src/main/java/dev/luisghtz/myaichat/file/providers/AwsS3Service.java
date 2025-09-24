@@ -45,6 +45,7 @@ public class AwsS3Service {
     s3Client.putObject(PutObjectRequest.builder()
         .bucket(bucketName)
         .key(fileName)
+        .contentDisposition("inline")
         .build(), RequestBody.fromBytes(fileContent));
   }
 
