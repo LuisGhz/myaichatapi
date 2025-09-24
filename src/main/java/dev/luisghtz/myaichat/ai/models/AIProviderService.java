@@ -11,5 +11,7 @@ import reactor.core.publisher.Flux;
 public interface AIProviderService {
   Flux<ChatResponse> getAssistantMessage(List<AppMessage> messages, Chat chat);
 
+  ChatResponse sendNewMessage(List<AppMessage> messages, Chat chat);
+
   String generateTitle(String userMessage, String assistantMessage);
 }

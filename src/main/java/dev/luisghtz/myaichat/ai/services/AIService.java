@@ -32,6 +32,19 @@ public class AIService implements AIStrategyService {
     }
   }
 
+  @Override
+  public ChatResponse sendNewMessage(List<AppMessage> messages, Chat chat) {
+    if (chat.getModel().startsWith("gpt-") || chat.getModel().matches("^o\\d.*")) {
+      log.info("Sending new message to OpenAI");
+      return openAIService.sendNewMessage(messages, chat);
+    } else if (chat.getModel().startsWith("gemini-")) {
+      log.info("Sending new message to Vertex Gemini");
+      return vertexGeminiService.sendNewMessage(messages, chat);
+    } else {
+      throw new UnsupportedOperationException("Unsupported model for sendNewMessage: " + chat.getModel());
+    }
+  }
+
   public String generateTitle(Chat chat, String userMessage, String assistantMessage) {
     if (chat.getModel().startsWith("gpt-") || chat.getModel().matches("^o\\d.*")) {
       return openAIService.generateTitle(userMessage, assistantMessage);

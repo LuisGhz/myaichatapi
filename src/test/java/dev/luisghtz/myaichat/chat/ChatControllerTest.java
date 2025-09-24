@@ -329,7 +329,7 @@ public class ChatControllerTest {
       // Arrange
       String newTitle = "New Chat Title";
       RenameChatTitleDto requestDto = new RenameChatTitleDto();
-      requestDto.setTitle(newTitle);
+      requestDto.setName(newTitle);
 
       // Act & Assert
       mockMvc.perform(patch("/api/chat/{id}/rename", testChatId)
@@ -345,7 +345,7 @@ public class ChatControllerTest {
     public void testRenameChatWithBlankTitle() throws Exception {
       // Arrange
       RenameChatTitleDto requestDto = new RenameChatTitleDto();
-      requestDto.setTitle("");
+      requestDto.setName("");
 
       // Act & Assert
       mockMvc.perform(patch("/api/chat/{id}/rename", testChatId)
@@ -362,7 +362,7 @@ public class ChatControllerTest {
       // Arrange
       String longTitle = "a".repeat(51); // Exceeds max length of 50
       RenameChatTitleDto requestDto = new RenameChatTitleDto();
-      requestDto.setTitle(longTitle);
+      requestDto.setName(longTitle);
 
       // Act & Assert
       mockMvc.perform(patch("/api/chat/{id}/rename", testChatId)
@@ -379,7 +379,7 @@ public class ChatControllerTest {
       // Arrange
       String newTitle = "New Chat Title";
       RenameChatTitleDto requestDto = new RenameChatTitleDto();
-      requestDto.setTitle(newTitle);
+      requestDto.setName(newTitle);
 
       // Act & Assert
       mockMvc.perform(patch("/api/chat/{id}/rename", testChatId)

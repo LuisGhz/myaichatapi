@@ -129,7 +129,8 @@ class ChatServiceTest {
 
     // Then
     assertNotNull(result);
-    verify(chatRepository).save(any(Chat.class));
+    // Expect 2 saves: one for creating new chat, one for updating web search mode
+    verify(chatRepository, times(2)).save(any(Chat.class));
   }
 
   @Test

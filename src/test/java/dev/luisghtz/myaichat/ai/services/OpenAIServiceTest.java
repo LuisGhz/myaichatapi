@@ -21,6 +21,7 @@ import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.content.Media;
 import static org.springframework.util.MimeTypeUtils.*;
+import reactor.core.publisher.Flux;
 
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -65,6 +66,16 @@ class OpenAIServiceTest {
     return chat;
   }
 
+  private void setupStreamingMocks(Chat chat, ChatResponse expectedChatResponse) {
+    // Mock the streaming response
+    ChatClient.StreamResponseSpec streamResponseSpec = mock(ChatClient.StreamResponseSpec.class);
+    when(streamResponseSpec.chatResponse()).thenReturn(Flux.just(expectedChatResponse));
+
+    CallResponseMock callResponseMock = new CallResponseMock(expectedChatResponse);
+    ChatClientRequestMock chatClientRequestMock = new ChatClientRequestMock(callResponseMock, streamResponseSpec);
+    when(chatClientToolsUtil.getChatClientRequestSpec(openAIChatClient, chat)).thenReturn(chatClientRequestMock);
+  }
+
   @Test
   @DisplayName("sendNewMessage - Should return chat response with assistant message")
   void sendNewMessage_ShouldReturnChatResponseWithAssistantMessage() {
@@ -76,10 +87,8 @@ class OpenAIServiceTest {
         .build());
     Chat chat = createTestChat();
     var assistantMessage = new AssistantMessage("Hello");
-    ChatResponse mockResponse = new ChatResponse(List.of(new Generation(assistantMessage)));
-    CallResponseMock callResponse = new CallResponseMock(mockResponse);
-    ChatClientRequestMock mockRequest = new ChatClientRequestMock(callResponse);
-    when(chatClientToolsUtil.getChatClientRequestSpec(openAIChatClient, chat)).thenReturn(mockRequest);
+    ChatResponse expectedChatResponse = new ChatResponse(List.of(new Generation(assistantMessage)));
+    setupStreamingMocks(chat, expectedChatResponse);
 
     // Act
     ChatResponse response = openAIService.sendNewMessage(messages, chat);
@@ -102,10 +111,8 @@ class OpenAIServiceTest {
     messages.add(appMessage);
     Chat chat = createTestChat();
     var assistantMessage = new AssistantMessage("Hello");
-    ChatResponse mockResponse = new ChatResponse(List.of(new Generation(assistantMessage)));
-    CallResponseMock callResponse = new CallResponseMock(mockResponse);
-    ChatClientRequestMock mockRequest = new ChatClientRequestMock(callResponse);
-    when(chatClientToolsUtil.getChatClientRequestSpec(openAIChatClient, chat)).thenReturn(mockRequest);
+    ChatResponse expectedChatResponse = new ChatResponse(List.of(new Generation(assistantMessage)));
+    setupStreamingMocks(chat, expectedChatResponse);
 
     // Spy on Media constructor to verify it was called
     try (var mediaMockedConstruction = mockStatic(Media.class, CALLS_REAL_METHODS)) {
@@ -132,10 +139,8 @@ class OpenAIServiceTest {
     messages.add(appMessage);
     Chat chat = createTestChat();
     var assistantMessage = new AssistantMessage("Hello");
-    ChatResponse mockResponse = new ChatResponse(List.of(new Generation(assistantMessage)));
-    CallResponseMock callResponse = new CallResponseMock(mockResponse);
-    ChatClientRequestMock mockRequest = new ChatClientRequestMock(callResponse);
-    when(chatClientToolsUtil.getChatClientRequestSpec(openAIChatClient, chat)).thenReturn(mockRequest);
+    ChatResponse expectedChatResponse = new ChatResponse(List.of(new Generation(assistantMessage)));
+    setupStreamingMocks(chat, expectedChatResponse);
 
     // Spy on Media constructor to verify it was called
     try (var mediaMockedConstruction = mockStatic(Media.class, CALLS_REAL_METHODS)) {
@@ -162,10 +167,8 @@ class OpenAIServiceTest {
     messages.add(appMessage);
     Chat chat = createTestChat();
     var assistantMessage = new AssistantMessage("Hello");
-    ChatResponse mockResponse = new ChatResponse(List.of(new Generation(assistantMessage)));
-    CallResponseMock callResponse = new CallResponseMock(mockResponse);
-    ChatClientRequestMock mockRequest = new ChatClientRequestMock(callResponse);
-    when(chatClientToolsUtil.getChatClientRequestSpec(openAIChatClient, chat)).thenReturn(mockRequest);
+    ChatResponse expectedChatResponse = new ChatResponse(List.of(new Generation(assistantMessage)));
+    setupStreamingMocks(chat, expectedChatResponse);
 
     // Spy on Media constructor to verify it was called
     try (var mediaMockedConstruction = mockStatic(Media.class, CALLS_REAL_METHODS)) {
@@ -192,10 +195,8 @@ class OpenAIServiceTest {
     messages.add(appMessage);
     Chat chat = createTestChat();
     var assistantMessage = new AssistantMessage("Hello");
-    ChatResponse mockResponse = new ChatResponse(List.of(new Generation(assistantMessage)));
-    CallResponseMock callResponse = new CallResponseMock(mockResponse);
-    ChatClientRequestMock mockRequest = new ChatClientRequestMock(callResponse);
-    when(chatClientToolsUtil.getChatClientRequestSpec(openAIChatClient, chat)).thenReturn(mockRequest);
+    ChatResponse expectedChatResponse = new ChatResponse(List.of(new Generation(assistantMessage)));
+    setupStreamingMocks(chat, expectedChatResponse);
 
     // Spy on Media constructor to verify it was called
     try (var mediaMockedConstruction = mockStatic(Media.class, CALLS_REAL_METHODS)) {
@@ -258,10 +259,8 @@ class OpenAIServiceTest {
         .build());
     Chat chat = createTestChatWithWebSearch();
     var assistantMessage = new AssistantMessage("I'll search for current information.");
-    ChatResponse mockResponse = new ChatResponse(List.of(new Generation(assistantMessage)));
-    CallResponseMock callResponse = new CallResponseMock(mockResponse);
-    ChatClientRequestMock mockRequest = new ChatClientRequestMock(callResponse);
-    when(chatClientToolsUtil.getChatClientRequestSpec(openAIChatClient, chat)).thenReturn(mockRequest);
+    ChatResponse expectedChatResponse = new ChatResponse(List.of(new Generation(assistantMessage)));
+    setupStreamingMocks(chat, expectedChatResponse);
 
     // Act
     ChatResponse response = openAIService.sendNewMessage(messages, chat);
@@ -285,10 +284,8 @@ class OpenAIServiceTest {
     messages.add(appMessage);
     Chat chat = createTestChatWithWebSearch();
     var assistantMessage = new AssistantMessage("Image analyzed with web search capabilities.");
-    ChatResponse mockResponse = new ChatResponse(List.of(new Generation(assistantMessage)));
-    CallResponseMock callResponse = new CallResponseMock(mockResponse);
-    ChatClientRequestMock mockRequest = new ChatClientRequestMock(callResponse);
-    when(chatClientToolsUtil.getChatClientRequestSpec(openAIChatClient, chat)).thenReturn(mockRequest);
+    ChatResponse expectedChatResponse = new ChatResponse(List.of(new Generation(assistantMessage)));
+    setupStreamingMocks(chat, expectedChatResponse);
 
     // Spy on Media constructor to verify it was called
     try (var mediaMockedConstruction = mockStatic(Media.class, CALLS_REAL_METHODS)) {
@@ -318,10 +315,8 @@ class OpenAIServiceTest {
         .build());
     Chat chat = createTestChatWithWebSearch();
     var assistantMessage = new AssistantMessage("Continuing with web search capabilities.");
-    ChatResponse mockResponse = new ChatResponse(List.of(new Generation(assistantMessage)));
-    CallResponseMock callResponse = new CallResponseMock(mockResponse);
-    ChatClientRequestMock mockRequest = new ChatClientRequestMock(callResponse);
-    when(chatClientToolsUtil.getChatClientRequestSpec(openAIChatClient, chat)).thenReturn(mockRequest);
+    ChatResponse expectedChatResponse = new ChatResponse(List.of(new Generation(assistantMessage)));
+    setupStreamingMocks(chat, expectedChatResponse);
 
     // Act
     ChatResponse response = openAIService.sendNewMessage(messages, chat);

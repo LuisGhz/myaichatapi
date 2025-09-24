@@ -26,6 +26,7 @@ import org.springframework.ai.chat.model.Generation;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.server.ResponseStatusException;
+import reactor.core.publisher.Flux;
 
 import java.util.*;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -138,22 +139,28 @@ class MessagesServiceTest {
       String fileUrl = "file.png";
       Chat chat = new Chat();
       chat.setId(UUID.randomUUID());
-      chat.setTitle("New Chat");
+      chat.setTitle(null); // Set to null for new chat testing
       chat.setModel("gpt-3");
       chat.setMaxOutputTokens((short) 100);
       chat.setIsWebSearchMode(false);
-      chat.setMessages(Collections.emptyList());
       User user = new User();
       user.setId(UUID.randomUUID());
       chat.setUser(user);
 
       AppMessage userMessage = mock(AppMessage.class);
+      when(userMessage.getRole()).thenReturn("User");
+      when(userMessage.getContent()).thenReturn("Test message");
+      
+      // Set the messages list on the real Chat entity
+      chat.setMessages(List.of(userMessage));
+      
       AppMessage assistantMessage = mock(AppMessage.class);
       TokensSum tokensSum = new TokensSum(1L, 2L);
-      var userJwt = createUserJwtData(UUID.randomUUID().toString());
+      var userJwt = createUserJwtData(user.getId().toString());
 
       // Only stub what's needed
       when(chatService.getChat(requestDto, userJwt.getId())).thenReturn(chat);
+      when(chatService.findChatById(chat.getId())).thenReturn(chat);
       when(messageRepository.getSumOfPromptAndCompletionTokensByChatId(chat.getId())).thenReturn(tokensSum);
 
       try (MockedStatic<MessagesUtils> utils = Mockito.mockStatic(MessagesUtils.class)) {
@@ -161,10 +168,22 @@ class MessagesServiceTest {
         utils.when(() -> MessagesUtils.createAssistantMessage(any(), eq(chat))).thenReturn(assistantMessage);
 
         var assistantMessageRes = new AssistantMessage("Hello");
-        ChatResponse mockResponse = new ChatResponse(List.of(new Generation(assistantMessageRes)));
-        when(aiProviderService.sendNewMessage(anyList(), eq(chat))).thenReturn(mockResponse);
-        when(messageRepository.saveAll(any())).thenReturn(List.of(userMessage, assistantMessage));
-        doNothing().when(chatService).generateAndSetTitleForNewChat(eq(chat), eq(requestDto), any());
+        Generation generation = new Generation(assistantMessageRes);
+        ChatResponse mockResponse = mock(ChatResponse.class);
+        when(mockResponse.getResult()).thenReturn(generation);
+        
+        // Mock the metadata properly with usage information
+        org.springframework.ai.chat.metadata.ChatResponseMetadata metadata = mock(org.springframework.ai.chat.metadata.ChatResponseMetadata.class);
+        org.springframework.ai.chat.metadata.Usage usage = mock(org.springframework.ai.chat.metadata.Usage.class);
+        when(usage.getTotalTokens()).thenReturn(10);
+        when(usage.getPromptTokens()).thenReturn(5);
+        when(usage.getCompletionTokens()).thenReturn(5);
+        when(metadata.getUsage()).thenReturn(usage);
+        when(mockResponse.getMetadata()).thenReturn(metadata);
+        
+        when(aiProviderService.getAssistantMessage(anyList(), eq(chat))).thenReturn(Flux.just(mockResponse));
+        when(aiProviderService.generateTitle(eq(chat), anyString(), anyString())).thenReturn("Generated Title");
+        doNothing().when(chatService).updateChatTitle(any(), anyString());
 
         AssistantMessageResponseDto result = messagesService.getAssistantMessage(requestDto, fileUrl, userJwt);
 
@@ -199,6 +218,7 @@ class MessagesServiceTest {
       var userJwt = createUserJwtData(UUID.randomUUID().toString());
 
       when(chatService.getChat(requestDto, userJwt.getId())).thenReturn(chat);
+      when(chatService.findChatById(chat.getId())).thenReturn(chat);
 
       assertThrows(ResponseStatusException.class, () -> messagesService.getAssistantMessage(requestDto, null, userJwt));
     }

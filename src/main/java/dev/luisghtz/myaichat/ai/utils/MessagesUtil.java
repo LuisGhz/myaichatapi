@@ -40,7 +40,7 @@ public class MessagesUtil {
   private static String addWebSearchInstructionsIfApply(Chat chat, String prompt) {
     var currentDate = LocalDate.now();
     var year = currentDate.getYear();
-    if (chat.getIsWebSearchMode()) {
+    if (chat.getIsWebSearchMode() != null && chat.getIsWebSearchMode()) {
       var webSearchInstructions = String.format(
           """
               --- WEB SEARCH INSTRUCTIONS ---

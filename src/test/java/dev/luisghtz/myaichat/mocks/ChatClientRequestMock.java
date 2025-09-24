@@ -25,6 +25,12 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 public class ChatClientRequestMock implements ChatClientRequestSpec {
   private CallResponseSpec callResponseSpec;
+  private StreamResponseSpec streamResponseSpec;
+  
+  public ChatClientRequestMock(CallResponseSpec callResponseSpec) {
+    this.callResponseSpec = callResponseSpec;
+    this.streamResponseSpec = null;
+  }
 
   @Override
   public Builder mutate() {
@@ -118,7 +124,7 @@ public class ChatClientRequestMock implements ChatClientRequestSpec {
 
   @Override
   public StreamResponseSpec stream() {
-    return null;
+    return streamResponseSpec;
   }
 
   @Override

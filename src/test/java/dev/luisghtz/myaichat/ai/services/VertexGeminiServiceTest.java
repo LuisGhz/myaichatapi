@@ -27,6 +27,7 @@ import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.content.Media;
 import static org.springframework.util.MimeTypeUtils.*;
+import reactor.core.publisher.Flux;
 
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -72,6 +73,16 @@ class VertexGeminiServiceTest {
     return chat;
   }
 
+  private void setupStreamingMocks(Chat chat, ChatResponse expectedChatResponse) {
+    // Mock the streaming response
+    ChatClient.StreamResponseSpec streamResponseSpec = mock(ChatClient.StreamResponseSpec.class);
+    when(streamResponseSpec.chatResponse()).thenReturn(Flux.just(expectedChatResponse));
+
+    CallResponseMock callResponseMock = new CallResponseMock(expectedChatResponse);
+    ChatClientRequestMock chatClientRequestMock = new ChatClientRequestMock(callResponseMock, streamResponseSpec);
+    when(chatClientToolsUtil.getChatClientRequestSpec(mockVertextAIChatClient, chat)).thenReturn(chatClientRequestMock);
+  }
+
   @Test
   @DisplayName("sendNewMessage - Should return chat response with assistant message")
   void sendNewMessage_ShouldReturnChatResponseWithAssistantMessage() {
@@ -83,9 +94,7 @@ class VertexGeminiServiceTest {
     AssistantMessage assistantMessage = new AssistantMessage("Hello there!");
     ChatResponse expectedChatResponse = new ChatResponse(List.of(new Generation(assistantMessage)));
 
-    CallResponseMock callResponseMock = new CallResponseMock(expectedChatResponse);
-    ChatClientRequestMock chatClientRequestMock = new ChatClientRequestMock(callResponseMock);
-    when(chatClientToolsUtil.getChatClientRequestSpec(mockVertextAIChatClient, chat)).thenReturn(chatClientRequestMock);
+    setupStreamingMocks(chat, expectedChatResponse);
 
     // Act
     ChatResponse actualChatResponse = vertexGeminiService.sendNewMessage(appMessages, chat);
@@ -109,9 +118,7 @@ class VertexGeminiServiceTest {
 
     AssistantMessage assistantMessage = new AssistantMessage("Image received.");
     ChatResponse expectedChatResponse = new ChatResponse(List.of(new Generation(assistantMessage)));
-    CallResponseMock callResponseMock = new CallResponseMock(expectedChatResponse);
-    ChatClientRequestMock chatClientRequestMock = new ChatClientRequestMock(callResponseMock);
-    when(chatClientToolsUtil.getChatClientRequestSpec(mockVertextAIChatClient, chat)).thenReturn(chatClientRequestMock);
+    setupStreamingMocks(chat, expectedChatResponse);
 
     // Spy on Media constructor to verify it was called
     try (var mediaMockedConstruction = mockStatic(Media.class, CALLS_REAL_METHODS)) {
@@ -139,9 +146,7 @@ class VertexGeminiServiceTest {
 
     AssistantMessage assistantMessage = new AssistantMessage("JPG Image received.");
     ChatResponse expectedChatResponse = new ChatResponse(List.of(new Generation(assistantMessage)));
-    CallResponseMock callResponseMock = new CallResponseMock(expectedChatResponse);
-    ChatClientRequestMock chatClientRequestMock = new ChatClientRequestMock(callResponseMock);
-    when(chatClientToolsUtil.getChatClientRequestSpec(mockVertextAIChatClient, chat)).thenReturn(chatClientRequestMock);
+    setupStreamingMocks(chat, expectedChatResponse);
 
     // Spy on Media constructor to verify it was called
     try (var mediaMockedConstruction = mockStatic(Media.class, CALLS_REAL_METHODS)) {
@@ -169,9 +174,7 @@ class VertexGeminiServiceTest {
 
     AssistantMessage assistantMessage = new AssistantMessage("JPEG Image received.");
     ChatResponse expectedChatResponse = new ChatResponse(List.of(new Generation(assistantMessage)));
-    CallResponseMock callResponseMock = new CallResponseMock(expectedChatResponse);
-    ChatClientRequestMock chatClientRequestMock = new ChatClientRequestMock(callResponseMock);
-    when(chatClientToolsUtil.getChatClientRequestSpec(mockVertextAIChatClient, chat)).thenReturn(chatClientRequestMock);
+    setupStreamingMocks(chat, expectedChatResponse);
 
     // Spy on Media constructor to verify it was called
     try (var mediaMockedConstruction = mockStatic(Media.class, CALLS_REAL_METHODS)) {
@@ -199,9 +202,7 @@ class VertexGeminiServiceTest {
 
     AssistantMessage assistantMessage = new AssistantMessage("GIF Image received.");
     ChatResponse expectedChatResponse = new ChatResponse(List.of(new Generation(assistantMessage)));
-    CallResponseMock callResponseMock = new CallResponseMock(expectedChatResponse);
-    ChatClientRequestMock chatClientRequestMock = new ChatClientRequestMock(callResponseMock);
-    when(chatClientToolsUtil.getChatClientRequestSpec(mockVertextAIChatClient, chat)).thenReturn(chatClientRequestMock);
+    setupStreamingMocks(chat, expectedChatResponse);
 
     // Spy on Media constructor to verify it was called
     try (var mediaMockedConstruction = mockStatic(Media.class, CALLS_REAL_METHODS)) {
@@ -248,9 +249,7 @@ class VertexGeminiServiceTest {
 
     AssistantMessage assistantMessage = new AssistantMessage("Processed without image.");
     ChatResponse expectedChatResponse = new ChatResponse(List.of(new Generation(assistantMessage)));
-    CallResponseMock callResponseMock = new CallResponseMock(expectedChatResponse);
-    ChatClientRequestMock chatClientRequestMock = new ChatClientRequestMock(callResponseMock);
-    when(chatClientToolsUtil.getChatClientRequestSpec(mockVertextAIChatClient, chat)).thenReturn(chatClientRequestMock);
+    setupStreamingMocks(chat, expectedChatResponse);
 
     // Act
     ChatResponse actualChatResponse = vertexGeminiService.sendNewMessage(appMessages, chat);
@@ -276,9 +275,7 @@ class VertexGeminiServiceTest {
 
     AssistantMessage assistantMessage = new AssistantMessage("Processed text only.");
     ChatResponse expectedChatResponse = new ChatResponse(List.of(new Generation(assistantMessage)));
-    CallResponseMock callResponseMock = new CallResponseMock(expectedChatResponse);
-    ChatClientRequestMock chatClientRequestMock = new ChatClientRequestMock(callResponseMock);
-    when(chatClientToolsUtil.getChatClientRequestSpec(mockVertextAIChatClient, chat)).thenReturn(chatClientRequestMock);
+    setupStreamingMocks(chat, expectedChatResponse);
 
     // Act
     ChatResponse actualChatResponse = vertexGeminiService.sendNewMessage(appMessages, chat);
@@ -306,9 +303,7 @@ class VertexGeminiServiceTest {
 
     AssistantMessage assistantMessage = new AssistantMessage("Understood.");
     ChatResponse expectedChatResponse = new ChatResponse(List.of(new Generation(assistantMessage)));
-    CallResponseMock callResponseMock = new CallResponseMock(expectedChatResponse);
-    ChatClientRequestMock chatClientRequestMock = new ChatClientRequestMock(callResponseMock);
-    when(chatClientToolsUtil.getChatClientRequestSpec(mockVertextAIChatClient, chat)).thenReturn(chatClientRequestMock);
+    setupStreamingMocks(chat, expectedChatResponse);
 
     // Act
     try (MockedStatic<MessagesUtil> messagesUtilMock = mockStatic(MessagesUtil.class)) {
@@ -369,10 +364,8 @@ class VertexGeminiServiceTest {
         .build());
     Chat chat = createTestChatWithWebSearch();
     var assistantMessage = new AssistantMessage("I'll search for current information.");
-    ChatResponse mockResponse = new ChatResponse(List.of(new Generation(assistantMessage)));
-    CallResponseMock callResponse = new CallResponseMock(mockResponse);
-    ChatClientRequestMock mockRequest = new ChatClientRequestMock(callResponse);
-    when(chatClientToolsUtil.getChatClientRequestSpec(mockVertextAIChatClient, chat)).thenReturn(mockRequest);
+    ChatResponse expectedChatResponse = new ChatResponse(List.of(new Generation(assistantMessage)));
+    setupStreamingMocks(chat, expectedChatResponse);
 
     // Act
     ChatResponse response = vertexGeminiService.sendNewMessage(messages, chat);
@@ -396,10 +389,8 @@ class VertexGeminiServiceTest {
     messages.add(appMessage);
     Chat chat = createTestChatWithWebSearch();
     var assistantMessage = new AssistantMessage("Image analyzed with web search capabilities.");
-    ChatResponse mockResponse = new ChatResponse(List.of(new Generation(assistantMessage)));
-    CallResponseMock callResponse = new CallResponseMock(mockResponse);
-    ChatClientRequestMock mockRequest = new ChatClientRequestMock(callResponse);
-    when(chatClientToolsUtil.getChatClientRequestSpec(mockVertextAIChatClient, chat)).thenReturn(mockRequest);
+    ChatResponse expectedChatResponse = new ChatResponse(List.of(new Generation(assistantMessage)));
+    setupStreamingMocks(chat, expectedChatResponse);
 
     // Spy on Media constructor to verify it was called
     try (var mediaMockedConstruction = mockStatic(Media.class, CALLS_REAL_METHODS)) {
@@ -429,10 +420,8 @@ class VertexGeminiServiceTest {
         .build());
     Chat chat = createTestChatWithWebSearch();
     var assistantMessage = new AssistantMessage("Continuing with web search capabilities.");
-    ChatResponse mockResponse = new ChatResponse(List.of(new Generation(assistantMessage)));
-    CallResponseMock callResponse = new CallResponseMock(mockResponse);
-    ChatClientRequestMock mockRequest = new ChatClientRequestMock(callResponse);
-    when(chatClientToolsUtil.getChatClientRequestSpec(mockVertextAIChatClient, chat)).thenReturn(mockRequest);
+    ChatResponse expectedChatResponse = new ChatResponse(List.of(new Generation(assistantMessage)));
+    setupStreamingMocks(chat, expectedChatResponse);
 
     // Act
     ChatResponse response = vertexGeminiService.sendNewMessage(messages, chat);

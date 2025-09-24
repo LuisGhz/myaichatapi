@@ -15,11 +15,12 @@ public class AppModelsTest {
     assertTrue(models.contains(AppModels.GPT_4O.getKey()));
     assertTrue(models.contains(AppModels.GPT_4_1.getKey()));
     assertTrue(models.contains(AppModels.GPT_4_1_MINI.getKey()));
+    assertTrue(models.contains(AppModels.O4_MINI.getKey()));
     assertTrue(models.contains(AppModels.GEMINI_FLASH_2_0_LITE.getKey()));
     assertTrue(models.contains(AppModels.GEMINI_FLASH_2_0.getKey()));
     assertTrue(models.contains(AppModels.GEMINI_FLASH_2_5_FLASH.getKey()));
     assertTrue(models.contains(AppModels.GEMINI_FLASH_2_5_PRO.getKey()));
-    assertEquals(8, models.size());
+    assertEquals(9, models.size());
   }
 
   @Test
@@ -28,6 +29,7 @@ public class AppModelsTest {
     assertEquals(10_000, AppModels.getMaxTokens(AppModels.GPT_4O.getKey()));
     assertEquals(10_000, AppModels.getMaxTokens(AppModels.GPT_4_1.getKey()));
     assertEquals(10_000, AppModels.getMaxTokens(AppModels.GPT_4_1_MINI.getKey()));
+    assertEquals(10_000, AppModels.getMaxTokens(AppModels.O4_MINI.getKey()));
     assertEquals(5_000, AppModels.getMaxTokens(AppModels.GEMINI_FLASH_2_0_LITE.getKey()));
     assertEquals(8_000, AppModels.getMaxTokens(AppModels.GEMINI_FLASH_2_0.getKey()));
     assertEquals(10_000, AppModels.getMaxTokens(AppModels.GEMINI_FLASH_2_5_FLASH.getKey()));

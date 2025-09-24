@@ -65,6 +65,12 @@ public class OpenAIService implements AIProviderService {
     return chatResponse;
   }
 
+  @Override
+  public ChatResponse sendNewMessage(List<AppMessage> messages, Chat chat) {
+    return getAssistantMessage(messages, chat).blockFirst();
+  }
+
+  @Override
   public String generateTitle(String userMessage, String assistantMessage) {
     var MAX_COMPLETION_TOKENS = 50;
     List<Message> titleMessages = new ArrayList<>();

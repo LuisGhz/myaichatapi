@@ -93,6 +93,10 @@ public class GlobalControllerAdvice {
     return ResponseEntity.internalServerError().body("Server error: " + message);
   }
 
+  public ResponseEntity<Object> handleRuntimeException() {
+    return ResponseEntity.internalServerError().body("Server error. Try later");
+  }
+
   @ExceptionHandler(DataIntegrityViolationException.class)
   public ResponseEntity<ChatErrorResponseDto> handleUniqueConstraintViolationException(
       DataIntegrityViolationException ex) {

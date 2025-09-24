@@ -64,6 +64,11 @@ public class VertexGeminiService implements AIProviderService {
   }
 
   @Override
+  public ChatResponse sendNewMessage(List<AppMessage> messages, Chat chat) {
+    return getAssistantMessage(messages, chat).blockFirst();
+  }
+
+  @Override
   public String generateTitle(String userMessage, String assistantMessage) {
     final int MAX_TOKENS = 50;
     List<Message> titleMessages = new ArrayList<>();

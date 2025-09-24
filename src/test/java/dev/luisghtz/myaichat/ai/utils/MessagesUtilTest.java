@@ -26,6 +26,7 @@ class MessagesUtilTest {
   @BeforeEach
   void setUp() {
     chat = new Chat(); // Assuming Chat has a default constructor
+    chat.setIsWebSearchMode(false); // Set default value to avoid NullPointerException
     messages = new ArrayList<>();
   }
 
