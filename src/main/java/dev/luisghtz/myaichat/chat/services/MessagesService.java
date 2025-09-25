@@ -114,8 +114,8 @@ public class MessagesService {
     return aiProviderService.getAssistantMessage(messages, chat)
         .map(chatResponse -> {
           // Extract content from response
-          String content = chatResponse.getResult().getOutput().getText();
-
+          String text = chatResponse.getResult().getOutput().getText();
+          String content = text != null ? text : "";
           // Accumulate content FIRST (before checking if it's last chunk)
           contentBuilder.append(content);
 
