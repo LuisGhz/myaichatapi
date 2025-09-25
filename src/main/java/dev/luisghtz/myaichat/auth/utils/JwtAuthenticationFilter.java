@@ -56,11 +56,21 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 user, null, authorities);
             authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
             SecurityContextHolder.getContext().setAuthentication(authToken);
+          } else {
+            log.debug("User not found, locked, or disabled for token");
+            SecurityContextHolder.clearContext();
           }
+        } else {
+          log.debug("No user ID found in token");
+          SecurityContextHolder.clearContext();
         }
+      } else if (!jwtService.validateToken(token)) {
+        log.debug("Invalid JWT token");
+        SecurityContextHolder.clearContext();
       }
     } catch (Exception e) {
       log.error("Error processing JWT token", e);
+      SecurityContextHolder.clearContext();
     }
 
     filterChain.doFilter(request, response);
