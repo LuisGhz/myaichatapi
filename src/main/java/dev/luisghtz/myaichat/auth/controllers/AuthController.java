@@ -8,6 +8,8 @@ import dev.luisghtz.myaichat.auth.services.AuthService;
 import dev.luisghtz.myaichat.auth.services.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -36,7 +38,7 @@ public class AuthController {
       @RequestHeader(value = "Authorization", required = false) String authHeader) {
     try {
       if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-        return ResponseEntity.badRequest().body(ValidateResDto.failure("Invalid token format"));
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ValidateResDto.failure("Invalid token format"));
       }
 
       String token = authHeader.substring(7);
@@ -50,11 +52,11 @@ public class AuthController {
         }
       }
 
-      return ResponseEntity.ok(ValidateResDto.failure("Invalid token"));
+      return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ValidateResDto.failure("Invalid token"));
 
     } catch (Exception e) {
       log.error("Error validating token", e);
-      return ResponseEntity.ok(ValidateResDto.failure("Token validation failed"));
+      return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ValidateResDto.failure("Token validation failed"));
     }
   }
 
@@ -63,10 +65,16 @@ public class AuthController {
       @RequestHeader(value = "Authorization", required = false) String authHeader) {
     try {
       if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-        return ResponseEntity.badRequest().build();
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
       }
 
       String token = authHeader.substring(7);
+
+      // First validate the token
+      if (!authService.validateToken(token)) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+      }
+
       User user = authService.getUserFromToken(token);
 
       if (user != null) {
@@ -74,11 +82,11 @@ public class AuthController {
         return ResponseEntity.ok(userDto);
       }
 
-      return ResponseEntity.notFound().build();
+      return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
 
     } catch (Exception e) {
       log.error("Error getting current user", e);
-      return ResponseEntity.badRequest().build();
+      return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
     }
   }
 
