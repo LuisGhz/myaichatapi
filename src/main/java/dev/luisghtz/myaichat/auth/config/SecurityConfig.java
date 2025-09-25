@@ -3,6 +3,7 @@ package dev.luisghtz.myaichat.auth.config;
 import dev.luisghtz.myaichat.auth.utils.JwtAuthenticationFilter;
 import dev.luisghtz.myaichat.auth.utils.OAuth2AuthenticationSuccessHandler;
 import dev.luisghtz.myaichat.auth.utils.OAuth2AuthenticationFailureHandler;
+import dev.luisghtz.myaichat.auth.utils.CustomAuthenticationEntryPoint;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
@@ -41,6 +42,7 @@ public class SecurityConfig {
   private final OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
   private final OAuth2AuthenticationFailureHandler oAuth2AuthenticationFailureHandler;
   private final JwtAuthenticationFilter jwtAuthenticationFilter;
+  private final CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
 
   @Value("${app.base-url}")
   private String baseUrl;
@@ -99,6 +101,8 @@ public class SecurityConfig {
             .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
             .maximumSessions(1)
             .maxSessionsPreventsLogin(false))
+        .exceptionHandling(exceptions -> exceptions
+            .authenticationEntryPoint(customAuthenticationEntryPoint))
         .authorizeHttpRequests(authz -> authz
             .requestMatchers("/auth/**", "/login/**", "/oauth2/**").permitAll()
             .requestMatchers("/actuator/**").permitAll()
