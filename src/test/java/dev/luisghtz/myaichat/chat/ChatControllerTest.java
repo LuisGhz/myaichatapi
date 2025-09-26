@@ -385,4 +385,49 @@ public class ChatControllerTest {
       verify(chatService, times(1)).deleteChat(eq(testChatId), any(UserJwtDataDto.class));
     }
   }
+
+  @Nested
+  @DisplayName("POST Endpoints")
+  class PostEndpoints {
+
+    @Test
+    @DisplayName("POST /api/chat/send-user-message - Should send user message successfully without file")
+    public void testSendUserMessageSuccessWithoutFile() throws Exception {
+      // Arrange
+      var req = new dev.luisghtz.myaichat.chat.dtos.NewMessageRequestDto();
+      req.setChatId(null);
+      req.setContent("Hello assistant");
+      req.setMaxOutputTokens((short)2000);
+      req.setModel(null);
+
+      var responseDto = new dev.luisghtz.myaichat.chat.dtos.UserMessageResDto(true, UUID.randomUUID().toString());
+      when(messagesService.userMessage(any(dev.luisghtz.myaichat.chat.dtos.NewMessageRequestDto.class), any(UserJwtDataDto.class), any()))
+          .thenReturn(responseDto);
+
+      // Act & Assert - send as multipart form (ModelAttribute)
+      mockMvc.perform(multipart("/api/chat/send-user-message")
+          .param("content", req.getContent())
+          .param("maxOutputTokens", String.valueOf(req.getMaxOutputTokens()))
+          .header("Authorization", "Bearer test-user-id"))
+          .andExpect(status().isOk())
+          .andExpect(jsonPath("$.isNew").value(true))
+          .andExpect(jsonPath("$.chatId").isString());
+
+      verify(messagesService, times(1)).userMessage(any(dev.luisghtz.myaichat.chat.dtos.NewMessageRequestDto.class), any(UserJwtDataDto.class), any());
+    }
+
+    @Test
+    @DisplayName("POST /api/chat/send-user-message - Should return BAD_REQUEST when content is missing")
+    public void testSendUserMessageMissingContent() throws Exception {
+      // Arrange - missing content param
+
+      // Act & Assert
+      mockMvc.perform(multipart("/api/chat/send-user-message")
+          .param("maxOutputTokens", "2000")
+          .header("Authorization", "Bearer test-user-id"))
+          .andExpect(status().isBadRequest());
+
+      verify(messagesService, never()).userMessage(any(), any(), any());
+    }
+  }
 }
