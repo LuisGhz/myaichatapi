@@ -72,6 +72,11 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
   }
 
   private AuthResponse processOAuth2User(String registrationId, Map<String, Object> attributes) {
+    // Guard against null/empty registrationId to avoid NPE in tests
+    if (registrationId == null || registrationId.isBlank()) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unsupported OAuth2 provider: " + (registrationId == null ? "" : registrationId));
+    }
+
     switch (registrationId.toLowerCase()) {
       case "github":
         return authService.authenticateWithGitHub(attributes);

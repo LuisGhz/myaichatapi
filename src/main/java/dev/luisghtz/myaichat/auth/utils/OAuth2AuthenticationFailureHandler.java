@@ -45,9 +45,12 @@ public class OAuth2AuthenticationFailureHandler implements AuthenticationFailure
         log.error("OAuth2 authentication failure", exception);
         
         // Extract more details if it's an OAuth2AuthenticationException
-        if (exception.getCause() instanceof org.springframework.security.oauth2.core.OAuth2AuthenticationException) {
-            org.springframework.security.oauth2.core.OAuth2AuthenticationException oauth2Exception = 
-                (org.springframework.security.oauth2.core.OAuth2AuthenticationException) exception.getCause();
+        if (exception instanceof org.springframework.security.oauth2.core.OAuth2AuthenticationException) {
+            var oauth2Exception = (org.springframework.security.oauth2.core.OAuth2AuthenticationException) exception;
+            log.error("OAuth2 error code: {}", oauth2Exception.getError().getErrorCode());
+            log.error("OAuth2 error description: {}", oauth2Exception.getError().getDescription());
+        } else if (exception.getCause() instanceof org.springframework.security.oauth2.core.OAuth2AuthenticationException) {
+            var oauth2Exception = (org.springframework.security.oauth2.core.OAuth2AuthenticationException) exception.getCause();
             log.error("OAuth2 error code: {}", oauth2Exception.getError().getErrorCode());
             log.error("OAuth2 error description: {}", oauth2Exception.getError().getDescription());
         }

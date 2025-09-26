@@ -42,7 +42,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     try {
       String token = authHeader.substring(7);
 
-      if (jwtService.validateToken(token) && SecurityContextHolder.getContext().getAuthentication() == null) {
+      boolean valid = jwtService.validateToken(token);
+
+      if (valid && SecurityContextHolder.getContext().getAuthentication() == null) {
         String userId = jwtService.getUserIdFromToken(token);
 
         if (userId != null) {
@@ -64,7 +66,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
           log.debug("No user ID found in token");
           SecurityContextHolder.clearContext();
         }
-      } else if (!jwtService.validateToken(token)) {
+      } else if (!valid) {
         log.debug("Invalid JWT token");
         SecurityContextHolder.clearContext();
       }
