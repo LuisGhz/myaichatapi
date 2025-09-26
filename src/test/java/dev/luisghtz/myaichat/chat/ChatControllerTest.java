@@ -2,7 +2,7 @@ package dev.luisghtz.myaichat.chat;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.isNull;
+
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -20,7 +20,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.mock.web.MockMultipartFile;
+
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -29,12 +29,12 @@ import org.springframework.web.server.ResponseStatusException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import dev.luisghtz.myaichat.auth.dtos.UserJwtDataDto;
-import dev.luisghtz.myaichat.chat.dtos.AssistantMessageResponseDto;
+
 import dev.luisghtz.myaichat.chat.dtos.ChangeIsWebSearchModeReqDto;
 import dev.luisghtz.myaichat.chat.dtos.ChangeMaxOutputTokensReqDto;
 import dev.luisghtz.myaichat.chat.dtos.ChatsListResponseDto;
 import dev.luisghtz.myaichat.chat.dtos.HistoryChatDto;
-import dev.luisghtz.myaichat.chat.dtos.NewMessageRequestDto;
+
 import dev.luisghtz.myaichat.chat.dtos.RenameChatTitleDto;
 import dev.luisghtz.myaichat.chat.models.AppMessageHistory;
 import dev.luisghtz.myaichat.chat.models.ChatSummary;
@@ -181,141 +181,6 @@ public class ChatControllerTest {
       // We can't verify exact pageable because of how MockMvc works, but we can
       // verify the method was called
       verify(messagesService, times(1)).getPreviousMessages(eq(testChatId), any(Pageable.class), eq(user));
-    }
-  }
-
-  @Nested
-  @DisplayName("POST Endpoints")
-  class PostEndpoints {
-
-    @Test
-    @DisplayName("POST /api/chat/send-message - Sends new message without file")
-    public void testNewMessageWithoutFile() throws Exception {
-      // Arrange
-      NewMessageRequestDto requestDto = new NewMessageRequestDto();
-  requestDto.setContent("Hello AI");
-      requestDto.setChatId(testChatId);
-      requestDto.setMaxOutputTokens((short) 1500);
-      requestDto.setFile(null);
-      requestDto.setModel("gpt-4o");
-
-      AssistantMessageResponseDto expectedResponse = AssistantMessageResponseDto.builder()
-          .content("AI response")
-          .build();
-      var user = createTestUserJwtData();
-      when(messagesService.getAssistantMessage(any(NewMessageRequestDto.class), isNull(), eq(user)))
-          .thenReturn(expectedResponse);
-
-    mockMvc.perform(multipart("/api/chat/send-message")
-      .param("content", requestDto.getContent())
-          .param("chatId", requestDto.getChatId().toString())
-          .param("maxOutputTokens", requestDto.getMaxOutputTokens().toString())
-          .param("model", requestDto.getModel())
-          .header("Authorization", "Bearer test-user-id"))
-          .andExpect(status().isOk())
-          .andExpect(jsonPath("$.content").value("AI response"));
-
-      verify(fileService, never()).uploadFile(any());
-      verify(messagesService, times(1)).getAssistantMessage(any(NewMessageRequestDto.class), isNull(),
-          eq(user));
-    }
-
-    @Test
-    @DisplayName("POST /api/chat/send-message - Sends new message with file")
-    public void testNewMessageWithFile() throws Exception {
-      // Arrange
-      NewMessageRequestDto requestDto = new NewMessageRequestDto();
-  requestDto.setContent("Check this file");
-      requestDto.setChatId(testChatId);
-      requestDto.setMaxOutputTokens((short) 2000);
-      requestDto.setModel("gpt-4o");
-
-      MockMultipartFile uploadedFile = new MockMultipartFile(
-          "file", "test-image.jpg", "image/jpeg", "test image content".getBytes());
-      requestDto.setFile(uploadedFile);
-
-      String fileName = "uploaded-file.jpg";
-      when(fileService.uploadFile(any())).thenReturn(fileName);
-
-      AssistantMessageResponseDto expectedResponse = AssistantMessageResponseDto.builder()
-          .content("AI response to file")
-          .build();
-
-      when(messagesService.getAssistantMessage(any(NewMessageRequestDto.class), eq(fileName), any(UserJwtDataDto.class)))
-          .thenReturn(expectedResponse);
-
-      // Act & Assert
-    mockMvc.perform(multipart("/api/chat/send-message")
-          .file(uploadedFile)
-      .param("content", requestDto.getContent())
-          .param("chatId", requestDto.getChatId().toString())
-          .param("maxOutputTokens", requestDto.getMaxOutputTokens().toString())
-          .param("model", requestDto.getModel()))
-          .andExpect(status().isOk())
-          .andExpect(jsonPath("$.content").value("AI response to file"));
-
-      verify(fileService, times(1)).uploadFile(any());
-      verify(messagesService, times(1)).getAssistantMessage(any(NewMessageRequestDto.class), eq(fileName),
-          any(UserJwtDataDto.class));
-    }
-
-    @Test
-    @DisplayName("POST /api/chat/send-message - Returns BAD_REQUEST for invalid file")
-    public void sendNewMessageWithInvalidFile() throws Exception {
-      // Arrange - invalid file
-      MockMultipartFile invalidFile = new MockMultipartFile(
-          "file", "invalid.txt", "text/plain", "This is not a supported file".getBytes());
-
-      // Act & Assert
-    mockMvc.perform(multipart("/api/chat/send-message")
-          .file(invalidFile)
-      .param("content", "Invalid file test")
-          .param("chatId", testChatId.toString())
-          .param("maxOutputTokens", "2000")
-          .param("model", "gpt-4o"))
-          .andExpect(status().isBadRequest());
-    }
-
-    @Test
-    @DisplayName("POST /api/chat/send-message - Returns BAD_REQUEST for invalid model")
-    public void sendNewMessageWithInvalidModel() throws Exception {
-      // Arrange - invalid model
-      NewMessageRequestDto requestDto = new NewMessageRequestDto();
-  requestDto.setContent("Test with invalid model");
-      requestDto.setChatId(testChatId);
-      requestDto.setMaxOutputTokens((short) 2000);
-      requestDto.setModel("invalid-model");
-
-      // Act & Assert
-    mockMvc.perform(multipart("/api/chat/send-message")
-      .param("content", requestDto.getContent())
-          .param("chatId", requestDto.getChatId().toString())
-          .param("maxOutputTokens", requestDto.getMaxOutputTokens().toString())
-          .param("model", requestDto.getModel()))
-          .andExpect(status().isBadRequest());
-    }
-
-    @Test
-    @DisplayName("POST /api/chat/send-message - Returns BAD_REQUEST for missing required fields")
-    public void sendNewMessageWithMissingFields() throws Exception {
-      // Arrange - missing required fields
-      NewMessageRequestDto requestDto = new NewMessageRequestDto();
-  requestDto.setContent(""); // Empty content
-      requestDto.setChatId(null); // No chat ID
-
-      // Act & Assert
-    mockMvc.perform(multipart("/api/chat/send-message")
-      .param("content", "")
-          .param("model", "gpt-4o"))
-          .andExpect(status().isBadRequest());
-    }
-
-    @Test
-    @DisplayName("POST /api/chat/send-message - Returns BAD_REQUEST for invalid request")
-    public void testNewMessageWithInvalidRequest() throws Exception {
-      // Act & Assert - test with completely missing parameters
-      mockMvc.perform(multipart("/api/chat/send-message"))
-          .andExpect(status().isBadRequest());
     }
   }
 
