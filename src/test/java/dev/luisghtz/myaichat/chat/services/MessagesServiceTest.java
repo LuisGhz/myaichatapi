@@ -20,6 +20,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -33,6 +35,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 class MessagesServiceTest {
 
   @Mock
@@ -58,6 +61,104 @@ class MessagesServiceTest {
       cdnField.set(messagesService, "https://cdn.example.com/");
     } catch (Exception e) {
       throw new RuntimeException(e);
+    }
+  }
+
+  @Nested
+  @DisplayName("GetAssistantMessage Method")
+  class GetAssistantMessageTests {
+
+    @Test
+    @DisplayName("getAssistantMessage - Should stream chunks and on last chunk save assistant message and generate title for new chat")
+    void testGetAssistantMessage_StreamsAndSavesAndGeneratesTitle() throws Exception {
+      UUID chatId = UUID.randomUUID();
+      var userId = UUID.randomUUID();
+      var userJwt = createUserJwtData(userId.toString());
+
+      // Prepare chat and messages
+      Chat chat = mock(Chat.class);
+      when(chatService.findChatById(chatId)).thenReturn(chat);
+      when(chat.getUser()).thenReturn(new User() {{ setId(userId); }});
+      when(chat.getModel()).thenReturn("gpt-3");
+      when(chat.getTitle()).thenReturn(null); // new chat
+      when(chat.getId()).thenReturn(chatId);
+
+      AppMessage userMsg = mock(AppMessage.class);
+      when(userMsg.getRole()).thenReturn("User");
+      when(userMsg.getContent()).thenReturn("Hello");
+      when(chat.getMessages()).thenReturn(List.of(userMsg));
+
+      // Build two ChatResponse-like mocks: first chunk (not last), second chunk (last with usage)
+  var chunk1 = mock(org.springframework.ai.chat.model.ChatResponse.class, Answers.RETURNS_DEEP_STUBS);
+  when(chunk1.getResult().getOutput().getText()).thenReturn("Hello ");
+  when(chunk1.getMetadata().getUsage().getTotalTokens()).thenReturn(0);
+
+  var chunk2 = mock(org.springframework.ai.chat.model.ChatResponse.class, Answers.RETURNS_DEEP_STUBS);
+  when(chunk2.getResult().getOutput().getText()).thenReturn("world");
+  when(chunk2.getMetadata().getUsage().getTotalTokens()).thenReturn(3);
+  when(chunk2.getMetadata().getUsage().getPromptTokens()).thenReturn(1);
+  when(chunk2.getMetadata().getUsage().getCompletionTokens()).thenReturn(2);
+  // no-op: deep stub provides nested usage mock
+
+      when(aiProviderService.getAssistantMessage(anyList(), any())).thenReturn(
+          reactor.core.publisher.Flux.just(chunk1, chunk2)
+      );
+
+  lenient().when(aiProviderService.generateTitle(eq(chat), anyString(), anyString())).thenReturn("Generated Title");
+
+  // Stub token sums repository call used after save
+  lenient().when(messageRepository.getSumOfPromptAndCompletionTokensByChatId(chatId)).thenReturn(new TokensSum(1L, 2L));
+
+  // Capture repository saves
+  lenient().when(messageRepository.save(any(AppMessage.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+      var responses = messagesService.getAssistantMessage(chatId, userJwt).collectList().block();
+
+      assertThat(responses).isNotNull();
+      assertThat(responses).hasSize(2);
+  assertThat(responses.get(0).getIsLastChunk()).isFalse();
+  assertThat(responses.get(1).getIsLastChunk()).isTrue();
+      assertThat(responses.get(1).getContent()).isEqualTo("world");
+      assertThat(responses.get(1).getChatTitle()).isEqualTo("Generated Title");
+
+      // Allow asynchronous DB saves and title update to run
+      Thread.sleep(200);
+
+      verify(messageRepository, atLeastOnce()).save(any(AppMessage.class));
+      verify(chatService, atLeastOnce()).updateChatTitle(eq(chatId), eq("Generated Title"));
+    }
+
+    @Test
+    @DisplayName("getAssistantMessage - Should log and return last chunk even when no user message exists")
+    void testGetAssistantMessage_NoUserMessageHandledGracefully() {
+      UUID chatId = UUID.randomUUID();
+      var userId = UUID.randomUUID();
+      var userJwt = createUserJwtData(userId.toString());
+
+      Chat chat = mock(Chat.class);
+      when(chatService.findChatById(chatId)).thenReturn(chat);
+      when(chat.getUser()).thenReturn(new User() {{ setId(userId); }});
+      when(chat.getModel()).thenReturn("gpt-3");
+      when(chat.getTitle()).thenReturn("Existing Title");
+      when(chat.getId()).thenReturn(chatId);
+      when(chat.getMessages()).thenReturn(Collections.emptyList());
+
+  var chunk = mock(org.springframework.ai.chat.model.ChatResponse.class, Answers.RETURNS_DEEP_STUBS);
+  when(chunk.getResult().getOutput().getText()).thenReturn("Only");
+  when(chunk.getMetadata().getUsage().getTotalTokens()).thenReturn(1);
+  when(chunk.getMetadata().getUsage().getPromptTokens()).thenReturn(0);
+  when(chunk.getMetadata().getUsage().getCompletionTokens()).thenReturn(1);
+
+  when(aiProviderService.getAssistantMessage(anyList(), any())).thenReturn(reactor.core.publisher.Flux.just(chunk));
+  lenient().when(messageRepository.getSumOfPromptAndCompletionTokensByChatId(chatId)).thenReturn(new TokensSum(0L, 1L));
+  lenient().when(messageRepository.save(any(AppMessage.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+      var responses = messagesService.getAssistantMessage(chatId, userJwt).collectList().block();
+
+      assertThat(responses).isNotNull();
+      assertThat(responses).hasSize(1);
+  assertThat(responses.get(0).getIsLastChunk()).isTrue();
+      assertThat(responses.get(0).getChatTitle()).isEqualTo("Existing Title");
     }
   }
 
