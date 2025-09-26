@@ -71,15 +71,6 @@ public class MessagesService {
     return res;
   }
 
-  public AssistantMessageResponseDto getAssistantMessage(NewMessageRequestDto requestDto, String fileUrl, UserJwtDataDto user) {
-    // Process the user message first
-    UserMessageResDto userMessageRes = userMessage(requestDto, user, fileUrl);
-    UUID chatId = UUID.fromString(userMessageRes.chatId());
-    
-    // Then get the assistant response for the chat
-    return getAssistantMessage(chatId, user).blockFirst();
-  }
-
   public Flux<AssistantMessageResponseDto> getAssistantMessage(UUID chatId, UserJwtDataDto user) {
     // Get the chat and validate ownership
     Chat chat = chatService.findChatById(chatId);

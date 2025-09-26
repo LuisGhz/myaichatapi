@@ -69,18 +69,6 @@ public class ChatController {
     return ResponseEntity.ok(response);
   }
 
-  @PostMapping("send-message")
-  public ResponseEntity<AssistantMessageResponseDto> sendMessage(
-      @Validated @ModelAttribute NewMessageRequestDto newMessageRequestDto,
-      @UserJwtData UserJwtDataDto user) {
-    String fileName = null;
-    if (newMessageRequestDto.getFile() != null) {
-      fileName = fileService.uploadFile(newMessageRequestDto.getFile());
-    }
-    var response = messagesService.getAssistantMessage(newMessageRequestDto, fileName, user);
-    return ResponseEntity.ok(response);
-  }
-
   @GetMapping(value = "assistant-message/{id}")
   public Flux<AssistantMessageResponseDto> newMessage(
       @PathVariable UUID id,
