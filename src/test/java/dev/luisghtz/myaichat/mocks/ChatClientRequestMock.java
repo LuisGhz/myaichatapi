@@ -39,17 +39,17 @@ public class ChatClientRequestMock implements ChatClientRequestSpec {
 
   @Override
   public ChatClientRequestSpec advisors(Consumer<AdvisorSpec> consumer) {
-    return null;
+    return this;
   }
 
   @Override
   public ChatClientRequestSpec advisors(Advisor... advisors) {
-    return null;
+    return this;
   }
 
   @Override
   public ChatClientRequestSpec advisors(List<Advisor> advisors) {
-    return null;
+    return this;
   }
 
   @Override
@@ -69,52 +69,52 @@ public class ChatClientRequestMock implements ChatClientRequestSpec {
 
   @Override
   public ChatClientRequestSpec tools(Object... toolObjects) {
-    return null;
+    return this;
   }
 
   @Override
   public ChatClientRequestSpec toolContext(Map<String, Object> toolContext) {
-    return null;
+    return this;
   }
 
   @Override
   public ChatClientRequestSpec system(String text) {
-    return null;
+    return this;
   }
 
   @Override
   public ChatClientRequestSpec system(Resource textResource, Charset charset) {
-    return null;
+    return this;
   }
 
   @Override
   public ChatClientRequestSpec system(Resource text) {
-    return null;
+    return this;
   }
 
   @Override
   public ChatClientRequestSpec system(Consumer<PromptSystemSpec> consumer) {
-    return null;
+    return this;
   }
 
   @Override
   public ChatClientRequestSpec user(String text) {
-    return null;
+    return this;
   }
 
   @Override
   public ChatClientRequestSpec user(Resource text, Charset charset) {
-    return null;
+    return this;
   }
 
   @Override
   public ChatClientRequestSpec user(Resource text) {
-    return null;
+    return this;
   }
 
   @Override
   public ChatClientRequestSpec user(Consumer<PromptUserSpec> consumer) {
-    return null;
+    return this;
   }
 
   @Override
@@ -129,32 +129,27 @@ public class ChatClientRequestMock implements ChatClientRequestSpec {
 
   @Override
   public ChatClientRequestSpec toolNames(String... toolNames) {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException("Unimplemented method 'toolNames'");
+    return this;
   }
 
   @Override
   public ChatClientRequestSpec toolCallbacks(ToolCallback... toolCallbacks) {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException("Unimplemented method 'toolCallbacks'");
+    return this;
   }
 
   @Override
   public ChatClientRequestSpec toolCallbacks(List<ToolCallback> toolCallbacks) {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException("Unimplemented method 'toolCallbacks'");
+    return this;
   }
 
   @Override
   public ChatClientRequestSpec toolCallbacks(ToolCallbackProvider... toolCallbackProviders) {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException("Unimplemented method 'toolCallbacks'");
+    return this;
   }
 
   @Override
   public ChatClientRequestSpec templateRenderer(TemplateRenderer templateRenderer) {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException("Unimplemented method 'templateRenderer'");
+    return this;
   }
 
 }
