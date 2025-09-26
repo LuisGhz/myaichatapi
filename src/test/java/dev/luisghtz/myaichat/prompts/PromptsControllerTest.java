@@ -163,6 +163,53 @@ public class PromptsControllerTest {
   }
 
   @Nested
+  @DisplayName("PATCH Endpoints")
+  class PatchEndpoints {
+
+    @Test
+    @DisplayName("PATCH /api/custom-prompts/{promptId}/update - Should update prompt successfully")
+    void testUpdatePromptSuccess() throws Exception {
+      // Arrange
+      String promptIdString = promptId.toString();
+      var updateReq = new dev.luisghtz.myaichat.prompts.dtos.update.UpdateCustomPromptDtoReq();
+      updateReq.setName("Updated Prompt");
+      updateReq.setContent("Updated content");
+
+      doNothing().when(customPromptService).update(eq(promptIdString), any(), any(UUID.class));
+
+      // Act & Assert
+      mockMvc.perform(patch("/api/custom-prompts/{promptId}/update", promptId)
+          .contentType(MediaType.APPLICATION_JSON)
+          .content(objectMapper.writeValueAsString(updateReq)))
+          .andExpect(status().isOk())
+          .andExpect(jsonPath("$.message").value("Prompt updated successfully"));
+
+      verify(customPromptService, times(1)).update(eq(promptIdString), any(), any(UUID.class));
+    }
+
+    @Test
+    @DisplayName("PATCH /api/custom-prompts/{promptId}/update - Should return 404 when prompt not found")
+    void testUpdatePromptNotFound() throws Exception {
+      // Arrange
+      String promptIdString = promptId.toString();
+      var updateReq = new dev.luisghtz.myaichat.prompts.dtos.update.UpdateCustomPromptDtoReq();
+      updateReq.setName("Updated Prompt");
+      updateReq.setContent("Updated content");
+
+      doThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "Prompt not found"))
+          .when(customPromptService).update(eq(promptIdString), any(), any(UUID.class));
+
+      // Act & Assert
+      mockMvc.perform(patch("/api/custom-prompts/{promptId}/update", promptId)
+          .contentType(MediaType.APPLICATION_JSON)
+          .content(objectMapper.writeValueAsString(updateReq)))
+          .andExpect(status().isNotFound());
+
+      verify(customPromptService, times(1)).update(eq(promptIdString), any(), any(UUID.class));
+    }
+  }
+
+  @Nested
   @DisplayName("POST Endpoints")
   class PostEndpoints {
 
@@ -281,6 +328,42 @@ public class PromptsControllerTest {
           .andExpect(status().isNotFound());
 
       verify(customPromptService, times(1)).delete(eq(promptIdString), any(UUID.class));
+    }
+  }
+
+  @Nested
+  @DisplayName("DELETE Message Endpoints")
+  class DeleteMessageEndpoints {
+
+    @Test
+    @DisplayName("DELETE /api/custom-prompts/{promptId}/{messageId}/delete-message - Should delete message successfully")
+    void testDeleteMessageSuccess() throws Exception {
+      // Arrange
+      String promptIdString = promptId.toString();
+      UUID messageId = UUID.randomUUID();
+      doNothing().when(customPromptService).deleteMessage(eq(promptIdString), eq(messageId.toString()), any(UUID.class));
+
+      // Act & Assert
+      mockMvc.perform(delete("/api/custom-prompts/{promptId}/{messageId}/delete-message", promptId, messageId))
+          .andExpect(status().isOk());
+
+      verify(customPromptService, times(1)).deleteMessage(eq(promptIdString), eq(messageId.toString()), any(UUID.class));
+    }
+
+    @Test
+    @DisplayName("DELETE /api/custom-prompts/{promptId}/{messageId}/delete-message - Should return 404 when service throws not found")
+    void testDeleteMessageNotFound() throws Exception {
+      // Arrange
+      String promptIdString = promptId.toString();
+      UUID messageId = UUID.randomUUID();
+      doThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "Message not found"))
+          .when(customPromptService).deleteMessage(eq(promptIdString), eq(messageId.toString()), any(UUID.class));
+
+      // Act & Assert
+      mockMvc.perform(delete("/api/custom-prompts/{promptId}/{messageId}/delete-message", promptId, messageId))
+          .andExpect(status().isNotFound());
+
+      verify(customPromptService, times(1)).deleteMessage(eq(promptIdString), eq(messageId.toString()), any(UUID.class));
     }
   }
 }
