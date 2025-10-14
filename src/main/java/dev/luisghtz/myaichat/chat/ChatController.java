@@ -69,7 +69,7 @@ public class ChatController {
     return ResponseEntity.ok(response);
   }
 
-  @GetMapping(value = "assistant-message/{id}")
+  @GetMapping("assistant-message/{id}")
   public Flux<AssistantMessageResponseDto> newMessage(
       @PathVariable UUID id,
       @UserJwtData UserJwtDataDto user) {
