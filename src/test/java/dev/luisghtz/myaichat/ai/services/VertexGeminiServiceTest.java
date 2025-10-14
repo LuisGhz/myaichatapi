@@ -313,7 +313,7 @@ class VertexGeminiServiceTest {
         return null;
       });
 
-      messagesUtilMock.when(() -> MessagesUtil.addInitialMessagesIfApply(any(), any())).thenAnswer(invocation -> {
+      messagesUtilMock.when(() -> MessagesUtil.addInitialMessagesFromCustomPromptIfExist(any(), any())).thenAnswer(invocation -> {
         List<Message> messages = invocation.getArgument(1);
         for (PromptMessage promptMessage : chat.getCustomPrompt().getMessages()) {
           if (promptMessage.getRole().equals("User")) {

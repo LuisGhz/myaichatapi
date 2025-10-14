@@ -74,7 +74,7 @@ class MessagesUtilTest {
           PromptMessage.builder().role("Assistant").content("Hi there!").build()));
       chat.setCustomPrompt(customPrompt);
 
-      MessagesUtil.addInitialMessagesIfApply(chat, messages);
+      MessagesUtil.addInitialMessagesFromCustomPromptIfExist(chat, messages);
 
       assertEquals(2, messages.size());
       assertTrue(messages.get(0) instanceof UserMessage);
@@ -88,7 +88,7 @@ class MessagesUtilTest {
     void addInitialMessages_noCustomPrompt_doesNotAdd() {
       chat.setCustomPrompt(null); // Ensure customPrompt is null
 
-      MessagesUtil.addInitialMessagesIfApply(chat, messages);
+      MessagesUtil.addInitialMessagesFromCustomPromptIfExist(chat, messages);
 
       assertTrue(messages.isEmpty());
     }

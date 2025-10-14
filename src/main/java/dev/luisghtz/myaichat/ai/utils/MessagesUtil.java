@@ -23,7 +23,7 @@ public class MessagesUtil {
     messages.add(new SystemMessage(prompt));
   }
 
-  public static void addInitialMessagesIfApply(Chat chat, List<Message> messages) {
+  public static void addInitialMessagesFromCustomPromptIfExist(Chat chat, List<Message> messages) {
     if (chat.getCustomPrompt() != null && chat.getCustomPrompt().getMessages() != null
         && !chat.getCustomPrompt().getMessages().isEmpty()) {
       CustomPrompt customPrompt = chat.getCustomPrompt();

@@ -42,7 +42,7 @@ public class VertexGeminiService implements AIProviderService {
   public Flux<ChatResponse> getAssistantMessage(List<AppMessage> messages, Chat chat) {
     List<Message> modelMessages = new ArrayList<>();
     MessagesUtil.addSystemMessage(chat, modelMessages);
-    MessagesUtil.addInitialMessagesIfApply(chat, modelMessages);
+    MessagesUtil.addInitialMessagesFromCustomPromptIfExist(chat, modelMessages);
 
     // Convert AppMessages to the appropriate Message type
     List<Message> convertedMessages = messages.stream().map(message -> {
